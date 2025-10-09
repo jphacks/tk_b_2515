@@ -17,7 +17,23 @@ pnpm install
 
 # 環境変数の設定
 cp .env.example .env
-# .env ファイルを編集して必要な環境変数を設定
+# .env ファイルを編集して以下を設定:
+# - Supabase URL/Keys
+# - Anthropic API Key (Claude)
+# - Google AI API Key (Gemini)
+# - Google Cloud STT/TTS認証情報
+```
+
+### データベースセットアップ
+
+1. [Supabase](https://supabase.com/)でプロジェクトを作成
+2. SQL Editorで[docs/database-schema.md](docs/database-schema.md)のSQLを実行
+3. `.env`に認証情報を追加
+
+```bash
+# Frontend用
+cd frontend
+pnpm add @supabase/supabase-js
 ```
 
 ### 開発環境の起動
