@@ -1,0 +1,34 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # 開発用: frontendのみ (backend は wrangler dev で起動)
+  frontend-dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/frontend/node_modules
+    ports:
+      - "3000:3000"
+    command: sh -c "corepack enable && corepack prepare pnpm@10.14.0 --activate && pnpm install && pnpm --filter frontend dev"
+    environment:
+      - NODE_ENV=development
+    profiles:
+      - dev
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
