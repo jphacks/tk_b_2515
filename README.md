@@ -2,6 +2,70 @@
 
 [![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
 
+## セットアップ
+
+### 必要な環境
+- Node.js 20以上
+- pnpm 10.14.0
+- Docker & Docker Compose (オプション)
+
+### インストール
+
+```bash
+# 依存関係のインストール
+pnpm install
+
+# 環境変数の設定
+cp .env.example .env
+# .env ファイルを編集して必要な環境変数を設定
+```
+
+### 開発環境の起動
+
+#### 方法1: ローカル環境で起動
+
+```bash
+# Frontend (Next.js) - ターミナル1
+cd frontend
+pnpm dev
+# http://localhost:3000 でアクセス可能
+
+# Backend (Hono + Cloudflare Workers) - ターミナル2
+cd backend
+pnpm dev
+```
+
+#### 方法2: Dockerで起動
+
+```bash
+# Frontend を Docker で起動 (ホットリロード有効)
+docker compose --profile dev up frontend-dev
+
+# Backend は別ターミナルでローカル起動
+cd backend
+pnpm dev
+```
+
+### 本番ビルド
+
+#### Frontend (Docker)
+
+```bash
+# Dockerイメージのビルドと起動
+docker compose up frontend
+
+# または手動ビルド
+docker build -t tk_b_2515 .
+docker run -p 3000:3000 tk_b_2515
+```
+
+#### Backend (Cloudflare Workers)
+
+```bash
+cd backend
+pnpm deploy
+```
+
 ## 製品概要
 ### 背景(製品開発のきっかけ、課題等）
 ### 製品説明（具体的な製品の説明）
