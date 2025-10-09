@@ -1,11 +1,14 @@
-# サンプル（プロダクト名）
+# 恋愛をしたい男子諸君のためのアプリ恋 AI
+
+![恋AI](/)
 
 [![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
 
 ## セットアップ
 
 ### 必要な環境
-- Node.js 20以上
+
+- Node.js 20 以上
 - pnpm 10.14.0
 - Docker & Docker Compose (オプション)
 
@@ -27,7 +30,7 @@ cp .env.example .env
 ### データベースセットアップ
 
 1. [Supabase](https://supabase.com/)でプロジェクトを作成
-2. SQL Editorで[docs/database-schema.md](docs/database-schema.md)のSQLを実行
+2. SQL Editor で[docs/database-schema.md](docs/database-schema.md)の SQL を実行
 3. `.env`に認証情報を追加
 
 ```bash
@@ -38,7 +41,7 @@ pnpm add @supabase/supabase-js
 
 ### 開発環境の起動
 
-#### 方法1: ローカル環境で起動
+#### 方法 1: ローカル環境で起動
 
 ```bash
 # Frontend (Next.js) - ターミナル1
@@ -51,7 +54,7 @@ cd backend
 pnpm dev
 ```
 
-#### 方法2: Dockerで起動
+#### 方法 2: Docker で起動
 
 ```bash
 # Frontend を Docker で起動 (ホットリロード有効)
@@ -83,34 +86,54 @@ pnpm deploy
 ```
 
 ## 製品概要
+
+純愛を求める男子学生のためのアプリ、恋 AI(renai)。
+
 ### 背景(製品開発のきっかけ、課題等）
+
+弊学は女子率が低く女性経験が少ない男子生徒が多く、それを手助けできるアプリケーションが作りたかった。嘘です。ほんとは単純に彼女が欲しすぎました。
+
 ### 製品説明（具体的な製品の説明）
+
 ### 特長
-#### 1. 特長1
-#### 2. 特長2
-#### 3. 特長3
+
+#### 1. 特長 1
+
+#### 2. 特長 2
+
+#### 3. 特長 3
 
 ### 解決出来ること
+
 ### 今後の展望
+
 ### 注力したこと（こだわり等）
-* 
-* 
+
+-
+-
 
 ## 開発技術
+
 ### 活用した技術
+
 #### API・データ
-* 
-* 
+
+-
+-
 
 #### フレームワーク・ライブラリ・モジュール
-* 
-* 
+
+-
+-
 
 #### デバイス
-* 
-* 
+
+-
+-
 
 ### 独自技術
+
 #### ハッカソンで開発した独自機能・技術
-* 独自で開発したものの内容をこちらに記載してください
-* 特に力を入れた部分をファイルリンク、またはcommit_idを記載してください。
+
+- 独自で開発したものの内容をこちらに記載してください
+- 特に力を入れた部分をファイルリンク、または commit_id を記載してください。
