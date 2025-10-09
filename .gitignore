@@ -6,6 +6,7 @@
 /package-lock.json
 /yarn.lock
 /pnpm-lock.yaml
+.pnpm-store/
 
 # ビルド・出力ディレクトリ
 /.next/        # Next.jsのビルドキャッシュと出力
