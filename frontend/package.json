@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.18.0",
     "@pixiv/three-vrm": "^3.4.2",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.3.0",
