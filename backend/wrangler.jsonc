@@ -2,10 +2,11 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "backend",
   "main": "src/index.ts",
-  "compatibility_date": "2025-10-07"
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
+  "compatibility_date": "2025-10-07",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+  //
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
