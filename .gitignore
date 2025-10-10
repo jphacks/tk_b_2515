@@ -48,3 +48,4 @@ Thumbs.db # Windows
 .idea/    # IntelliJ/WebStorm
 *~        # Emacs
 # --------------------
+/generated/prisma
