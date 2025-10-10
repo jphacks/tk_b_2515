@@ -1,8 +1,15 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { swaggerUI } from '@hono/swagger-ui'
+import { logger } from './middleware/logger'
+import { errorHandler } from './middleware/error'
+import api from './routes/api'
+import swagger from './routes/swagger'
 
 const app = new Hono()
+
+// グローバルミドルウェア
+app.use('/*', errorHandler)
+app.use('/*', logger)
 
 // CORS設定: フロントエンドからのリクエストを許可
 app.use('/*', cors({
@@ -10,44 +17,15 @@ app.use('/*', cors({
   credentials: true,
 }))
 
-// OpenAPI ドキュメント
-const openApiDoc = {
-  openapi: '3.0.0',
-  info: {
-    title: 'API Documentation',
-    version: '1.0.0',
-    description: 'API documentation for your service',
-  },
-  paths: {
-    '/': {
-      get: {
-        summary: 'Hello endpoint',
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'text/plain': {
-                schema: {
-                  type: 'string',
-                  example: 'Hello Hono!',
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-}
-
-// OpenAPIドキュメントを提供
-app.get('/doc', (c) => c.json(openApiDoc))
-
-// Swagger UIを提供
-app.get('/ui', swaggerUI({ url: '/doc' }))
-
+// ルート
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
+
+// APIルート
+app.route('/api', api)
+
+// Swagger/ドキュメント
+app.route('/', swagger)
 
 export default app

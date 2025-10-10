@@ -11,6 +11,7 @@
     "prisma:studio": "prisma studio --schema=../prisma/schema.prisma"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.18.0",
     "@hono/swagger-ui": "^0.5.2",
     "@prisma/client": "^6.17.0",
     "@prisma/extension-accelerate": "^2.0.2",
