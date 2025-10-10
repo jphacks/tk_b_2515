@@ -4,15 +4,21 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "prisma:generate": "prisma generate --schema=../prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=../prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=../prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema=../prisma/schema.prisma"
   },
   "dependencies": {
+    "@hono/swagger-ui": "^0.5.2",
     "@prisma/client": "^6.17.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "hono": "^4.9.10",
     "prisma": "^6.17.0"
   },
   "devDependencies": {
+    "@types/node": "^24.7.1",
     "wrangler": "^4.4.0"
   }
 }

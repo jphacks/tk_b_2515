@@ -1,71 +1,39 @@
-// ----------------------------------------------------
-// 1. データソース (Supabase接続設定)
-// ----------------------------------------------------
 datasource db {
   provider = "postgresql"
-  // 環境変数名は.envファイルの内容に合わせて調整してください
   url      = env("DATABASE_URL")
 }
 
-// ----------------------------------------------------
-// 2. ジェネレーター (Prisma Clientの生成設定)
-// ----------------------------------------------------
 generator client {
   provider = "prisma-client-js"
 }
 
-// ----------------------------------------------------
-// 3. モデル定義
-// ----------------------------------------------------
-
-// 会話セッション全体を管理するモデル
-// 匿名ユーザーとして開始するため、ユーザー情報は含まない
 model ConversationSession {
-  // セッションID (主キー)
-  id          String    @id @default(uuid())
-  // セッション開始時刻
-  createdAt   DateTime  @default(now())
-  // セッション終了時刻
-  finishedAt  DateTime?
-  // 会話履歴 (1対多の関係)
-  messages    Message[]
-  // フィードバック結果 (1対1の関係)
-  feedback    Feedback?
+  id         String    @id @default(uuid())
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+  messages   Message[]
+  feedback   Feedback?
 }
 
-// セッション内の個々の発言を記録するモデル
 model Message {
-  // メッセージID (主キー)
-  id                    String                @id @default(uuid())
-  // 発言者 ('User' または 'AI')
-  speaker               SpeakerType
-  // 発言内容 (テキスト)
-  content               String
-  // 発言時刻
-  timestamp             DateTime              @default(now())
+  id        String              @id @default(uuid())
+  speaker   SpeakerType
+  content   String
+  timestamp DateTime            @default(now())
+  sessionId String
+  session   ConversationSession @relation(fields: [sessionId], references: [id])
 
-  // 会話セッションへのリレーション
-  sessionId             String
-  session               ConversationSession   @relation(fields: [sessionId], references: [id])
-
-  @@index([sessionId]) // sessionIdで頻繁に検索するためインデックスを設定
+  @@index([sessionId])
 }
 
-// AIによるフィードバック結果を保存するモデル
 model Feedback {
-  // フィードバックID (主キー)
-  id                        String                @id @default(uuid())
-  // フィードバックテキスト全体 (Claude/Geminiの最終出力)
-  feedbackText              String
-  // 評価スコア (任意: 1-100点など、MVPでは省略可能だが将来のため含める)
-  score                     Int?
-
-  // 会話セッションへのリレーション (1対1)
-  sessionId                 String                @unique // 1つのセッションに1つのフィードバック
-  session                   ConversationSession   @relation(fields: [sessionId], references: [id])
+  id           String              @id @default(uuid())
+  feedbackText String
+  score        Int?
+  sessionId    String              @unique
+  session      ConversationSession @relation(fields: [sessionId], references: [id])
 }
 
-// 発言者 (列挙型)
 enum SpeakerType {
   User
   AI
