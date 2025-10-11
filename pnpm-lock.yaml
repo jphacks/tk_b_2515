@@ -18,6 +18,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.2.5
         version: 2.2.5
+      husky:
+        specifier: ^8.0.0
+        version: 8.0.3
 
   backend:
     dependencies:
@@ -52,6 +55,9 @@ importers:
       '@elevenlabs/elevenlabs-js':
         specifier: ^2.18.0
         version: 2.18.0
+      '@mediapipe/tasks-vision':
+        specifier: 0.10.22-rc.20250304
+        version: 0.10.22-rc.20250304
       '@pixiv/three-vrm':
         specifier: ^3.4.2
         version: 3.4.2(three@0.180.0)
@@ -104,6 +110,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.1(@types/react@19.2.2)
+      '@types/three':
+        specifier: ^0.180.0
+        version: 0.180.0
       tailwindcss:
         specifier: ^4
         version: 4.1.14
@@ -642,6 +651,9 @@ packages:
 
   '@mediapipe/tasks-vision@0.10.17':
     resolution: {integrity: sha512-CZWV/q6TTe8ta61cZXjfnnHsfWIdFhms03M9T7Cnd5y2mdpylJM0rF1qRq+wsQVRMLz1OYPVEBU9ph2Bx8cxrg==}
+
+  '@mediapipe/tasks-vision@0.10.22-rc.20250304':
+    resolution: {integrity: sha512-dElxVXMFGthshfIj+qAVm8KE2jmNo2p8oXFib8WzEjb7GNaX/ClWBc8UJfoSZwjEMVrdHJ4YUfa7P3ifl6MIWw==}
 
   '@monogrid/gainmap-js@3.1.0':
     resolution: {integrity: sha512-Obb0/gEd/HReTlg8ttaYk+0m62gQJmCblMOjHSMHRrBP2zdfKMHLCRbh/6ex9fSUJMKdjjIEiohwkbGD3wj2Nw==}
@@ -1219,6 +1231,11 @@ packages:
   hono@4.9.10:
     resolution: {integrity: sha512-AlI15ijFyKTXR7eHo7QK7OR4RoKIedZvBuRjO8iy4zrxvlY5oFCdiRG/V/lFJHCNXJ0k72ATgnyzx8Yqa5arug==}
     engines: {node: '>=16.9.0'}
+
+  husky@8.0.3:
+    resolution: {integrity: sha512-+dQSyqPh4x1hlO1swXBiNb2HzTDN1I2IGLQx1GrBuiqFJfoMrnZWwVmatvSiO+Iz8fBUnf+lekwNo4c2LlXItg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -2092,6 +2109,8 @@ snapshots:
 
   '@mediapipe/tasks-vision@0.10.17': {}
 
+  '@mediapipe/tasks-vision@0.10.22-rc.20250304': {}
+
   '@monogrid/gainmap-js@3.1.0(three@0.180.0)':
     dependencies:
       promise-worker-transferable: 1.0.4
@@ -2667,6 +2686,8 @@ snapshots:
   hls.js@1.6.13: {}
 
   hono@4.9.10: {}
+
+  husky@8.0.3: {}
 
   ieee754@1.2.1: {}
 
