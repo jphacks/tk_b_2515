@@ -5,7 +5,9 @@ import { logger } from "./middleware/logger";
 import { errorHandler } from "./middleware/error";
 import api from "./routes/api";
 
-const app = new OpenAPIHono<{ Bindings: { ELEVENLABS_API_KEY: string } }>();
+const app = new OpenAPIHono<{
+	Bindings: { ELEVENLABS_API_KEY: string; GOOGLE_AI_API_KEY: string };
+}>();
 
 // グローバルミドルウェア
 app.use("/*", errorHandler);

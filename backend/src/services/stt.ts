@@ -1,10 +1,8 @@
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import type { Voice } from "@elevenlabs/elevenlabs-js/api";
+import { getElevenLabsClient } from "./client";
 
 export async function getVoices(apiKey: string): Promise<Voice[]> {
-	const client = new ElevenLabsClient({
-		apiKey,
-	});
+	const client = getElevenLabsClient(apiKey);
 
 	const voices = await client.voices.getAll();
 	return voices.voices;
@@ -22,9 +20,7 @@ export async function speechToText(
 	apiKey: string,
 	audioFile: Blob | File,
 ): Promise<string> {
-	const client = new ElevenLabsClient({
-		apiKey,
-	});
+	const client = getElevenLabsClient(apiKey);
 
 	// Convert File to Buffer for ElevenLabs API
 	const arrayBuffer = await audioFile.arrayBuffer();
@@ -35,7 +31,14 @@ export async function speechToText(
 		modelId: "eleven_multilingual_v2",
 	});
 
-	return result.text || "";
+	// Handle different response types
+	if ("text" in result) {
+		return result.text || "";
+	}
+	if ("transcription" in result && typeof result.transcription === "string") {
+		return result.transcription;
+	}
+	return "";
 }
 
 export async function speechToTextWithVoice(
@@ -57,9 +60,7 @@ export async function textToSpeech(
 	voiceId: string,
 	modelId = "eleven_multilingual_v2",
 ): Promise<ReadableStream> {
-	const client = new ElevenLabsClient({
-		apiKey,
-	});
+	const client = getElevenLabsClient(apiKey);
 
 	const audioStream = await client.textToSpeech.convert(voiceId, {
 		text,
