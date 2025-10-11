@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Heart, ThumbsUp, Lightbulb, ArrowLeft, RotateCcw } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function FeedbackPage() {
   // Mock feedback data - will be replaced with actual AI-generated feedback
@@ -42,6 +43,18 @@ export default function FeedbackPage() {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-3xl w-full space-y-6">
+          {/* Avatar */}
+          <div className="flex justify-center">
+            <div className="relative w-32 h-32">
+              <Image
+                src="/../../public/avatar.png"
+                alt="恋AI アバター"
+                fill
+                className="object-cover rounded-full drop-shadow-lg border-2 border-primary/20"
+              />
+            </div>
+          </div>
+
           {/* Title */}
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold text-foreground">
