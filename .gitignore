@@ -3,7 +3,8 @@
 # --------------------
 # 依存関係
 /node_modules
-/package-lock.json
+**/node_modules
+package-lock.json
 /yarn.lock
 /pnpm-lock.yaml
 .pnpm-store/
