@@ -2,16 +2,24 @@
 
 import { ArrowLeft, Heart, Mic, MicOff, Phone, Video, VideoOff } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { VideoStream } from "@/components/VideoStream";
+import dynamic from "next/dynamic";
+
+// VRMアバターを動的インポート（SSR回避）
+const ConversationAvatar = dynamic(
+	() => import("@/components/Avatar/ConversationAvatar"),
+	{ ssr: false },
+);
 
 export default function SimulationPage() {
 	const [conversationStarted, setConversationStarted] = useState(false);
 	const [videoEnabled, setVideoEnabled] = useState(true);
+	const [lipSyncValue, setLipSyncValue] = useState(0);
 
 	// メディアデバイス（カメラ・マイク）へのアクセス
 	const { stream, error: mediaError, startStream, stopStream } = useMediaDevices();
@@ -27,6 +35,9 @@ export default function SimulationPage() {
 		pauseRecording,
 		resumeRecording,
 	} = useAudioRecorder();
+
+	// デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
+	const avatarModelUrl = "/models/avatar.vrm";
 
 	const handleStartConversation = async () => {
 		// カメラとマイクへのアクセスを開始
@@ -125,21 +136,64 @@ export default function SimulationPage() {
 					</div>
 				</main>
 			) : (
-				/* Conversation State - Video-centric Layout */
+				/* Conversation State - Split Screen Layout */
 				<main className="flex-1 flex flex-col overflow-hidden">
-					{/* Video Container - Takes most of the screen */}
-					<div className="flex-1 relative bg-black/90">
-						{stream && videoEnabled ? (
-							<VideoStream
-								stream={stream}
-								className="w-full h-full object-contain"
-							/>
-						) : (
-							<div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
-								<VideoOff className="w-24 h-24 text-muted-foreground/50 mb-4" />
-								<p className="text-muted-foreground text-lg">カメラがオフになっています</p>
+					{/* Video Container - Split view: AI Avatar (left) + User Camera (right) */}
+					<div className="flex-1 relative bg-gradient-to-br from-black/95 via-primary/5 to-black/95">
+						<div className="w-full h-full flex flex-col md:flex-row gap-2 p-2">
+							{/* AI Avatar - Main Area (Left Side on desktop, Top on mobile) */}
+							<div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[300px] md:min-h-0">
+								<Suspense
+									fallback={
+										<div className="w-full h-full flex items-center justify-center">
+											<div className="text-center space-y-4">
+												<Heart className="w-16 h-16 text-primary animate-pulse mx-auto" />
+												<p className="text-muted-foreground">AI女子を読み込み中...</p>
+											</div>
+										</div>
+									}
+								>
+									<ConversationAvatar
+										modelUrl={avatarModelUrl}
+										lipSyncValue={lipSyncValue}
+										className="w-full h-full"
+									/>
+								</Suspense>
+								{/* AI Label */}
+								<div className="absolute top-4 left-4 bg-primary/90 backdrop-blur-sm px-4 py-2 rounded-full border border-primary-foreground/20">
+									<p className="text-primary-foreground font-semibold text-sm flex items-center gap-2">
+										<Heart className="w-4 h-4 fill-current" />
+										AI女子
+									</p>
+								</div>
 							</div>
-						)}
+
+							{/* User Camera - Secondary Area (Right Side on desktop, Bottom on mobile) */}
+							<div className="w-full md:w-80 h-48 md:h-auto relative bg-black rounded-xl overflow-hidden border border-border/50 shadow-2xl">
+								{stream && videoEnabled ? (
+									<>
+										<VideoStream
+											stream={stream}
+											className="w-full h-full object-cover"
+										/>
+										{/* User Label */}
+										<div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+											<p className="text-white font-semibold text-sm flex items-center gap-2">
+												<Video className="w-4 h-4" />
+												あなた
+											</p>
+										</div>
+									</>
+								) : (
+									<div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted/20 to-muted/5">
+										<VideoOff className="w-16 h-16 text-muted-foreground/50 mb-3" />
+										<p className="text-muted-foreground text-sm text-center px-4">
+											カメラが<br />オフです
+										</p>
+									</div>
+								)}
+							</div>
+						</div>
 
 						{/* Recording Status Indicator - Floating Top Right */}
 						<div className="absolute top-6 right-6 flex items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-white/10">
