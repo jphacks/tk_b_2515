@@ -39,20 +39,52 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 				setAudioBlobs([]);
 				setAudioURL(null);
 
-				// サポートされているMIMEタイプを確認
-				const mimeType =
-					options?.mimeType ||
-					(MediaRecorder.isTypeSupported("audio/webm")
-						? "audio/webm"
-						: "audio/mp4");
+				// 音声トラックのみを含む新しいストリームを作成
+				const audioTracks = stream.getAudioTracks();
+				if (audioTracks.length === 0) {
+					throw new Error("音声トラックが見つかりません");
+				}
+				const audioStream = new MediaStream(audioTracks);
 
-				const recorderOptions: MediaRecorderOptions = {
-					mimeType,
-					audioBitsPerSecond: options?.audioBitsPerSecond || 128000,
-				};
+				// サポートされているMIMEタイプを確認（優先順位付き）
+				let mimeType = options?.mimeType;
 
-				// MediaRecorderのインスタンスを作成
-				const mediaRecorder = new MediaRecorder(stream, recorderOptions);
+				if (!mimeType) {
+					const supportedTypes = [
+						"audio/webm;codecs=opus",
+						"audio/webm",
+						"audio/ogg;codecs=opus",
+						"audio/mp4",
+						"audio/mpeg",
+					];
+
+					for (const type of supportedTypes) {
+						if (MediaRecorder.isTypeSupported(type)) {
+							mimeType = type;
+							break;
+						}
+					}
+
+					if (!mimeType) {
+						// フォールバック: MIMEタイプなしで試す
+						console.warn("サポートされている音声MIMEタイプが見つかりませんでした。デフォルト設定を使用します。");
+					}
+				}
+
+				const recorderOptions: MediaRecorderOptions = mimeType
+					? {
+							mimeType,
+							audioBitsPerSecond: options?.audioBitsPerSecond || 128000,
+					  }
+					: {};
+
+				// MediaRecorderのインスタンスを作成（音声ストリームのみ使用）
+				const mediaRecorder = new MediaRecorder(audioStream, recorderOptions);
+
+				console.log("MediaRecorder作成成功:", {
+					mimeType: mediaRecorder.mimeType,
+					state: mediaRecorder.state,
+				});
 
 				// データが利用可能になったときのハンドラ
 				mediaRecorder.ondataavailable = (event) => {
@@ -63,22 +95,32 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
 				// 録音が停止したときのハンドラ
 				mediaRecorder.onstop = () => {
-					const audioBlob = new Blob(chunksRef.current, { type: mimeType });
+					const blobType = mimeType || mediaRecorder.mimeType;
+					const audioBlob = new Blob(chunksRef.current, { type: blobType });
 					const url = URL.createObjectURL(audioBlob);
 
 					setAudioBlobs([...chunksRef.current]);
 					setAudioURL(url);
 					setIsRecording(false);
 					setIsPaused(false);
+
+					console.log("録音停止:", {
+						blobSize: audioBlob.size,
+						blobType: audioBlob.type,
+						url,
+					});
 				};
 
 				// エラーハンドラ
 				mediaRecorder.onerror = (event) => {
+					const errorEvent = event as ErrorEvent;
 					const error = new Error(
-						`MediaRecorder error: ${(event as ErrorEvent).error}`,
+						`MediaRecorder error: ${errorEvent.error || errorEvent.message || "Unknown error"}`,
 					);
 					setError(error);
-					console.error("録音エラー:", error);
+					setIsRecording(false);
+					setIsPaused(false);
+					console.error("録音エラー:", error, event);
 				};
 
 				mediaRecorderRef.current = mediaRecorder;
@@ -87,10 +129,14 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 				mediaRecorder.start(1000);
 				setIsRecording(true);
 				setIsPaused(false);
+
+				console.log("録音開始成功");
 			} catch (err) {
 				const error = err instanceof Error ? err : new Error(String(err));
 				setError(error);
-				console.error("録音開始エラー:", error);
+				setIsRecording(false);
+				setIsPaused(false);
+				console.error("録音開始エラー:", error, err);
 			}
 		},
 		[],

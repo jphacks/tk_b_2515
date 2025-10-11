@@ -2,13 +2,14 @@
 
 import { ArrowLeft, Heart, Mic, MicOff, Phone, Video, VideoOff } from "lucide-react";
 import Link from "next/link";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { VideoStream } from "@/components/VideoStream";
 import dynamic from "next/dynamic";
+import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 
 // VRMアバターを動的インポート（SSR回避）
 const ConversationAvatar = dynamic(
@@ -38,6 +39,11 @@ export default function SimulationPage() {
 
 	// デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
 	const avatarModelUrl = "/models/avatar.vrm";
+
+	// MediaRecorderサポート情報をログ出力（開発時のデバッグ用）
+	useEffect(() => {
+		logMediaRecorderSupport();
+	}, []);
 
 	const handleStartConversation = async () => {
 		// カメラとマイクへのアクセスを開始
