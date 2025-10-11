@@ -40,23 +40,88 @@ export interface SpeechToTextRequest {
 
 // フィードバック型定義
 export interface Feedback {
-	goodPoints: string[];
-	improvements: string[];
-	overallScore: number;
+	id: string;
+	goodPoints: string;
+	improvementPoints: string;
+	overallScore: number | null;
+	conversationId: string;
+	createdAt: string;
+	updatedAt: string;
 }
 
 // 会話履歴型定義
-export interface ConversationMessage {
+export interface Message {
 	id: string;
 	role: "user" | "assistant";
 	content: string;
-	timestamp: Date;
+	audioUrl: string | null;
+	conversationId: string;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface ConversationSession {
 	id: string;
-	startTime: Date;
-	endTime?: Date;
-	messages: ConversationMessage[];
+	status: "active" | "completed";
+	createdAt: string;
+	updatedAt: string;
+	messages?: Message[];
 	feedback?: Feedback;
+}
+
+// API レスポンス型定義（セッション）
+export interface CreateSessionResponse {
+	session: ConversationSession;
+}
+
+export interface GetSessionResponse {
+	session: ConversationSession;
+}
+
+export interface GetSessionsResponse {
+	sessions: ConversationSession[];
+}
+
+// API レスポンス型定義（メッセージ）
+export interface CreateMessageRequest {
+	role: "user" | "assistant";
+	content: string;
+	audioUrl?: string;
+}
+
+export interface CreateMessageResponse {
+	message: Message;
+}
+
+// API レスポンス型定義（フィードバック）
+export interface CreateFeedbackRequest {
+	goodPoints: string;
+	improvementPoints: string;
+	overallScore?: number;
+}
+
+export interface CreateFeedbackResponse {
+	feedback: Feedback;
+}
+
+// API レスポンス型定義（会話生成）
+export interface GenerateConversationRequest {
+	sessionId: string;
+	userMessage: string;
+	systemPrompt?: string;
+}
+
+export interface GenerateConversationResponse {
+	response: string;
+	userMessage: Message;
+	assistantMessage: Message;
+}
+
+// API レスポンス型定義（フィードバック生成）
+export interface GenerateFeedbackRequest {
+	sessionId: string;
+}
+
+export interface GenerateFeedbackResponse {
+	feedback: Feedback;
 }
