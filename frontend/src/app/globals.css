@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   /* Custom pink theme colors in oklch format */
   --background: oklch(0.99 0.01 340);

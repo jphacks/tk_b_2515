@@ -1,85 +1,85 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Start Frontend",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "Start Backend",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "Start All Services",
-      "dependsOn": ["Start Frontend", "Start Backend"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Docker Compose Up",
-      "type": "shell",
-      "command": "docker-compose up -d",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Docker Compose Down",
-      "type": "shell",
-      "command": "docker-compose down",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Prisma Generate",
-      "type": "shell",
-      "command": "npx prisma generate",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Prisma Migrate Dev",
-      "type": "shell",
-      "command": "npx prisma migrate dev",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Prisma Studio",
-      "type": "shell",
-      "command": "npx prisma studio",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Frontend",
+			"type": "shell",
+			"command": "npm run dev",
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Start Backend",
+			"type": "shell",
+			"command": "npm run dev",
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Start All Services",
+			"dependsOn": ["Start Frontend", "Start Backend"],
+			"problemMatcher": []
+		},
+		{
+			"label": "Docker Compose Up",
+			"type": "shell",
+			"command": "docker-compose up -d",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Docker Compose Down",
+			"type": "shell",
+			"command": "docker-compose down",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Prisma Generate",
+			"type": "shell",
+			"command": "npx prisma generate",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Prisma Migrate Dev",
+			"type": "shell",
+			"command": "npx prisma migrate dev",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Prisma Studio",
+			"type": "shell",
+			"command": "npx prisma studio",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		}
+	]
 }

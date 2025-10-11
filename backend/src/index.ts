@@ -14,16 +14,16 @@ app.use("/*", logger);
 
 // CORS設定: フロントエンドからのリクエストを許可
 app.use(
-  "/*",
-  cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
-    credentials: true,
-  })
+	"/*",
+	cors({
+		origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+		credentials: true,
+	}),
 );
 
 // ルート
 app.get("/", (c) => {
-  return c.text("Hello Hono!");
+	return c.text("Hello Hono!");
 });
 
 // APIルート
