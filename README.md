@@ -1,6 +1,6 @@
 # 恋愛をしたい男子諸君のためのアプリ恋 AI
 
-![恋AI](./renaipic_kari.png)
+![恋AI](./docs/renaipic_kari.png)
 
 [![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
 
@@ -131,7 +131,7 @@ tk_b_2515/
 
 ### 製品説明（具体的な製品の説明）
 
-![アーキテクチャー図](./archtecture.png)
+![アーキテクチャー図](./docs/archtecture.png)
 
 ### 特長
 

@@ -1,24 +1,29 @@
 {
   "name": "tk_b_2515",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "恋AI - AI-powered conversation practice application",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:backend": "pnpm --filter backend deploy",
     "lint": "biome lint --write .",
     "format": "biome format --write .",
-    "check": "biome check --write ."
+    "check": "biome check --write .",
+    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=./prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema=./prisma/schema.prisma"
   },
-  "keywords": [],
+  "keywords": ["ai", "conversation", "practice"],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.14.0",
   "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
-    "tailwindcss": "^4.1.14"
+    "@biomejs/biome": "^2.2.5"
   },
   "dependencies": {
     "@prisma/client": "^6.17.0",
-    "lucide-react": "^0.545.0",
     "prisma": "^6.17.0"
   }
 }

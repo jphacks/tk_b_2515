@@ -2,21 +2,22 @@
 # 開発環境: Node.js (Next.js, Hono, TypeScript)
 # --------------------
 # 依存関係
-/node_modules
-/package-lock.json
-/yarn.lock
-/pnpm-lock.yaml
+node_modules/
+package-lock.json
+yarn.lock
 .pnpm-store/
 
 # ビルド・出力ディレクトリ
-/.next/        # Next.jsのビルドキャッシュと出力
-/dist/         # Honoバックエンドなどのビルド出力（もしあれば）
-/out/          # 静的エクスポート（もし利用するなら）
+.next/
+dist/
+out/
+.wrangler/
 
 # ログファイル
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 lerna-debug.log*
 
 # TypeScript/JavaScriptのコンパイル出力
@@ -30,22 +31,25 @@ next-env.d.ts
 .env
 .env.local
 .env.*.local
-.vscode/settings.json # VSCodeの個人設定
 
 # --------------------
-# 3Dアバター関連 
+# Prisma
+# --------------------
+/generated/prisma
+
+# --------------------
+# 3Dアバター関連
 # --------------------
 # VRMやその他の大型アセットファイル（Git LFSを使わない場合）
 # VRMファイル自体はリポジトリに含める方が初期設定が楽かもしれませんが、
 # サイズが大きい場合は除外を検討
-# *.vrm 
+# *.vrm
 
 # --------------------
 # OS、エディタの一時ファイル
 # --------------------
-.DS_Store # macOS
-Thumbs.db # Windows
-.idea/    # IntelliJ/WebStorm
-*~        # Emacs
-# --------------------
-/generated/prisma
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+*~
