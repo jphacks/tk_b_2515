@@ -14,7 +14,8 @@
 		"check": "biome check --write .",
 		"prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
 		"prisma:push": "prisma db push --schema=./prisma/schema.prisma",
-		"prisma:studio": "prisma studio --schema=./prisma/schema.prisma"
+		"prisma:studio": "prisma studio --schema=./prisma/schema.prisma",
+		"prepare": "husky install"
 	},
 	"keywords": [
 		"ai",
@@ -24,7 +25,8 @@
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
-		"@biomejs/biome": "^2.2.5"
+		"@biomejs/biome": "^2.2.5",
+		"husky": "^8.0.0"
 	},
 	"dependencies": {
 		"@prisma/client": "^6.17.0",

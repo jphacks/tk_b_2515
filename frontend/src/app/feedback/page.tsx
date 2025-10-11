@@ -1,6 +1,5 @@
 "use client";
 
-// biome-ignore assist/source/organizeImports: <explanation>
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Heart, ThumbsUp, Lightbulb, ArrowLeft, RotateCcw } from "lucide-react";
