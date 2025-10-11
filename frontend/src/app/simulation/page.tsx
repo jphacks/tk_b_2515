@@ -2,12 +2,14 @@
 
 import { ArrowLeft, Heart, Mic, MicOff, Phone, Video, VideoOff } from "lucide-react";
 import Link from "next/link";
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { VideoStream } from "@/components/VideoStream";
+import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
+import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
+import { FacialFeedback } from "@/components/FacialFeedback";
 import dynamic from "next/dynamic";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 
@@ -21,6 +23,9 @@ export default function SimulationPage() {
 	const [conversationStarted, setConversationStarted] = useState(false);
 	const [videoEnabled, setVideoEnabled] = useState(true);
 	const [lipSyncValue, setLipSyncValue] = useState(0);
+
+	// video要素への参照
+	const videoStreamRef = useRef<VideoStreamRef>(null);
 
 	// メディアデバイス（カメラ・マイク）へのアクセス
 	const { stream, error: mediaError, startStream, stopStream } = useMediaDevices();
@@ -37,6 +42,15 @@ export default function SimulationPage() {
 		resumeRecording,
 	} = useAudioRecorder();
 
+	// 表情分析機能
+	const {
+		metrics: facialMetrics,
+		isAnalyzing,
+		error: facialError,
+		startAnalysis,
+		stopAnalysis,
+	} = useFacialAnalysis();
+
 	// デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
 	const avatarModelUrl = "/models/avatar.vrm";
 
@@ -44,6 +58,13 @@ export default function SimulationPage() {
 	useEffect(() => {
 		logMediaRecorderSupport();
 	}, []);
+
+	// ビデオが準備できたら表情分析を開始
+	const handleVideoReady = (videoElement: HTMLVideoElement) => {
+		console.log("ビデオ準備完了、表情分析を開始します");
+		// アバターは画面左側にあるので、左側中央（x: 0.25, y: 0.5）を見るのが適切
+		startAnalysis(videoElement, { x: 0.25, y: 0.5 });
+	};
 
 	const handleStartConversation = async () => {
 		// カメラとマイクへのアクセスを開始
@@ -56,6 +77,8 @@ export default function SimulationPage() {
 		if (isRecording) {
 			stopRecording();
 		}
+		// 表情分析を停止
+		stopAnalysis();
 		// メディアストリームを停止
 		stopStream();
 		// Navigate to feedback page
@@ -175,19 +198,31 @@ export default function SimulationPage() {
 							</div>
 
 							{/* User Camera - Secondary Area (Right Side on desktop, Bottom on mobile) */}
-							<div className="w-full md:w-80 h-48 md:h-auto relative bg-black rounded-xl overflow-hidden border border-border/50 shadow-2xl">
+							<div className="w-full md:w-80 h-48 md:h-auto relative bg-black rounded-xl overflow-hidden border border-border/50 shadow-2xl flex flex-col">
 								{stream && videoEnabled ? (
 									<>
-										<VideoStream
-											stream={stream}
-											className="w-full h-full object-cover"
-										/>
-										{/* User Label */}
-										<div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-											<p className="text-white font-semibold text-sm flex items-center gap-2">
-												<Video className="w-4 h-4" />
-												あなた
-											</p>
+										<div className="flex-1 relative">
+											<VideoStream
+												ref={videoStreamRef}
+												stream={stream}
+												className="w-full h-full object-cover"
+												onVideoReady={handleVideoReady}
+											/>
+											{/* User Label */}
+											<div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+												<p className="text-white font-semibold text-sm flex items-center gap-2">
+													<Video className="w-4 h-4" />
+													あなた
+												</p>
+											</div>
+										</div>
+
+										{/* Facial Feedback Overlay */}
+										<div className="absolute bottom-4 left-4 right-4">
+											<FacialFeedback
+												metrics={facialMetrics}
+												isAnalyzing={isAnalyzing}
+											/>
 										</div>
 									</>
 								) : (
@@ -220,11 +255,11 @@ export default function SimulationPage() {
 						</div>
 
 						{/* Error Messages - Floating Top Center */}
-						{(mediaError || recorderError) && (
+						{(mediaError || recorderError || facialError) && (
 							<div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-md">
 								<div className="bg-destructive/90 backdrop-blur-md text-destructive-foreground px-6 py-3 rounded-lg shadow-lg border border-destructive">
 									<p className="text-sm font-medium text-center">
-										⚠️ {mediaError?.message || recorderError?.message}
+										⚠️ {mediaError?.message || recorderError?.message || facialError?.message}
 									</p>
 								</div>
 							</div>
