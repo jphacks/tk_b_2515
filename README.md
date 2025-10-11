@@ -19,25 +19,26 @@
 pnpm install
 
 # 環境変数の設定
+# Frontend
+cd frontend
 cp .env.example .env
 # .env ファイルを編集して以下を設定:
-# - Supabase URL/Keys
-# - Anthropic API Key (Claude)
-# - Google AI API Key (Gemini)
-# - Google Cloud STT/TTS認証情報
+# - NEXT_PUBLIC_API_URL (バックエンドのURL)
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Backend
+cd ../backend
+cp .env.example .env
+# .env ファイルを編集して以下を設定:
+# - ELEVENLABS_API_KEY
 ```
 
 ### データベースセットアップ
 
 1. [Supabase](https://supabase.com/)でプロジェクトを作成
 2. SQL Editor で[docs/database-schema.md](docs/database-schema.md)の SQL を実行
-3. `.env`に認証情報を追加
-
-```bash
-# Frontend用
-cd frontend
-pnpm add @supabase/supabase-js
-```
+3. フロントエンドの`.env`に認証情報を追加
 
 ### 開発環境の起動
 
@@ -85,11 +86,46 @@ cd backend
 pnpm deploy
 ```
 
+## プロジェクト構成
+
+```
+tk_b_2515/
+├── frontend/               # Next.js フロントエンド
+│   ├── src/
+│   │   ├── app/           # Next.js App Router (ページ)
+│   │   │   ├── page.tsx           # ホームページ
+│   │   │   ├── simulation/        # 会話シミュレーション
+│   │   │   └── feedback/          # フィードバック表示
+│   │   ├── components/    # UIコンポーネント
+│   │   │   ├── Avatar/           # VRMアバター関連
+│   │   │   └── ui/               # shadcn/ui コンポーネント
+│   │   ├── hooks/        # カスタムフック
+│   │   ├── lib/          # ユーティリティ・設定
+│   │   │   ├── api/              # APIクライアント
+│   │   │   │   ├── client.ts    # 基底APIクライアント
+│   │   │   │   ├── voices.ts    # 音声API
+│   │   │   │   └── speech.ts    # STT API
+│   │   │   ├── config.ts         # 環境変数設定
+│   │   │   ├── database.ts       # Supabaseクライアント
+│   │   │   └── utils.ts          # ユーティリティ関数
+│   │   └── types/        # TypeScript型定義
+│   │       └── api.ts            # API型定義
+│   └── .env.example      # 環境変数サンプル
+├── backend/              # Hono + Cloudflare Workers
+│   ├── src/
+│   │   ├── index.ts      # エントリーポイント
+│   │   ├── routes/       # APIルート
+│   │   ├── services/     # ビジネスロジック
+│   │   └── middleware/   # ミドルウェア
+│   └── wrangler.toml     # Cloudflare設定
+└── README.md
+```
+
 ## 製品概要
 
 純愛を求める男子学生のためのアプリ、恋 AI(renai)。
 
-### 背景(製品開発のきっかけ、課題等）
+### 背景（製品開発のきっかけ、課題等）
 
 弊学は女子率が低く女性経験が少ない男子生徒が多く、それを手助けできるアプリケーションが作りたかった。嘘です。ほんとは単純に彼女が欲しすぎました。
 
