@@ -5,9 +5,7 @@
 
 // クライアント
 export { apiClient } from "./client";
-
-// 音声関連API
-export { checkHealth, getVoices, getVoiceById } from "./voices";
-
 // Speech-to-Text API
 export { speechToText } from "./speech";
+// 音声関連API
+export { checkHealth, getVoiceById, getVoices } from "./voices";

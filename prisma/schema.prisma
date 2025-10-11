@@ -7,34 +7,38 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model ConversationSession {
-  id         String    @id @default(uuid())
-  createdAt  DateTime  @default(now())
-  finishedAt DateTime?
-  messages   Message[]
-  feedback   Feedback?
+model Conversation {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  status    String    @default("active")
+  messages  Message[]
+  feedback  Feedback?
+
+  @@map("conversations")
 }
 
 model Message {
-  id        String              @id @default(uuid())
-  speaker   SpeakerType
-  content   String
-  timestamp DateTime            @default(now())
-  sessionId String
-  session   ConversationSession @relation(fields: [sessionId], references: [id])
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  role           String
+  content        String
+  audioUrl       String?      @map("audio_url")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  @@index([sessionId])
+  @@index([conversationId])
+  @@map("messages")
 }
 
 model Feedback {
-  id           String              @id @default(uuid())
-  feedbackText String
-  score        Int?
-  sessionId    String              @unique
-  session      ConversationSession @relation(fields: [sessionId], references: [id])
-}
+  id                 String       @id @default(uuid())
+  conversationId     String       @unique @map("conversation_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  goodPoints         String       @map("good_points")
+  improvementPoints  String       @map("improvement_points")
+  overallScore       Int?         @map("overall_score")
+  conversation       Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-enum SpeakerType {
-  User
-  AI
+  @@map("feedback")
 }
