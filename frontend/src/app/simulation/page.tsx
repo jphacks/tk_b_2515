@@ -16,7 +16,17 @@ import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 // VRMアバターを動的インポート（SSR回避）
 const ConversationAvatar = dynamic(
 	() => import("@/components/Avatar/ConversationAvatar"),
-	{ ssr: false },
+	{
+		ssr: false,
+		loading: () => (
+			<div className="w-full h-full flex items-center justify-center">
+				<div className="text-center space-y-4">
+					<Heart className="w-16 h-16 text-primary animate-pulse mx-auto" />
+					<p className="text-muted-foreground">アバターを読み込み中...</p>
+				</div>
+			</div>
+		),
+	},
 );
 
 export default function SimulationPage() {
