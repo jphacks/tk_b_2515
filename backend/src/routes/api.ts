@@ -13,7 +13,7 @@ import {
 } from "../services/conversation";
 
 const api = new OpenAPIHono<{
-	Bindings: { ELEVENLABS_API_KEY: string; GOOGLE_AI_API_KEY: string };
+	Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
 }>();
 
 // Health check endpoint with OpenAPI
@@ -509,9 +509,9 @@ const generateResponseRoute = createRoute({
 
 api.openapi(generateResponseRoute, async (c) => {
 	try {
-		const apiKey = c.env.GOOGLE_AI_API_KEY;
+		const apiKey = c.env.GEMINI_API_KEY;
 		if (!apiKey) {
-			return c.json({ error: "Google AI API key not configured" }, 500);
+			return c.json({ error: "Gemini API key not configured" }, 500);
 		}
 
 		const { sessionId, userMessage, systemPrompt } = c.req.valid("json");
@@ -651,9 +651,9 @@ const generateFeedbackRoute = createRoute({
 
 api.openapi(generateFeedbackRoute, async (c) => {
 	try {
-		const apiKey = c.env.GOOGLE_AI_API_KEY;
+		const apiKey = c.env.GEMINI_API_KEY;
 		if (!apiKey) {
-			return c.json({ error: "Google AI API key not configured" }, 500);
+			return c.json({ error: "Gemini API key not configured" }, 500);
 		}
 
 		const { sessionId } = c.req.valid("json");

@@ -1,15 +1,17 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from "hono/cors";
-import { logger } from "./middleware/logger";
+import { envMiddleware } from "./middleware/env";
 import { errorHandler } from "./middleware/error";
+import { logger } from "./middleware/logger";
 import api from "./routes/api";
 
 const app = new OpenAPIHono<{
-	Bindings: { ELEVENLABS_API_KEY: string; GOOGLE_AI_API_KEY: string };
+	Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
 }>();
 
 // グローバルミドルウェア
+app.use("/*", envMiddleware);
 app.use("/*", errorHandler);
 app.use("/*", logger);
 
