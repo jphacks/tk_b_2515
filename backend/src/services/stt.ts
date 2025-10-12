@@ -1,31 +1,11 @@
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-
-export interface VoiceSettings {
-	stability: number;
-	similarity_boost: number;
-}
-
-export interface Voice {
-	voice_id: string;
-	name: string;
-	category: string;
-	description: string;
-	labels: Record<string, string>;
-	samples: Array<{
-		sample_id: string;
-		file_name: string;
-		mime_type: string;
-	}>;
-	settings: VoiceSettings;
-}
+import type { Voice } from "@elevenlabs/elevenlabs-js/api";
+import { getElevenLabsClient } from "./client";
 
 export async function getVoices(apiKey: string): Promise<Voice[]> {
-	const client = new ElevenLabsClient({
-		apiKey,
-	});
+	const client = getElevenLabsClient(apiKey);
 
 	const voices = await client.voices.getAll();
-	return voices.voices as Voice[];
+	return voices.voices;
 }
 
 export async function getVoiceById(
@@ -33,22 +13,32 @@ export async function getVoiceById(
 	voiceId: string,
 ): Promise<Voice | null> {
 	const voices = await getVoices(apiKey);
-	return voices.find((v) => v.voice_id === voiceId) || null;
+	return voices.find((v) => v.voiceId === voiceId) || null;
 }
 
 export async function speechToText(
 	apiKey: string,
 	audioFile: Blob | File,
 ): Promise<string> {
-	const client = new ElevenLabsClient({
-		apiKey,
-	});
+	const client = getElevenLabsClient(apiKey);
+
+	// Convert File to Buffer for ElevenLabs API
+	const arrayBuffer = await audioFile.arrayBuffer();
+	const buffer = Buffer.from(arrayBuffer);
 
 	const result = await client.speechToText.convert({
-		audio: audioFile,
+		file: buffer,
+		modelId: "eleven_multilingual_v2",
 	});
 
-	return result.text;
+	// Handle different response types
+	if ("text" in result) {
+		return result.text || "";
+	}
+	if ("transcription" in result && typeof result.transcription === "string") {
+		return result.transcription;
+	}
+	return "";
 }
 
 export async function speechToTextWithVoice(
@@ -62,4 +52,20 @@ export async function speechToTextWithVoice(
 	]);
 
 	return { text, voice };
+}
+
+export async function textToSpeech(
+	apiKey: string,
+	text: string,
+	voiceId: string,
+	modelId = "eleven_multilingual_v2",
+): Promise<ReadableStream> {
+	const client = getElevenLabsClient(apiKey);
+
+	const audioStream = await client.textToSpeech.convert(voiceId, {
+		text,
+		modelId,
+	});
+
+	return audioStream as ReadableStream;
 }

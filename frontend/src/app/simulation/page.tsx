@@ -8,6 +8,9 @@ import {
   Phone,
   Video,
   VideoOff,
+  Loader2,
+  MessageSquare,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, Suspense, useEffect, useRef } from "react";
@@ -16,8 +19,10 @@ import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
+import { useConversation } from "@/hooks/useConversation";
 import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
 import { FacialFeedback } from "@/components/FacialFeedback";
+import { ConversationHistory } from "@/components/ConversationHistory";
 import dynamic from "next/dynamic";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 
@@ -40,7 +45,9 @@ const ConversationAvatar = dynamic(
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
-  const [lipSyncValue, _setLipSyncValue] = useState(0);
+  const [lipSyncValue, setLipSyncValue] = useState(0);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   // video要素への参照
   const videoStreamRef = useRef<VideoStreamRef>(null);
@@ -56,13 +63,12 @@ export default function SimulationPage() {
   // 音声録音機能
   const {
     isRecording,
-    isPaused,
     audioURL,
     error: recorderError,
     startRecording,
     stopRecording,
-    pauseRecording,
-    resumeRecording,
+    clearRecording,
+    audioBlob,
   } = useAudioRecorder();
 
   // 表情分析機能
@@ -73,6 +79,20 @@ export default function SimulationPage() {
     startAnalysis,
     stopAnalysis,
   } = useFacialAnalysis();
+
+  // 会話管理（STT → AI → TTS）
+  const {
+    session,
+    messages,
+    isProcessing,
+    error: conversationError,
+    startSession,
+    endSession,
+    sendAudio,
+  } = useConversation({
+    voiceId: "21m00Tcm4TlvDq8ikWAM", // デフォルトの音声ID（後で設定可能にする）
+    onLipSyncUpdate: setLipSyncValue,
+  });
 
   // デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
   const avatarModelUrl = "/models/avatar.vrm";
@@ -90,22 +110,37 @@ export default function SimulationPage() {
   };
 
   const handleStartConversation = async () => {
-    // カメラとマイクへのアクセスを開始
-    await startStream({ video: true, audio: true });
-    setConversationStarted(true);
+    try {
+      // カメラとマイクへのアクセスを開始
+      await startStream({ video: true, audio: true });
+      // 会話セッションを開始
+      const newSession = await startSession();
+      if (newSession) {
+        setSessionId(newSession.id);
+      }
+      setConversationStarted(true);
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+    }
   };
 
-  const handleEndConversation = () => {
+  const handleEndConversation = async () => {
     // 録音を停止
     if (isRecording) {
       stopRecording();
     }
     // 表情分析を停止
     stopAnalysis();
+    // 会話セッションを終了
+    await endSession();
     // メディアストリームを停止
     stopStream();
-    // Navigate to feedback page
-    window.location.href = "/feedback";
+    // フィードバックページへ遷移（セッションIDを渡す）
+    if (session?.id) {
+      window.location.href = `/feedback?sessionId=${session.id}`;
+    } else {
+      window.location.href = "/feedback";
+    }
   };
 
   const toggleRecording = () => {
@@ -114,14 +149,25 @@ export default function SimulationPage() {
     if (!isRecording) {
       // 録音を開始
       startRecording(stream);
-    } else if (isPaused) {
-      // 録音を再開
-      resumeRecording();
     } else {
-      // 録音を一時停止
-      pauseRecording();
+      // 録音を停止して、音声を送信
+      stopRecording();
     }
   };
+
+  // 録音が停止されたら、音声を送信
+  useEffect(() => {
+    const sendRecordedAudio = async () => {
+      if (audioBlob && !isRecording && session) {
+        console.log("Sending recorded audio...");
+        await sendAudio(audioBlob);
+        // 録音をクリア
+        clearRecording();
+      }
+    };
+
+    sendRecordedAudio();
+  }, [audioBlob, isRecording, session, sendAudio, clearRecording]);
 
   const toggleVideo = () => {
     if (stream) {
@@ -272,28 +318,76 @@ export default function SimulationPage() {
             <div className="absolute top-6 right-6 flex items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-white/10">
               <div
                 className={`w-4 h-4 rounded-full ${
-                  isRecording && !isPaused
+                  isRecording
                     ? "bg-red-500 animate-pulse shadow-lg shadow-red-500/50"
+                    : isProcessing
+                    ? "bg-yellow-500 animate-pulse"
                     : "bg-gray-500"
                 }`}
               />
               <span className="text-white font-semibold text-sm">
-                {!isRecording ? "待機中" : isPaused ? "一時停止" : "録音中"}
+                {isProcessing ? "処理中" : isRecording ? "録音中" : "待機中"}
               </span>
             </div>
 
             {/* Error Messages - Floating Top Center */}
-            {(mediaError || recorderError || facialError) && (
+            {(mediaError || recorderError || facialError || conversationError) && (
               <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-md">
                 <div className="bg-destructive/90 backdrop-blur-md text-destructive-foreground px-6 py-3 rounded-lg shadow-lg border border-destructive">
                   <p className="text-sm font-medium text-center">
                     ⚠️{" "}
                     {mediaError?.message ||
                       recorderError?.message ||
-                      facialError?.message}
+                      facialError?.message ||
+                      conversationError?.message}
                   </p>
                 </div>
               </div>
+            )}
+
+            {/* Conversation History Panel - Floating Bottom Right */}
+            <div
+              className={`absolute bottom-4 right-4 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300 ${
+                showHistory
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-2 opacity-0 pointer-events-none"
+              }`}
+            >
+              <Card className="bg-card/95 backdrop-blur-md border-border/50 shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-border/50">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">会話履歴</h3>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setShowHistory(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="h-96 overflow-hidden">
+                  <ConversationHistory
+                    messages={messages}
+                    className="h-full p-4"
+                  />
+                </div>
+              </Card>
+            </div>
+
+            {/* Toggle History Button - Floating Bottom Right (when history is hidden) */}
+            {!showHistory && messages.length > 0 && (
+              <Button
+                variant="default"
+                size="lg"
+                className="absolute bottom-4 right-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                onClick={() => setShowHistory(true)}
+              >
+                <MessageSquare className="w-5 h-5 mr-2" />
+                会話履歴 ({messages.length})
+              </Button>
             )}
           </div>
 
@@ -303,12 +397,17 @@ export default function SimulationPage() {
               {/* Status Text */}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  {!isRecording
-                    ? "マイクボタンを押して録音を開始してください"
-                    : isPaused
-                    ? "録音が一時停止されています"
-                    : "話している内容が記録されています"}
+                  {isProcessing
+                    ? "AIが応答を生成しています..."
+                    : isRecording
+                    ? "話している内容が記録されています"
+                    : "マイクボタンを押して録音を開始してください"}
                 </p>
+                {messages.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    会話ターン数: {Math.floor(messages.length / 2)}
+                  </p>
+                )}
               </div>
 
               {/* Audio Playback */}
@@ -327,25 +426,25 @@ export default function SimulationPage() {
                 {/* Recording Button - Primary */}
                 <Button
                   size="lg"
-                  variant={isRecording && !isPaused ? "secondary" : "default"}
+                  variant={isRecording ? "secondary" : "default"}
                   className="rounded-full h-16 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                   onClick={toggleRecording}
-                  disabled={!stream}
+                  disabled={!stream || isProcessing}
                 >
-                  {!isRecording ? (
+                  {isProcessing ? (
                     <>
-                      <Mic className="w-6 h-6 mr-2" />
-                      録音開始
+                      <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                      処理中
                     </>
-                  ) : isPaused ? (
+                  ) : isRecording ? (
                     <>
-                      <Mic className="w-6 h-6 mr-2" />
-                      録音再開
+                      <MicOff className="w-6 h-6 mr-2" />
+                      録音停止
                     </>
                   ) : (
                     <>
-                      <MicOff className="w-6 h-6 mr-2" />
-                      一時停止
+                      <Mic className="w-6 h-6 mr-2" />
+                      録音開始
                     </>
                   )}
                 </Button>
