@@ -6,6 +6,7 @@ import {
 	textToSpeechUrl,
 } from "@/lib/api";
 import type { ConversationSession, Message } from "@/types/api";
+import { useLipSync } from "./useLipSync";
 
 interface UseConversationOptions {
 	voiceId: string;
@@ -34,7 +35,9 @@ export function useConversation(options: UseConversationOptions) {
 	});
 
 	const audioRef = useRef<HTMLAudioElement | null>(null);
-	const lipSyncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+	// リップシンクを統合
+	const lipSyncValue = useLipSync(audioRef.current);
 
 	// セッションを開始
 	const startSession = useCallback(async () => {
@@ -81,30 +84,12 @@ export function useConversation(options: UseConversationOptions) {
 		}
 	}, [state.session]);
 
-	// リップシンクのシミュレーション
-	const startLipSync = useCallback(
-		(audio: HTMLAudioElement) => {
-			if (lipSyncIntervalRef.current) {
-				clearInterval(lipSyncIntervalRef.current);
-			}
-
-			// 音声の再生中にランダムなリップシンク値を生成
-			lipSyncIntervalRef.current = setInterval(() => {
-				if (audio.paused || audio.ended) {
-					onLipSyncUpdate?.(0);
-					if (lipSyncIntervalRef.current) {
-						clearInterval(lipSyncIntervalRef.current);
-						lipSyncIntervalRef.current = null;
-					}
-				} else {
-					// 0.3〜0.9の間でランダムな値を生成（話している感じを出す）
-					const value = 0.3 + Math.random() * 0.6;
-					onLipSyncUpdate?.(value);
-				}
-			}, 100);
-		},
-		[onLipSyncUpdate],
-	);
+	// リップシンク値を親コンポーネントに通知
+	useEffect(() => {
+		if (onLipSyncUpdate) {
+			onLipSyncUpdate(lipSyncValue);
+		}
+	}, [lipSyncValue, onLipSyncUpdate]);
 
 	// 音声を送信して応答を取得（STT → AI → TTS）
 	const sendAudio = useCallback(
@@ -166,15 +151,6 @@ export function useConversation(options: UseConversationOptions) {
 							error: new Error("Audio playback failed"),
 						}));
 					});
-					startLipSync(audio);
-				};
-
-				audio.onended = () => {
-					onLipSyncUpdate?.(0);
-					if (lipSyncIntervalRef.current) {
-						clearInterval(lipSyncIntervalRef.current);
-						lipSyncIntervalRef.current = null;
-					}
 				};
 
 				setState((prev) => ({
@@ -198,14 +174,7 @@ export function useConversation(options: UseConversationOptions) {
 				return null;
 			}
 		},
-		[
-			state.session,
-			voiceId,
-			systemPrompt,
-			onAudioReady,
-			onLipSyncUpdate,
-			startLipSync,
-		],
+		[state.session, voiceId, systemPrompt, onAudioReady],
 	);
 
 	// クリーンアップ
@@ -214,10 +183,6 @@ export function useConversation(options: UseConversationOptions) {
 			if (audioRef.current) {
 				audioRef.current.pause();
 				audioRef.current = null;
-			}
-			if (lipSyncIntervalRef.current) {
-				clearInterval(lipSyncIntervalRef.current);
-				lipSyncIntervalRef.current = null;
 			}
 			if (state.currentAudioUrl) {
 				URL.revokeObjectURL(state.currentAudioUrl);

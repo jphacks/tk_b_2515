@@ -74,4 +74,4 @@ class ApiClient {
 }
 
 // シングルトンインスタンスをエクスポート
-export const apiClient = new ApiClient(config.api.baseUrl);
+export const apiClient = new ApiClient(`${config.api.baseUrl}/api`);
