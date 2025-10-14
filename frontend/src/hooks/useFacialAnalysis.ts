@@ -223,7 +223,11 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
         setMetrics(DEFAULT_METRICS);
       }
     } catch (err) {
-      console.error("フレーム分析エラー:", err);
+      // TensorFlow LiteのINFOログは無視する
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (!errorMessage.includes("INFO:") && !errorMessage.includes("Created TensorFlow")) {
+        console.error("フレーム分析エラー:", err);
+      }
     }
 
     // 次のフレームを処理

@@ -37,37 +37,47 @@ export const VideoStream = forwardRef<VideoStreamRef, VideoStreamProps>(
 			getVideoElement: () => videoRef.current,
 		}));
 
+		// ストリームをvideo要素に設定
 		useEffect(() => {
 			const videoElement = videoRef.current;
-			if (!videoElement) return;
+			if (!videoElement || !stream) return;
 
-			if (stream) {
-				// ストリームをvideo要素に設定
-				videoElement.srcObject = stream;
+			// 既に同じストリームが設定されている場合はスキップ
+			if (videoElement.srcObject === stream) return;
 
-				// ビデオが準備できたらコールバックを呼ぶ
-				if (onVideoReady) {
-					const handleLoadedMetadata = () => {
-						onVideoReady(videoElement);
-					};
-					videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-					return () => {
-						videoElement.removeEventListener(
-							"loadedmetadata",
-							handleLoadedMetadata,
-						);
-					};
-				}
-			} else {
-				// ストリームがnullの場合はクリア
-				videoElement.srcObject = null;
-			}
+			videoElement.srcObject = stream;
 
 			// クリーンアップ
 			return () => {
-				if (videoElement.srcObject) {
+				if (videoElement.srcObject === stream) {
 					videoElement.srcObject = null;
 				}
+			};
+		}, [stream]);
+
+		// ビデオが準備できたらコールバックを呼ぶ（一度だけ）
+		useEffect(() => {
+			const videoElement = videoRef.current;
+			if (!videoElement || !onVideoReady || !stream) return;
+
+			let isCalled = false;
+
+			const handleLoadedMetadata = () => {
+				// 既に呼ばれている場合はスキップ
+				if (isCalled) return;
+				isCalled = true;
+				onVideoReady(videoElement);
+			};
+
+			videoElement.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
+
+			// 既にメタデータがロード済みの場合は即座に呼び出す
+			if (videoElement.readyState >= 1) {
+				handleLoadedMetadata();
+			}
+
+			return () => {
+				videoElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
 			};
 		}, [stream, onVideoReady]);
 
@@ -78,6 +88,9 @@ export const VideoStream = forwardRef<VideoStreamRef, VideoStreamProps>(
 				muted={muted}
 				autoPlay={autoPlay}
 				playsInline={playsInline}
+				style={{
+					transform: 'scaleX(-1)', // ミラー表示（ユーザーが見やすいように）
+				}}
 			/>
 		);
 	},

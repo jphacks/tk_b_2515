@@ -43,11 +43,21 @@ export default function FeedbackPage() {
 				setFeedback(result.feedback);
 			} catch (err) {
 				console.error("Failed to generate feedback:", err);
-				setError(
-					err instanceof Error
-						? err.message
-						: "フィードバックの生成に失敗しました",
-				);
+
+				// エラーメッセージをユーザーフレンドリーに変換
+				let errorMessage = "フィードバックの生成に失敗しました";
+
+				if (err instanceof Error) {
+					if (err.message.includes("No messages found")) {
+						errorMessage = "会話が記録されていません。まずは会話を始めてみましょう。";
+					} else if (err.message.includes("Session not found")) {
+						errorMessage = "セッションが見つかりません。";
+					} else {
+						errorMessage = err.message;
+					}
+				}
+
+				setError(errorMessage);
 			} finally {
 				setIsLoading(false);
 			}
@@ -99,15 +109,25 @@ export default function FeedbackPage() {
 							<div className="text-center space-y-4">
 								<AlertCircle className="w-16 h-16 text-destructive mx-auto" />
 								<h2 className="text-2xl font-bold text-foreground">
-									エラーが発生しました
+									{error.includes("会話が記録されていません")
+										? "会話がまだありません"
+										: "エラーが発生しました"}
 								</h2>
 								<p className="text-muted-foreground">{error}</p>
-								<Link href="/simulation">
-									<Button size="lg" className="rounded-full mt-4">
-										<RotateCcw className="w-5 h-5 mr-2" />
-										もう一度試す
-									</Button>
-								</Link>
+								<div className="flex flex-col gap-3">
+									<Link href="/simulation">
+										<Button size="lg" className="rounded-full w-full">
+											<RotateCcw className="w-5 h-5 mr-2" />
+											会話を始める
+										</Button>
+									</Link>
+									<Link href="/">
+										<Button size="lg" variant="outline" className="rounded-full w-full">
+											<ArrowLeft className="w-5 h-5 mr-2" />
+											ホームに戻る
+										</Button>
+									</Link>
+								</div>
 							</div>
 						</Card>
 					</div>

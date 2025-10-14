@@ -48,7 +48,7 @@ export const sessionApi = {
 	 * セッションを終了
 	 */
 	async finishSession(sessionId: string): Promise<ConversationSession> {
-		const response = await apiClient.post<CreateSessionResponse>(
+		const response = await apiClient.patch<CreateSessionResponse>(
 			`/sessions/${sessionId}/finish`,
 			{},
 		);

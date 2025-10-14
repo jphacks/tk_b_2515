@@ -8,11 +8,9 @@ const globalForPrisma = global as unknown as {
 };
 
 function createPrismaClient() {
+	// 開発環境でのログを最小化して起動速度を改善
 	const client = new PrismaClient({
-		log:
-			process.env.NODE_ENV === "development"
-				? ["query", "error", "warn"]
-				: ["error"],
+		log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
 	});
 	return client.$extends(withAccelerate());
 }

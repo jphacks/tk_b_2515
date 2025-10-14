@@ -11,6 +11,8 @@ import {
   Loader2,
   MessageSquare,
   X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, Suspense, useEffect, useRef } from "react";
@@ -21,7 +23,6 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
 import { useConversation } from "@/hooks/useConversation";
 import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
-import { FacialFeedback } from "@/components/FacialFeedback";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import dynamic from "next/dynamic";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
@@ -46,8 +47,8 @@ export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [lipSyncValue, setLipSyncValue] = useState(0);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showControls, setShowControls] = useState(true);
 
   // video要素への参照
   const videoStreamRef = useRef<VideoStreamRef>(null);
@@ -64,11 +65,11 @@ export default function SimulationPage() {
   const {
     isRecording,
     audioURL,
+    audioBlobs,
     error: recorderError,
     startRecording,
     stopRecording,
     clearRecording,
-    audioBlob,
   } = useAudioRecorder();
 
   // 表情分析機能
@@ -111,13 +112,22 @@ export default function SimulationPage() {
 
   const handleStartConversation = async () => {
     try {
-      // カメラとマイクへのアクセスを開始
-      await startStream({ video: true, audio: true });
+      // カメラとマイクへのアクセスを開始（低遅延設定）
+      await startStream({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 },
+          facingMode: "user",
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       // 会話セッションを開始
-      const newSession = await startSession();
-      if (newSession) {
-        setSessionId(newSession.id);
-      }
+      await startSession();
       setConversationStarted(true);
     } catch (error) {
       console.error("Failed to start conversation:", error);
@@ -158,8 +168,10 @@ export default function SimulationPage() {
   // 録音が停止されたら、音声を送信
   useEffect(() => {
     const sendRecordedAudio = async () => {
-      if (audioBlob && !isRecording && session) {
+      if (audioBlobs.length > 0 && !isRecording && session) {
         console.log("Sending recorded audio...");
+        // audioBlobsを1つのBlobに結合
+        const audioBlob = new Blob(audioBlobs, { type: audioBlobs[0]?.type || "audio/webm" });
         await sendAudio(audioBlob);
         // 録音をクリア
         clearRecording();
@@ -167,7 +179,7 @@ export default function SimulationPage() {
     };
 
     sendRecordedAudio();
-  }, [audioBlob, isRecording, session, sendAudio, clearRecording]);
+  }, [audioBlobs, isRecording, session, sendAudio, clearRecording]);
 
   const toggleVideo = () => {
     if (stream) {
@@ -215,6 +227,26 @@ export default function SimulationPage() {
                 AIと会話の練習をしましょう
               </p>
             </div>
+
+            {/* エラーメッセージ（初期画面） */}
+            {(mediaError || conversationError) && (
+              <Card className="p-6 border-2 border-destructive bg-destructive/5 space-y-3">
+                <p className="text-sm font-bold text-destructive text-center flex items-center justify-center gap-2">
+                  <span className="text-lg">⚠️</span>
+                  エラーが発生しました
+                </p>
+                <p className="text-sm text-center text-foreground">
+                  {mediaError?.message || conversationError?.message}
+                </p>
+                {mediaError?.message.includes("拒否") && (
+                  <div className="pt-2 border-t border-destructive/20">
+                    <p className="text-xs text-center text-muted-foreground">
+                      💡 ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
+                    </p>
+                  </div>
+                )}
+              </Card>
+            )}
 
             <Card className="p-10 text-center border-2 border-primary/20 shadow-xl space-y-8 bg-card/50 backdrop-blur-sm">
               <div className="space-y-4">
@@ -293,13 +325,7 @@ export default function SimulationPage() {
                       </div>
                     </div>
 
-                    {/* Facial Feedback Overlay */}
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <FacialFeedback
-                        metrics={facialMetrics}
-                        isAnalyzing={isAnalyzing}
-                      />
-                    </div>
+                    {/* Facial Feedback Overlay - フィードバックページでのみ表示されるため、ここでは非表示 */}
                   </>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted/20 to-muted/5">
@@ -332,15 +358,25 @@ export default function SimulationPage() {
 
             {/* Error Messages - Floating Top Center */}
             {(mediaError || recorderError || facialError || conversationError) && (
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-md">
-                <div className="bg-destructive/90 backdrop-blur-md text-destructive-foreground px-6 py-3 rounded-lg shadow-lg border border-destructive">
-                  <p className="text-sm font-medium text-center">
-                    ⚠️{" "}
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg z-50">
+                <div className="bg-destructive/95 backdrop-blur-md text-destructive-foreground px-6 py-4 rounded-lg shadow-2xl border-2 border-destructive space-y-2">
+                  <p className="text-sm font-bold text-center flex items-center justify-center gap-2">
+                    <span className="text-lg">⚠️</span>
+                    エラーが発生しました
+                  </p>
+                  <p className="text-sm text-center">
                     {mediaError?.message ||
                       recorderError?.message ||
                       facialError?.message ||
                       conversationError?.message}
                   </p>
+                  {mediaError?.message.includes("拒否") && (
+                    <div className="pt-2 border-t border-destructive-foreground/20">
+                      <p className="text-xs text-center text-destructive-foreground/90">
+                        💡 ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -392,8 +428,25 @@ export default function SimulationPage() {
           </div>
 
           {/* Control Panel - Bottom Fixed */}
-          <div className="bg-card/95 backdrop-blur-md border-t border-border/50 shadow-2xl">
-            <div className="max-w-4xl mx-auto px-6 py-6 space-y-4">
+          <div className="bg-card/95 backdrop-blur-md border-t border-border/50 shadow-2xl relative">
+            {/* Toggle Button - Floating above controls */}
+            <button
+              type="button"
+              onClick={() => setShowControls(!showControls)}
+              className="absolute -top-10 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-md border border-border/50 rounded-t-lg px-4 py-2 shadow-lg hover:bg-card transition-all"
+            >
+              {showControls ? (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              )}
+            </button>
+
+            <div
+              className={`max-w-4xl mx-auto px-6 space-y-4 transition-all duration-300 overflow-hidden ${
+                showControls ? "py-6 max-h-96 opacity-100" : "py-0 max-h-0 opacity-0"
+              }`}
+            >
               {/* Status Text */}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">

@@ -19,20 +19,26 @@
 pnpm install
 
 # 環境変数の設定
-# Frontend
-cd frontend
+# ルートディレクトリで .env ファイルを作成
 cp .env.example .env
+
 # .env ファイルを編集して以下を設定:
-# - NEXT_PUBLIC_API_URL (バックエンドのURL)
+# - DATABASE_URL (Supabase接続URL)
 # - NEXT_PUBLIC_SUPABASE_URL
 # - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - GEMINI_API_KEY (Google AI Studio APIキー)
+# - ELEVENLABS_API_KEY (ElevenLabs APIキー)
+# - ELEVENLABS_VOICE_ID (使用する音声ID)
+# - NEXT_PUBLIC_API_URL (バックエンドのURL、デフォルト: http://localhost:8787)
 
-# Backend
-cd ../backend
-cp .env.example .env
-# .env ファイルを編集して以下を設定:
-# - ELEVENLABS_API_KEY
+# Backend用のシンボリックリンクを作成（まだ存在しない場合）
+cd backend
+ln -s ../.env .env
+cd ..
 ```
+
+> **Note**: このプロジェクトでは、ルートディレクトリの `.env` ファイルを中心に環境変数を管理しています。
+> `backend/.env` はルートの `.env` へのシンボリックリンクとして作成することで、環境変数を一元管理できます。
 
 ### データベースセットアップ
 

@@ -13,6 +13,7 @@ export function useVRM(url: string | null) {
   useEffect(() => {
     if (!url) return;
 
+    console.log("Starting VRM load from:", url);
     setLoading(true);
     setError(null);
 
@@ -24,8 +25,18 @@ export function useVRM(url: string | null) {
     loader.load(
       url,
       (gltf) => {
+        console.log("VRM loaded successfully:", gltf);
         const vrm = gltf.userData.vrm as VRM;
 
+        if (!vrm) {
+          const error = new Error("VRMデータが見つかりません");
+          console.error(error);
+          setError(error);
+          setLoading(false);
+          return;
+        }
+
+        console.log("VRM data found, setting up...");
         // VRMUtils.rotateVRM0 is used to rotate VRM0.0 models
         VRMUtils.rotateVRM0(vrm);
 
@@ -37,6 +48,7 @@ export function useVRM(url: string | null) {
         currentVrm = vrm;
         setVrm(vrm);
         setLoading(false);
+        console.log("VRM setup complete");
       },
       (progress) => {
         console.log(
@@ -47,7 +59,11 @@ export function useVRM(url: string | null) {
       },
       (error) => {
         console.error("Error loading VRM:", error);
-        setError(error as Error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "VRMファイルの読み込みに失敗しました";
+        setError(new Error(`${errorMessage}\nURL: ${url}`));
         setLoading(false);
       }
     );
