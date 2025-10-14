@@ -13,7 +13,10 @@ const app = new OpenAPIHono<{
 // グローバルミドルウェア
 app.use("/*", envMiddleware);
 app.use("/*", errorHandler);
-app.use("/*", logger);
+// loggerは開発時のみ有効化（本番環境ではパフォーマンス向上のため無効化）
+if (process.env.NODE_ENV !== "production") {
+	app.use("/*", logger);
+}
 
 // CORS設定: フロントエンドからのリクエストを許可
 app.use(
@@ -32,17 +35,17 @@ app.get("/", (c) => {
 // APIルート
 app.route("/api", api);
 
-// OpenAPI ドキュメント
-app.doc("/doc", {
-	openapi: "3.1.0",
-	info: {
-		title: "恋AI API",
-		version: "1.0.0",
-		description: "AI-powered conversation practice application API",
-	},
-});
-
-// Swagger UI
-app.get("/ui", swaggerUI({ url: "/doc" }));
+// OpenAPI ドキュメントとSwagger UIは開発時のみ有効化（起動速度向上のため）
+if (process.env.NODE_ENV !== "production") {
+	app.doc("/doc", {
+		openapi: "3.1.0",
+		info: {
+			title: "恋AI API",
+			version: "1.0.0",
+			description: "AI-powered conversation practice application API",
+		},
+	});
+	app.get("/ui", swaggerUI({ url: "/doc" }));
+}
 
 export default app;

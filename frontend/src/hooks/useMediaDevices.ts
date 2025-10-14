@@ -29,6 +29,13 @@ export function useMediaDevices(
       setIsLoading(true);
       setError(null);
 
+      // MediaDevices APIがサポートされているか確認
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error(
+          "お使いのブラウザはカメラ/マイクへのアクセスをサポートしていません。最新のブラウザをご利用ください。"
+        );
+      }
+
       // 既存のストリームがあれば停止
       if (streamRef.current) {
         stopStream();
@@ -45,9 +52,28 @@ export function useMediaDevices(
       streamRef.current = mediaStream;
       setStream(mediaStream);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+      let errorMessage = "メディアデバイスへのアクセスに失敗しました";
+
+      if (err instanceof Error) {
+        // エラータイプに応じて分かりやすいメッセージを設定
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          errorMessage = "カメラとマイクへのアクセスが拒否されました。ブラウザの設定からアクセスを許可してください。";
+        } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+          errorMessage = "カメラまたはマイクが見つかりません。デバイスが接続されているか確認してください。";
+        } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+          errorMessage = "カメラまたはマイクが他のアプリケーションで使用中の可能性があります。";
+        } else if (err.name === "OverconstrainedError") {
+          errorMessage = "指定された設定でカメラ/マイクを起動できません。";
+        } else if (err.name === "SecurityError") {
+          errorMessage = "セキュリティ上の理由でアクセスが拒否されました。HTTPSでアクセスしているか確認してください。";
+        } else {
+          errorMessage = err.message || errorMessage;
+        }
+      }
+
+      const error = new Error(errorMessage);
       setError(error);
-      console.error("メディアデバイスへのアクセスエラー:", error);
+      console.error("メディアデバイスへのアクセスエラー:", err);
     } finally {
       setIsLoading(false);
     }

@@ -15,5 +15,5 @@ export async function speechToText(
 		formData.append("voiceId", request.voiceId);
 	}
 
-	return apiClient.postFormData<SpeechToTextResponse>("/api/stt", formData);
+	return apiClient.postFormData<SpeechToTextResponse>("/stt", formData);
 }

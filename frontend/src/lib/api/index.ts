@@ -4,15 +4,13 @@
  */
 
 // クライアント
+
+// biome-ignore assist/source/organizeImports: imports manually ordered for clarity
 export { apiClient } from "./client";
 // Speech-to-Text API
 export { speechToText } from "./speech";
 // Text-to-Speech API (拡張機能: キャッシュ、リトライ、ストリーミング)
-export {
-	textToSpeech,
-	textToSpeechUrl,
-	textToSpeechStreaming,
-} from "./tts";
+export { textToSpeech, textToSpeechUrl, textToSpeechStreaming } from "./tts";
 export type { TextToSpeechRequest, TextToSpeechOptions } from "./tts";
 // 音声関連API
 export { checkHealth, getVoiceById, getVoices } from "./voices";

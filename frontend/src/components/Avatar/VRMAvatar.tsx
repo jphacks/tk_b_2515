@@ -35,11 +35,23 @@ export default function VRMAvatar({
 
   if (error) {
     console.error("VRM load error:", error);
-    return null;
+    // エラーメッセージを表示
+    return (
+      <mesh>
+        <boxGeometry args={[1, 2, 1]} />
+        <meshStandardMaterial color="red" />
+      </mesh>
+    );
   }
 
   if (loading || !vrm) {
-    return null;
+    // ローディング中は簡単な形状を表示
+    return (
+      <mesh>
+        <boxGeometry args={[1, 2, 1]} />
+        <meshStandardMaterial color="gray" />
+      </mesh>
+    );
   }
 
   return (
