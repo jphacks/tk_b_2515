@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { prisma } from "../lib/prisma";
+import { supabase } from "../lib/supabase";
 import {
   getVoiceById,
   getVoices,
@@ -44,10 +45,22 @@ api.openapi(healthRoute, (c) => {
 // 新しいセッションを作成
 api.post("/sessions", async (c) => {
   try {
+    // Supabaseで匿名認証
+    const { data, error } = await supabase.auth.signInAnonymously();
+
+    if (error) {
+      console.error("Error signing in anonymously:", error);
+      return c.json({ error: "Failed to authenticate" }, 500);
+    }
+
+    // セッションを作成し、匿名ユーザーIDを保存
     const session = await prisma.conversation.create({
-      data: {},
+      data: {
+        userId: data.user?.id,
+      },
     });
-    return c.json({ session }, 201);
+
+    return c.json({ session, user: data.user }, 201);
   } catch (error) {
     console.error("Error creating session:", error);
     return c.json({ error: "Failed to create session" }, 500);
