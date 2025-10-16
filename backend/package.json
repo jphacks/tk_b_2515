@@ -21,6 +21,7 @@
 		"@next/env": "^15.5.5",
 		"@prisma/client": "^6.17.0",
 		"@prisma/extension-accelerate": "^2.0.2",
+		"@supabase/supabase-js": "^2.75.0",
 		"dotenv": "^17.2.3",
 		"hono": "^4.9.10",
 		"prisma": "^6.17.0",

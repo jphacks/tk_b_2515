@@ -9,12 +9,14 @@ generator client {
 
 model Conversation {
   id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   status    String    @default("active")
   messages  Message[]
   feedback  Feedback?
 
+  @@index([userId])
   @@map("conversations")
 }
 
