@@ -15,7 +15,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, Suspense, useEffect, useRef } from "react";
+import { useState, Suspense, useEffect, useRef, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
@@ -42,6 +42,12 @@ const ConversationAvatar = dynamic(
     ),
   }
 );
+
+// メモ化されたビデオストリームコンポーネント
+const MemoizedVideoStream = memo(VideoStream);
+
+// メモ化された会話履歴コンポーネント
+const MemoizedConversationHistory = memo(ConversationHistory);
 
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -72,14 +78,17 @@ export default function SimulationPage() {
     clearRecording,
   } = useAudioRecorder();
 
-  // 表情分析機能
+  // 表情分析機能（メトリクスは現在未使用だが、バックグラウンドで分析を実行）
   const {
-    metrics: facialMetrics,
-    isAnalyzing,
     error: facialError,
     startAnalysis,
     stopAnalysis,
   } = useFacialAnalysis();
+
+  // リップシンク更新のメモ化（不要な再生成を防ぐ）
+  const handleLipSyncUpdate = useCallback((value: number) => {
+    setLipSyncValue(value);
+  }, []);
 
   // 会話管理（STT → AI → TTS）
   const {
@@ -92,7 +101,7 @@ export default function SimulationPage() {
     sendAudio,
   } = useConversation({
     voiceId: "21m00Tcm4TlvDq8ikWAM", // デフォルトの音声ID（後で設定可能にする）
-    onLipSyncUpdate: setLipSyncValue,
+    onLipSyncUpdate: handleLipSyncUpdate,
   });
 
   // デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
@@ -104,20 +113,20 @@ export default function SimulationPage() {
   }, []);
 
   // ビデオが準備できたら表情分析を開始
-  const handleVideoReady = (videoElement: HTMLVideoElement) => {
+  const handleVideoReady = useCallback((videoElement: HTMLVideoElement) => {
     console.log("ビデオ準備完了、表情分析を開始します");
     // アバターは画面左側にあるので、左側中央（x: 0.25, y: 0.5）を見るのが適切
     startAnalysis(videoElement, { x: 0.25, y: 0.5 });
-  };
+  }, [startAnalysis]);
 
-  const handleStartConversation = async () => {
+  const handleStartConversation = useCallback(async () => {
     try {
-      // カメラとマイクへのアクセスを開始（低遅延設定）
+      // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
       await startStream({
         video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30 },
+          width: { ideal: 640 },  // 解像度を下げて負荷軽減
+          height: { ideal: 480 }, // 解像度を下げて負荷軽減
+          frameRate: { ideal: 24 }, // フレームレートを下げて負荷軽減
           facingMode: "user",
         },
         audio: {
@@ -132,9 +141,9 @@ export default function SimulationPage() {
     } catch (error) {
       console.error("Failed to start conversation:", error);
     }
-  };
+  }, [startStream, startSession]);
 
-  const handleEndConversation = async () => {
+  const handleEndConversation = useCallback(async () => {
     // 録音を停止
     if (isRecording) {
       stopRecording();
@@ -151,9 +160,9 @@ export default function SimulationPage() {
     } else {
       window.location.href = "/feedback";
     }
-  };
+  }, [isRecording, stopRecording, stopAnalysis, endSession, stopStream, session?.id]);
 
-  const toggleRecording = () => {
+  const toggleRecording = useCallback(() => {
     if (!stream) return;
 
     if (!isRecording) {
@@ -163,25 +172,25 @@ export default function SimulationPage() {
       // 録音を停止して、音声を送信
       stopRecording();
     }
-  };
+  }, [stream, isRecording, startRecording, stopRecording]);
 
   // 録音が停止されたら、音声を送信
   useEffect(() => {
+    if (audioBlobs.length === 0 || isRecording || !session) return;
+
     const sendRecordedAudio = async () => {
-      if (audioBlobs.length > 0 && !isRecording && session) {
-        console.log("Sending recorded audio...");
-        // audioBlobsを1つのBlobに結合
-        const audioBlob = new Blob(audioBlobs, { type: audioBlobs[0]?.type || "audio/webm" });
-        await sendAudio(audioBlob);
-        // 録音をクリア
-        clearRecording();
-      }
+      console.log("Sending recorded audio...");
+      // audioBlobsを1つのBlobに結合
+      const audioBlob = new Blob(audioBlobs, { type: audioBlobs[0]?.type || "audio/webm" });
+      await sendAudio(audioBlob);
+      // 録音をクリア
+      clearRecording();
     };
 
     sendRecordedAudio();
   }, [audioBlobs, isRecording, session, sendAudio, clearRecording]);
 
-  const toggleVideo = () => {
+  const toggleVideo = useCallback(() => {
     if (stream) {
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
@@ -189,7 +198,7 @@ export default function SimulationPage() {
         setVideoEnabled(videoTrack.enabled);
       }
     }
-  };
+  }, [stream]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
@@ -310,7 +319,7 @@ export default function SimulationPage() {
                 {stream && videoEnabled ? (
                   <>
                     <div className="flex-1 relative">
-                      <VideoStream
+                      <MemoizedVideoStream
                         ref={videoStreamRef}
                         stream={stream}
                         className="w-full h-full object-cover"
@@ -382,36 +391,32 @@ export default function SimulationPage() {
             )}
 
             {/* Conversation History Panel - Floating Bottom Right */}
-            <div
-              className={`absolute bottom-4 right-4 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300 ${
-                showHistory
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-2 opacity-0 pointer-events-none"
-              }`}
-            >
-              <Card className="bg-card/95 backdrop-blur-md border-border/50 shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-border/50">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold">会話履歴</h3>
+            {showHistory && (
+              <div className="absolute bottom-4 right-4 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300">
+                <Card className="bg-card/95 backdrop-blur-md border-border/50 shadow-2xl overflow-hidden">
+                  <div className="flex items-center justify-between p-4 border-b border-border/50">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-primary" />
+                      <h3 className="font-semibold">会話履歴</h3>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setShowHistory(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setShowHistory(false)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="h-96 overflow-hidden">
-                  <ConversationHistory
-                    messages={messages}
-                    className="h-full p-4"
-                  />
-                </div>
-              </Card>
-            </div>
+                  <div className="h-96 overflow-hidden">
+                    <MemoizedConversationHistory
+                      messages={messages}
+                      className="h-full p-4"
+                    />
+                  </div>
+                </Card>
+              </div>
+            )}
 
             {/* Toggle History Button - Floating Bottom Right (when history is hidden) */}
             {!showHistory && messages.length > 0 && (
