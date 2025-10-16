@@ -52,7 +52,11 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   // 最後に渡したタイムスタンプ（マイクロ秒）を保持し、必ず単調増加にする
   const lastTimestampRef = useRef<number>(0);
+  const lastAnalysisTimeRef = useRef<number>(0); // 最後に分析した時刻
   const gazeTargetRef = useRef<GazeTarget>({ x: 0.25, y: 0.5 }); // デフォルト: 左側中央（アバター位置）
+
+  // フレームレート制御：333ms = 3fps（パフォーマンス最適化）
+  const ANALYSIS_INTERVAL_MS = 333;
 
   // MediaPipe Face Landmarkerの初期化
   const initializeFaceLandmarker = async () => {
@@ -173,6 +177,15 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
       return;
     }
 
+    // フレームレート制御：指定間隔以内なら次のフレームへ
+    const timeSinceLastAnalysis = timestamp - lastAnalysisTimeRef.current;
+    if (timeSinceLastAnalysis < ANALYSIS_INTERVAL_MS) {
+      animationFrameRef.current = requestAnimationFrame(analyzeFrame);
+      return;
+    }
+
+    lastAnalysisTimeRef.current = timestamp;
+
     try {
       const video = videoElementRef.current;
 
@@ -209,14 +222,27 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
         const leftCorner = landmarks[61];
         const rightCorner = landmarks[291];
 
-        // メトリクスを更新
-        setMetrics({
-          isSmiling: smileData.isSmiling,
-          smileIntensity: smileData.intensity,
-          isLookingAtTarget: gazeData.isLookingAtTarget,
-          gazeScore: gazeData.gazeScore,
-          mouthCornerLeft: leftCorner.y,
-          mouthCornerRight: rightCorner.y,
+        // メトリクスを更新（変化があった場合のみ更新してパフォーマンス改善）
+        setMetrics(prev => {
+          const newMetrics = {
+            isSmiling: smileData.isSmiling,
+            smileIntensity: smileData.intensity,
+            isLookingAtTarget: gazeData.isLookingAtTarget,
+            gazeScore: gazeData.gazeScore,
+            mouthCornerLeft: leftCorner.y,
+            mouthCornerRight: rightCorner.y,
+          };
+
+          // 大きな変化がある場合のみ更新（不要な再レンダリングを防ぐ）
+          // 閾値を0.1に引き上げてさらに更新頻度を削減
+          if (!prev ||
+              prev.isSmiling !== newMetrics.isSmiling ||
+              Math.abs(prev.smileIntensity - newMetrics.smileIntensity) > 0.1 ||
+              prev.isLookingAtTarget !== newMetrics.isLookingAtTarget ||
+              Math.abs(prev.gazeScore - newMetrics.gazeScore) > 0.1) {
+            return newMetrics;
+          }
+          return prev;
         });
       } else {
         // 顔が検出されない場合はデフォルト値

@@ -208,7 +208,7 @@ const getVoicesRoute = createRoute({
   },
 });
 
-api.openapi(getVoicesRoute, async (c) => {
+api.openapi(getVoicesRoute, (async (c: any) => {
   try {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
@@ -221,7 +221,7 @@ api.openapi(getVoicesRoute, async (c) => {
     console.error("Error fetching voices:", error);
     return c.json({ error: "Failed to fetch voices" }, 500);
   }
-});
+}) as any);
 
 // 特定の音声情報を取得 with OpenAPI
 const getVoiceByIdRoute = createRoute({
@@ -296,6 +296,7 @@ api.post("/stt", async (c) => {
   try {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
+      console.error("STT Error: ELEVENLABS_API_KEY is not configured");
       return c.json({ error: "API key not configured" }, 500);
     }
 
@@ -303,21 +304,54 @@ api.post("/stt", async (c) => {
     const audioFile = body.audio;
     const voiceId = body.voiceId as string | undefined;
 
+    console.log("STT Request received:", {
+      hasAudio: !!audioFile,
+      audioType: audioFile instanceof File ? audioFile.type : typeof audioFile,
+      audioSize: audioFile instanceof File ? audioFile.size : 0,
+      voiceId: voiceId || "none",
+    });
+
     if (!audioFile || !(audioFile instanceof File)) {
+      console.error("STT Error: Invalid audio file", {
+        audioFile: typeof audioFile,
+      });
       return c.json({ error: "Audio file is required" }, 400);
     }
 
     if (voiceId) {
       // voiceIdが指定されている場合は音声情報も取得
+      console.log("Calling speechToTextWithVoice with voiceId:", voiceId);
       const result = await speechToTextWithVoice(apiKey, audioFile, voiceId);
+      console.log("STT Success:", {
+        textLength: result.text.length,
+        hasVoice: !!result.voice,
+      });
       return c.json(result);
     }
     // voiceIdなしの場合は単純にSTT
+    console.log("Calling speechToText without voiceId");
     const text = await speechToText(apiKey, audioFile);
+    console.log("STT Success:", { textLength: text.length });
     return c.json({ text });
   } catch (error) {
-    console.error("Error in STT:", error);
-    return c.json({ error: "Failed to process speech-to-text" }, 500);
+    // より詳細なエラー情報をログ出力
+    console.error("Error in STT - Full details:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error instanceof Error ? error.constructor.name : typeof error,
+    });
+
+    // エラーメッセージをクライアントに返す（開発環境では詳細を、本番では一般的なメッセージを）
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    return c.json(
+      {
+        error: "Failed to process speech-to-text",
+        details:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
+      },
+      500
+    );
   }
 });
 
@@ -403,36 +437,6 @@ api.openapi(ttsRoute, async (c) => {
   }
 });
 
-// Speech-to-text エンドポイント (keeping as regular endpoint for now due to file upload complexity)
-api.post("/stt", async (c) => {
-  try {
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) {
-      return c.json({ error: "API key not configured" }, 500);
-    }
-
-    const body = await c.req.parseBody();
-    const audioFile = body.audio;
-    const voiceId = body.voiceId as string | undefined;
-
-    if (!audioFile || !(audioFile instanceof File)) {
-      return c.json({ error: "Audio file is required" }, 400);
-    }
-
-    if (voiceId) {
-      // voiceIdが指定されている場合は音声情報も取得
-      const result = await speechToTextWithVoice(apiKey, audioFile, voiceId);
-      return c.json(result);
-    }
-    // voiceIdなしの場合は単純にSTT
-    const text = await speechToText(apiKey, audioFile);
-    return c.json({ text });
-  } catch (error) {
-    console.error("Error in STT:", error);
-    return c.json({ error: "Failed to process speech-to-text" }, 500);
-  }
-});
-
 // === AI Conversation Endpoints ===
 
 // 会話応答を生成 with OpenAPI
@@ -486,6 +490,16 @@ const generateResponseRoute = createRoute({
     },
     400: {
       description: "Bad request",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    404: {
+      description: "Session not found",
       content: {
         "application/json": {
           schema: z.object({
@@ -688,11 +702,26 @@ api.openapi(generateFeedbackRoute, async (c) => {
       conversationHistory
     );
 
-    // フィードバックを保存
-    const savedFeedback = await prisma.feedback.create({
-      data: {
-        goodPoints: feedbackData.goodPoints,
-        improvementPoints: feedbackData.improvementPoints,
+    const goodPointsStr = Array.isArray(feedbackData.goodPoints)
+      ? feedbackData.goodPoints.join("\n")
+      : feedbackData.goodPoints;
+    const improvementPointsStr = Array.isArray(feedbackData.improvementPoints)
+      ? feedbackData.improvementPoints.join("\n")
+      : feedbackData.improvementPoints;
+
+    // フィードバックを保存（既存のフィードバックがあればupsert）
+    const savedFeedback = await prisma.feedback.upsert({
+      where: {
+        conversationId: sessionId,
+      },
+      update: {
+        goodPoints: goodPointsStr,
+        improvementPoints: improvementPointsStr,
+        overallScore: feedbackData.overallScore,
+      },
+      create: {
+        goodPoints: goodPointsStr,
+        improvementPoints: improvementPointsStr,
         overallScore: feedbackData.overallScore,
         conversationId: sessionId,
       },

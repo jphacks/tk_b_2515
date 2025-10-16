@@ -1,4 +1,5 @@
 import { getGeminiClient } from "./ai-client";
+import type { GoogleGenAI } from "@google/genai";
 
 export interface ConversationMessage {
   role: "user" | "assistant";
@@ -26,9 +27,8 @@ export async function generateConversationResponse(
     modelName?: string;
   }
 ): Promise<string> {
-  const client = getGeminiClient(apiKey);
+  const client = getGeminiClient(apiKey) as GoogleGenAI;
   const modelName = options?.modelName || "gemini-2.0-flash-exp";
-  const model = client.getGenerativeModel({ model: modelName });
 
   // システムプロンプトのデフォルト設定
   const systemPrompt =
@@ -47,25 +47,33 @@ export async function generateConversationResponse(
     parts: [{ text: msg.content }],
   }));
 
-  // チャットセッションを開始
-  const chat = model.startChat({
-    history: contents.slice(0, -1), // 最後のメッセージ以外を履歴として使用
-    generationConfig: {
-      temperature: options?.temperature ?? 0.9,
-      maxOutputTokens: options?.maxTokens ?? 150,
-    },
-    systemInstruction: systemPrompt,
-  });
-
   // 最後のユーザーメッセージで応答を生成
   const lastMessage = contents[contents.length - 1];
   if (!lastMessage || lastMessage.role !== "user") {
     throw new Error("Last message must be from user");
   }
 
-  const result = await chat.sendMessage(lastMessage.parts[0].text);
-  const response = result.response;
-  return response.text();
+  // チャットセッションを作成
+  const chat = client.chats.create({
+    model: modelName,
+    history: contents.slice(0, -1), // 最後のメッセージ以外を履歴として使用
+    config: {
+      temperature: options?.temperature ?? 0.9,
+      maxOutputTokens: options?.maxTokens ?? 150,
+      systemInstruction: systemPrompt,
+    },
+  });
+
+  const result = await chat.sendMessage({
+    message: lastMessage.parts[0].text,
+  });
+
+  const responseText = result.text;
+  if (!responseText) {
+    throw new Error("No response text generated");
+  }
+
+  return responseText;
 }
 
 /**
@@ -82,8 +90,7 @@ export async function generateConversationFeedback(
   improvementPoints: string;
   overallScore: number;
 }> {
-  const client = getGeminiClient(apiKey);
-  const model = client.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+  const client = getGeminiClient(apiKey) as GoogleGenAI;
 
   // 会話履歴をテキストに変換
   const conversationText = messages
@@ -109,11 +116,18 @@ ${conversationText}
 - 質問の適切さ
 - 会話の自然さ`;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response.text();
+  const result = await client.models.generateContent({
+    model: "gemini-2.0-flash-exp",
+    contents: prompt,
+  });
+
+  const responseText = result.text;
+  if (!responseText) {
+    throw new Error("No response text generated for feedback");
+  }
 
   // JSONを抽出してパース
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error("Failed to parse feedback response");
   }
