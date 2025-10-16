@@ -51,6 +51,9 @@ importers:
       '@prisma/extension-accelerate':
         specifier: ^2.0.2
         version: 2.0.2(@prisma/client@6.17.0(prisma@6.17.0(typescript@5.9.3))(typescript@5.9.3))
+      '@supabase/supabase-js':
+        specifier: ^2.75.0
+        version: 2.75.0
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -2690,7 +2693,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 20.19.20
+      '@types/node': 24.7.1
 
   '@use-gesture/core@10.3.1': {}
 
