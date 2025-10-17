@@ -1,9 +1,10 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "backend",
+	"name": "renai-backend",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-10-07",
-	"compatibility_flags": ["nodejs_compat"]
+	"compatibility_flags": ["nodejs_compat"],
+	"account_id": "db74745d84b02c3798192c2602098072"
 	//
 	// "vars": {
 	//   "MY_VAR": "my-variable"

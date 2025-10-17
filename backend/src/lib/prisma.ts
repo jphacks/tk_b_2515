@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
 // PrismaClientのシングルトンインスタンスを作成
@@ -8,7 +8,7 @@ const globalForPrisma = global as unknown as {
 };
 
 function createPrismaClient() {
-	// 開発環境でのログを最小化して起動速度を改善
+	// Edge runtime用のPrisma Clientを使用
 	const client = new PrismaClient({
 		log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
 	});
