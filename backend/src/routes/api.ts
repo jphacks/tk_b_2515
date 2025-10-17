@@ -63,7 +63,12 @@ api.post("/sessions", async (c) => {
     return c.json({ session, user: data.user }, 201);
   } catch (error) {
     console.error("Error creating session:", error);
-    return c.json({ error: "Failed to create session" }, 500);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return c.json({
+      error: "Failed to create session",
+      details: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    }, 500);
   }
 });
 

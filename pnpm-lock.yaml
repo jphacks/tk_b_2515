@@ -60,9 +60,6 @@ importers:
       hono:
         specifier: ^4.9.10
         version: 4.9.10
-      prisma:
-        specifier: ^6.17.0
-        version: 6.17.0(typescript@5.9.3)
       zod:
         specifier: ^4.1.12
         version: 4.1.12
@@ -70,6 +67,9 @@ importers:
       '@types/node':
         specifier: ^24.7.1
         version: 24.7.1
+      prisma:
+        specifier: ^6.17.0
+        version: 6.17.0(typescript@5.9.3)
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
