@@ -1,5 +1,5 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { envMiddleware } from "./middleware/env";
 import { errorHandler } from "./middleware/error";
