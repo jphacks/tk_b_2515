@@ -4,11 +4,12 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-10-07",
 	"compatibility_flags": ["nodejs_compat"],
-	"account_id": "db74745d84b02c3798192c2602098072"
-	//
-	// "vars": {
-	//   "MY_VAR": "my-variable"
-	// },
+	"account_id": "db74745d84b02c3798192c2602098072",
+	// 環境変数はCloudflareダッシュボードのSecretsで設定してください
+	// ELEVENLABS_API_KEY, GEMINI_API_KEY, DATABASE_URLなど
+	"vars": {
+		"NODE_ENV": "production"
+	}
 	// "kv_namespaces": [
 	//   {
 	//     "binding": "MY_KV_NAMESPACE",

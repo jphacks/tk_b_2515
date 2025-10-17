@@ -25,8 +25,8 @@ app.use(
     origin: [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-      // Vercelのドメインを追加（デプロイ後にここを更新してください）
-      "https://renailove.vercel.app/", // ← ここをVercelのURLに置き換え
+      // Vercelのドメイン
+      "https://renailove.vercel.app",
     ],
     credentials: true,
   })
