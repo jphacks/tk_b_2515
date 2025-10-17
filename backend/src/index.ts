@@ -22,7 +22,7 @@ if (process.env.NODE_ENV !== "production") {
 app.use(
   "/*",
   cors({
-    origin: (origin) => {
+    origin: (origin, _c) => {
       // 開発環境のローカルホスト
       if (origin?.includes("localhost") || origin?.includes("127.0.0.1")) {
         return origin;
