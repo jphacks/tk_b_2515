@@ -121,4 +121,6 @@ class ApiClient {
 }
 
 // シングルトンインスタンスをエクスポート
+// Note: baseUrlには/apiプレフィックスを含める必要があります
+// バックエンドのルーティングが app.route("/api", api) となっているため
 export const apiClient = new ApiClient(`${config.api.baseUrl}/api`);
