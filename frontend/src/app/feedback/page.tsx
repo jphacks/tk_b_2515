@@ -13,12 +13,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { feedbackApi } from "@/lib/api";
 import type { Feedback } from "@/types/api";
 
-export default function FeedbackPage() {
+function FeedbackContent() {
 	const searchParams = useSearchParams();
 	const sessionId = searchParams.get("sessionId");
 
@@ -249,5 +249,20 @@ export default function FeedbackPage() {
 				)}
 			</main>
 		</div>
+	);
+}
+
+export default function FeedbackPage() {
+	return (
+		<Suspense fallback={
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="text-center space-y-4">
+					<Loader2 className="w-16 h-16 text-primary animate-spin mx-auto" />
+					<p className="text-muted-foreground text-lg">読み込み中...</p>
+				</div>
+			</div>
+		}>
+			<FeedbackContent />
+		</Suspense>
 	);
 }
