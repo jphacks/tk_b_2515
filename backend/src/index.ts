@@ -22,12 +22,22 @@ if (process.env.NODE_ENV !== "production") {
 app.use(
   "/*",
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      // Vercelのドメイン
-      "https://renailove.vercel.app",
-    ],
+    origin: (origin) => {
+      // 開発環境のローカルホスト
+      if (origin?.includes("localhost") || origin?.includes("127.0.0.1")) {
+        return origin;
+      }
+      // Vercelのドメイン（すべてのプレビュー環境を含む）
+      if (origin?.endsWith(".vercel.app")) {
+        return origin;
+      }
+      // その他の許可されたドメイン
+      const allowedOrigins = ["https://renailove.vercel.app"];
+      if (origin && allowedOrigins.includes(origin)) {
+        return origin;
+      }
+      return null;
+    },
     credentials: true,
   })
 );
