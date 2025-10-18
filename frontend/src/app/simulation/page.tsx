@@ -13,9 +13,18 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Send,
+  Smile,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, Suspense, useEffect, useRef, useCallback, memo } from "react";
+import {
+  useState,
+  Suspense,
+  useEffect,
+  useRef,
+  useCallback,
+  memo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
@@ -49,7 +58,13 @@ const MemoizedVideoStream = memo(VideoStream);
 // メモ化された会話履歴コンポーネント
 const MemoizedConversationHistory = memo(ConversationHistory);
 
-type GestureType = "idle" | "thinking" | "talking" | "armsCrossed" | "explaining" | "nodding";
+type GestureType =
+  | "idle"
+  | "thinking"
+  | "talking"
+  | "armsCrossed"
+  | "explaining"
+  | "nodding";
 
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -57,7 +72,9 @@ export default function SimulationPage() {
   const [lipSyncValue, setLipSyncValue] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [avatarEmotion, setAvatarEmotion] = useState<"neutral" | "happy" | "sad" | "surprised" | "angry">("happy");
+  const [avatarEmotion, setAvatarEmotion] = useState<
+    "neutral" | "happy" | "sad" | "surprised" | "angry"
+  >("happy");
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
 
   // video要素への参照
@@ -117,18 +134,21 @@ export default function SimulationPage() {
   }, []);
 
   // ビデオが準備できたら表情分析を開始
-  const handleVideoReady = useCallback((videoElement: HTMLVideoElement) => {
-    console.log("ビデオ準備完了、表情分析を開始します");
-    // アバターは画面左側にあるので、左側中央（x: 0.25, y: 0.5）を見るのが適切
-    startAnalysis(videoElement, { x: 0.25, y: 0.5 });
-  }, [startAnalysis]);
+  const handleVideoReady = useCallback(
+    (videoElement: HTMLVideoElement) => {
+      console.log("ビデオ準備完了、表情分析を開始します");
+      // アバターは画面左側にあるので、左側中央（x: 0.25, y: 0.5）を見るのが適切
+      startAnalysis(videoElement, { x: 0.25, y: 0.5 });
+    },
+    [startAnalysis]
+  );
 
   const handleStartConversation = useCallback(async () => {
     try {
       // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
       await startStream({
         video: {
-          width: { ideal: 640 },  // 解像度を下げて負荷軽減
+          width: { ideal: 640 }, // 解像度を下げて負荷軽減
           height: { ideal: 480 }, // 解像度を下げて負荷軽減
           frameRate: { ideal: 24 }, // フレームレートを下げて負荷軽減
           facingMode: "user",
@@ -164,7 +184,14 @@ export default function SimulationPage() {
     } else {
       window.location.href = "/feedback";
     }
-  }, [isRecording, stopRecording, stopAnalysis, endSession, stopStream, session?.id]);
+  }, [
+    isRecording,
+    stopRecording,
+    stopAnalysis,
+    endSession,
+    stopStream,
+    session?.id,
+  ]);
 
   const toggleRecording = useCallback(() => {
     if (!stream) return;
@@ -185,7 +212,9 @@ export default function SimulationPage() {
     const sendRecordedAudio = async () => {
       console.log("Sending recorded audio...");
       // audioBlobsを1つのBlobに結合
-      const audioBlob = new Blob(audioBlobs, { type: audioBlobs[0]?.type || "audio/webm" });
+      const audioBlob = new Blob(audioBlobs, {
+        type: audioBlobs[0]?.type || "audio/webm",
+      });
       await sendAudio(audioBlob);
       // 録音をクリア
       clearRecording();
@@ -198,15 +227,20 @@ export default function SimulationPage() {
   useEffect(() => {
     if (!conversationStarted) return;
 
-    const emotions: Array<"neutral" | "happy" | "sad" | "surprised" | "angry"> = [
-      "happy", "happy", "happy", // happy を多めに
-      "neutral", "neutral",
-      "surprised",
-    ];
+    const emotions: Array<"neutral" | "happy" | "sad" | "surprised" | "angry"> =
+      [
+        "happy",
+        "happy",
+        "happy", // happy を多めに
+        "neutral",
+        "neutral",
+        "surprised",
+      ];
 
     // 10〜20秒ごとにランダムに感情を変える
     const emotionInterval = setInterval(() => {
-      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      const randomEmotion =
+        emotions[Math.floor(Math.random() * emotions.length)];
       setAvatarEmotion(randomEmotion);
     }, 10000 + Math.random() * 10000);
 
@@ -226,8 +260,15 @@ export default function SimulationPage() {
       setAvatarGesture("talking");
     } else {
       // それ以外はアイドル状態
-      const gestures: GestureType[] = ["idle", "idle", "idle", "armsCrossed", "explaining"];
-      const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+      const gestures: GestureType[] = [
+        "idle",
+        "idle",
+        "idle",
+        "armsCrossed",
+        "explaining",
+      ];
+      const randomGesture =
+        gestures[Math.floor(Math.random() * gestures.length)];
       setAvatarGesture(randomGesture);
     }
   }, [isRecording, isProcessing, lipSyncValue]);
@@ -243,39 +284,39 @@ export default function SimulationPage() {
   }, [stream]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen flex flex-col gradient-pink">
       {/* Header */}
-      <header className="p-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+      <header className="p-6 flex items-center justify-between bg-card/60 backdrop-blur-md border-b border-border/30 soft-shadow">
         <Link href="/">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="rounded-full hover:bg-primary/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button variant="ghost" size="lg" className="heart-effect">
+            <ArrowLeft className="w-5 h-5 mr-2" />
             ホームへ
           </Button>
         </Link>
-        <div className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-          <span className="font-bold text-foreground text-lg">恋ai</span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center soft-shadow">
+            <Heart className="w-5 h-5 text-primary-foreground fill-current animate-soft-pulse" />
+          </div>
+          <span className="font-bold text-foreground text-xl">恋AI</span>
         </div>
-        <div className="w-24" /> {/* Spacer for alignment */}
+        <div className="w-32" /> {/* Spacer for alignment */}
       </header>
 
       {!conversationStarted ? (
         /* Initial State - Full Screen Welcome */
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-xl w-full space-y-8 animate-fade-in">
-            <div className="text-center space-y-4">
-              <div className="inline-block p-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-4">
-                <Heart className="w-20 h-20 text-primary animate-pulse" />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-2xl w-full space-y-12 animate-fade-in-up">
+            <div className="text-center space-y-6">
+              <div className="inline-block p-6 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 mb-6 soft-shadow">
+                <Heart className="w-24 h-24 text-primary animate-soft-pulse" />
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-6xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 会話シミュレーション
               </h1>
-              <p className="text-muted-foreground text-xl">
-                AIと会話の練習をしましょう
+              <p className="text-muted-foreground text-xl leading-relaxed">
+                AI女子と会話の練習をしましょう
+                <br />
+                自然な対話でコミュニケーション能力を向上させます
               </p>
             </div>
 
@@ -292,50 +333,55 @@ export default function SimulationPage() {
                 {mediaError?.message.includes("拒否") && (
                   <div className="pt-2 border-t border-destructive/20">
                     <p className="text-xs text-center text-muted-foreground">
-                      💡 ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
+                      💡
+                      ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
                     </p>
                   </div>
                 )}
               </Card>
             )}
 
-            <Card className="p-10 text-center border-2 border-primary/20 shadow-xl space-y-8 bg-card/50 backdrop-blur-sm">
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">
+            <Card
+              className="text-center space-y-8 animate-fade-in-up"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <div className="space-y-6">
+                <h2 className="text-4xl font-bold text-foreground">
                   準備はできましたか？
                 </h2>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-muted-foreground text-lg leading-relaxed">
                   カメラとマイクへのアクセスを許可して
                   <br />
                   会話を始めましょう
                 </p>
               </div>
               <Button
-                size="lg"
-                className="rounded-full px-12 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                size="xl"
+                className="heart-effect animate-gentle-bounce"
                 onClick={handleStartConversation}
               >
-                <Video className="w-6 h-6 mr-2" />
+                <Video className="w-6 h-6 mr-3" />
                 会話を始める
               </Button>
             </Card>
           </div>
         </main>
       ) : (
-        /* Conversation State - Split Screen Layout */
+        /* Conversation State - Chat Layout */
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Video Container - Split view: AI Avatar (left) + User Camera (right) */}
-          <div className="flex-1 relative bg-gradient-to-br from-black/95 via-primary/5 to-black/95">
-            <div className="w-full h-full flex flex-col md:flex-row gap-2 p-2">
-              {/* AI Avatar - Main Area (Left Side on desktop, Top on mobile) */}
-              <div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[360px] md:min-h-[420px]">
-                <div className="absolute inset-0">
+          {/* Chat Container */}
+          <div className="flex-1 relative bg-gradient-to-br from-background/80 via-background/60 to-primary/5">
+            <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
+              {/* AI Avatar - Left Side */}
+              <div className="w-full lg:w-80 h-64 lg:h-full relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl overflow-hidden border-2 border-primary/20 soft-shadow-lg">
                 <Suspense
                   fallback={
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center space-y-4">
-                        <Heart className="w-16 h-16 text-primary animate-pulse mx-auto" />
-                        <p className="text-muted-foreground">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto soft-shadow">
+                          <Heart className="w-8 h-8 text-primary animate-soft-pulse" />
+                        </div>
+                        <p className="text-muted-foreground font-medium">
                           AI女子を読み込み中...
                         </p>
                       </div>
@@ -350,9 +396,8 @@ export default function SimulationPage() {
                     className="w-full h-full"
                   />
                 </Suspense>
-                </div>
                 {/* AI Label */}
-                <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur-sm px-4 py-2 rounded-full border border-primary-foreground/20">
+                <div className="absolute top-4 left-4 bg-gradient-to-r from-primary/90 to-primary/80 backdrop-blur-sm px-4 py-2 rounded-2xl border border-primary-foreground/20 soft-shadow">
                   <p className="text-primary-foreground font-semibold text-sm flex items-center gap-2">
                     <Heart className="w-4 h-4 fill-current" />
                     AI女子
@@ -360,131 +405,117 @@ export default function SimulationPage() {
                 </div>
               </div>
 
-              {/* User Camera - Secondary Area (Right Side on desktop, Bottom on mobile) */}
-              <div className="w-full md:w-80 h-48 md:h-auto relative bg-black rounded-xl overflow-hidden border border-border/50 shadow-2xl flex flex-col">
-                {stream && videoEnabled ? (
-                  <>
-                    <div className="flex-1 relative">
-                      <MemoizedVideoStream
-                        ref={videoStreamRef}
-                        stream={stream}
-                        className="w-full h-full object-cover"
-                        onVideoReady={handleVideoReady}
-                      />
-                      {/* User Label */}
-                      <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                        <p className="text-white font-semibold text-sm flex items-center gap-2">
-                          <Video className="w-4 h-4" />
-                          あなた
-                        </p>
-                      </div>
+              {/* Chat History - Right Side */}
+              <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-sm rounded-3xl border-2 border-border/30 soft-shadow-lg overflow-hidden">
+                {/* Chat Header */}
+                <div className="flex items-center justify-between p-4 border-b border-border/30 bg-gradient-to-r from-primary/5 to-accent/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 text-primary-foreground" />
                     </div>
-
-                    {/* Facial Feedback Overlay - フィードバックページでのみ表示されるため、ここでは非表示 */}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted/20 to-muted/5">
-                    <VideoOff className="w-16 h-16 text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground text-sm text-center px-4">
-                      カメラが
-                      <br />
-                      オフです
-                    </p>
+                    <h3 className="font-semibold text-foreground">会話履歴</h3>
                   </div>
-                )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                      {messages.length} メッセージ
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 rounded-xl"
+                      onClick={() => setShowHistory(!showHistory)}
+                    >
+                      {showHistory ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronUp className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-hidden">
+                  <MemoizedConversationHistory
+                    messages={messages}
+                    className="h-full"
+                  />
+                </div>
               </div>
             </div>
 
+            {/* User Camera - Small floating window */}
+            {stream && videoEnabled && (
+              <div className="absolute bottom-24 right-6 w-48 h-36 bg-black rounded-2xl overflow-hidden border-2 border-border/50 soft-shadow-lg">
+                <MemoizedVideoStream
+                  ref={videoStreamRef}
+                  stream={stream}
+                  className="w-full h-full object-cover"
+                  onVideoReady={handleVideoReady}
+                />
+                {/* User Label */}
+                <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg">
+                  <p className="text-white font-semibold text-xs flex items-center gap-1">
+                    <Video className="w-3 h-3" />
+                    あなた
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Recording Status Indicator - Floating Top Right */}
-            <div className="absolute top-6 right-6 flex items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-white/10">
+            <div className="absolute top-6 right-6 flex items-center gap-3 bg-card/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/30 soft-shadow">
               <div
-                className={`w-4 h-4 rounded-full ${
+                className={`w-3 h-3 rounded-full ${
                   isRecording
                     ? "bg-red-500 animate-pulse shadow-lg shadow-red-500/50"
                     : isProcessing
                     ? "bg-yellow-500 animate-pulse"
-                    : "bg-gray-500"
+                    : "bg-muted-foreground"
                 }`}
               />
-              <span className="text-white font-semibold text-sm">
+              <span className="text-foreground font-medium text-sm">
                 {isProcessing ? "処理中" : isRecording ? "録音中" : "待機中"}
               </span>
             </div>
 
             {/* Error Messages - Floating Top Center */}
-            {(mediaError || recorderError || facialError || conversationError) && (
+            {(mediaError ||
+              recorderError ||
+              facialError ||
+              conversationError) && (
               <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg z-50">
-                <div className="bg-destructive/95 backdrop-blur-md text-destructive-foreground px-6 py-4 rounded-lg shadow-2xl border-2 border-destructive space-y-2">
-                  <p className="text-sm font-bold text-center flex items-center justify-center gap-2">
+                <div className="bg-card/95 backdrop-blur-md text-foreground px-6 py-4 rounded-2xl soft-shadow-lg border-2 border-destructive/30 space-y-2">
+                  <p className="text-sm font-bold text-center flex items-center justify-center gap-2 text-destructive">
                     <span className="text-lg">⚠️</span>
                     エラーが発生しました
                   </p>
-                  <p className="text-sm text-center">
+                  <p className="text-sm text-center text-muted-foreground">
                     {mediaError?.message ||
                       recorderError?.message ||
                       facialError?.message ||
                       conversationError?.message}
                   </p>
                   {mediaError?.message.includes("拒否") && (
-                    <div className="pt-2 border-t border-destructive-foreground/20">
-                      <p className="text-xs text-center text-destructive-foreground/90">
-                        💡 ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
+                    <div className="pt-2 border-t border-border/30">
+                      <p className="text-xs text-center text-muted-foreground">
+                        💡
+                        ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
                       </p>
                     </div>
                   )}
                 </div>
               </div>
             )}
-
-            {/* Conversation History Panel - Floating Bottom Right */}
-            {showHistory && (
-              <div className="absolute bottom-4 right-4 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300">
-                <Card className="bg-card/95 backdrop-blur-md border-border/50 shadow-2xl overflow-hidden">
-                  <div className="flex items-center justify-between p-4 border-b border-border/50">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-primary" />
-                      <h3 className="font-semibold">会話履歴</h3>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => setShowHistory(false)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="h-96 overflow-hidden">
-                    <MemoizedConversationHistory
-                      messages={messages}
-                      className="h-full p-4"
-                    />
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* Toggle History Button - Floating Bottom Right (when history is hidden) */}
-            {!showHistory && messages.length > 0 && (
-              <Button
-                variant="default"
-                size="lg"
-                className="absolute bottom-4 right-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
-                onClick={() => setShowHistory(true)}
-              >
-                <MessageSquare className="w-5 h-5 mr-2" />
-                会話履歴 ({messages.length})
-              </Button>
-            )}
           </div>
 
           {/* Control Panel - Bottom Fixed */}
-          <div className="bg-card/95 backdrop-blur-md border-t border-border/50 shadow-2xl relative">
+          <div className="bg-card/80 backdrop-blur-md border-t border-border/30 soft-shadow-lg relative">
             {/* Toggle Button - Floating above controls */}
             <button
               type="button"
               onClick={() => setShowControls(!showControls)}
-              className="absolute -top-10 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-md border border-border/50 rounded-t-lg px-4 py-2 shadow-lg hover:bg-card transition-all"
+              className="absolute -top-12 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-md border border-border/30 rounded-2xl px-4 py-2 soft-shadow hover:soft-shadow-lg transition-all"
             >
               {showControls ? (
                 <ChevronDown className="w-5 h-5 text-muted-foreground" />
@@ -495,7 +526,9 @@ export default function SimulationPage() {
 
             <div
               className={`max-w-4xl mx-auto px-6 space-y-4 transition-all duration-300 overflow-hidden ${
-                showControls ? "py-6 max-h-96 opacity-100" : "py-0 max-h-0 opacity-0"
+                showControls
+                  ? "py-6 max-h-96 opacity-100"
+                  : "py-0 max-h-0 opacity-0"
               }`}
             >
               {/* Status Text */}
