@@ -154,6 +154,31 @@ export default function SimulationPage() {
     }
   }, [facialMetrics]);
 
+  const sessionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (conversationStarted && timeRemaining !== null) {
+      interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev === null) return prev;
+          const next = prev - 1;
+          if (next < 0) {
+            if (interval) clearInterval(interval);
+            return 0;
+          }
+          return next;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [conversationStarted, timeRemaining]);
+
   // ビデオが準備できたら表情分析を開始
   const handleVideoReady = useCallback((videoElement: HTMLVideoElement) => {
     console.log("ビデオ準備完了、表情分析を開始します");
@@ -161,41 +186,12 @@ export default function SimulationPage() {
     startAnalysis(videoElement, { x: 0.25, y: 0.5 });
   }, [startAnalysis]);
 
-  const handleStartConversation = useCallback(async () => {
-    try {
-      gestureStatsRef.current = {
-        totalSamples: 0,
-        smilingSamples: 0,
-        smileIntensitySum: 0,
-        smileIntensityMax: 0,
-        gazeScoreSum: 0,
-        lookingSamples: 0,
-        gazeUpSamples: 0,
-        gazeDownSamples: 0,
-      };
-      // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
-      await startStream({
-        video: {
-          width: { ideal: 640 },  // 解像度を下げて負荷軽減
-          height: { ideal: 480 }, // 解像度を下げて負荷軽減
-          frameRate: { ideal: 24 }, // フレームレートを下げて負荷軽減
-          facingMode: "user",
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-      // 会話セッションを開始
-      await startSession();
-      setConversationStarted(true);
-    } catch (error) {
-      console.error("Failed to start conversation:", error);
-    }
-  }, [startStream, startSession]);
-
   const handleEndConversation = useCallback(async () => {
+    if (sessionTimerRef.current) {
+      clearTimeout(sessionTimerRef.current);
+      sessionTimerRef.current = null;
+    }
+    setTimeRemaining(null);
     // 録音を停止
     if (isRecording) {
       stopRecording();
@@ -235,6 +231,49 @@ export default function SimulationPage() {
       window.location.href = "/feedback";
     }
   }, [isRecording, stopRecording, stopAnalysis, endSession, stopStream, session?.id]);
+
+  const handleStartConversation = useCallback(async () => {
+    try {
+      gestureStatsRef.current = {
+        totalSamples: 0,
+        smilingSamples: 0,
+        smileIntensitySum: 0,
+        smileIntensityMax: 0,
+        gazeScoreSum: 0,
+        lookingSamples: 0,
+        gazeUpSamples: 0,
+        gazeDownSamples: 0,
+      };
+      // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
+      await startStream({
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 24 },
+          facingMode: "user",
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      // 会話セッションを開始
+      await startSession();
+      setConversationStarted(true);
+
+      if (sessionTimerRef.current) {
+        clearTimeout(sessionTimerRef.current);
+      }
+      sessionTimerRef.current = setTimeout(() => {
+        console.log("Conversation timer reached 3 minutes, ending session");
+        handleEndConversation();
+      }, 3 * 60 * 1000);
+      setTimeRemaining(3 * 60);
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+    }
+  }, [startStream, startSession, handleEndConversation]);
 
   const toggleRecording = useCallback(() => {
     if (!stream) return;
@@ -577,6 +616,11 @@ export default function SimulationPage() {
                     ? "話している内容が記録されています"
                     : "マイクボタンを押して録音を開始してください"}
                 </p>
+                {conversationStarted && timeRemaining !== null && (
+                  <p className="text-xs text-primary mt-2">
+                    残り時間: {Math.floor(timeRemaining / 60)}分{`${timeRemaining % 60}`.padStart(2, "0")}秒
+                  </p>
+                )}
                 {messages.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
                     会話ターン数: {Math.floor(messages.length / 2)}

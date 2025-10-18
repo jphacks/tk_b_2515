@@ -115,7 +115,9 @@ export function useLipSync(
 		// Start when audio plays
 		const handlePlay = () => {
 			if (audioContext.state === "suspended") {
-				audioContext.resume();
+				audioContext
+					.resume()
+					.catch((err) => console.warn("Failed to resume audio context", err));
 			}
 			updateLipSync();
 		};
@@ -132,6 +134,10 @@ export function useLipSync(
 		audioElement.addEventListener("play", handlePlay);
 		audioElement.addEventListener("pause", handlePause);
 		audioElement.addEventListener("ended", handlePause);
+
+		if (!audioElement.paused && !audioElement.ended) {
+			handlePlay();
+		}
 
 		return () => {
 			if (animationFrameRef.current) {

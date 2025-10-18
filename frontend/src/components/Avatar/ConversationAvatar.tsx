@@ -27,30 +27,31 @@ export default function ConversationAvatar({
 }: ConversationAvatarProps) {
 	return (
 		<div className={`relative ${className}`}>
-			<Canvas
-				camera={{ position: [0, 1.6, 0.8], fov: 30 }}
-				gl={{ alpha: true, antialias: true }}
-				style={{ width: "100%", height: "100%" }}
-			>
+      <Canvas
+        camera={{ position: [0, 1.6, 0.82], fov: 30 }}
+        gl={{ alpha: true, antialias: true }}
+        style={{ width: "100%", height: "100%" }}
+      >
 				<color attach="background" args={["#1a1a2e"]} />
 				<ambientLight intensity={0.8} />
 				<directionalLight position={[3, 5, 2]} intensity={1.2} />
 				<directionalLight position={[-3, 3, -2]} intensity={0.6} />
-				<Suspense fallback={null}>
-					<VRMAvatar
-						modelUrl={modelUrl}
-						lipSyncValue={lipSyncValue}
-						emotion={emotion}
-						gesture={gesture}
-					/>
-				</Suspense>
-				<OrbitControls
-					enableZoom={false}
-					enablePan={false}
-					target={[0, 1.6, 0]}
-					minPolarAngle={Math.PI / 3}
-					maxPolarAngle={Math.PI / 2}
-					enableDamping
+        <Suspense fallback={null}>
+          <VRMAvatar
+            modelUrl={modelUrl}
+            lipSyncValue={lipSyncValue}
+            emotion={emotion}
+            gesture={gesture}
+          />
+        </Suspense>
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          enableRotate={false}
+          target={[0, 1.65, 0]}
+          minPolarAngle={Math.PI / 3}
+          maxPolarAngle={Math.PI / 2}
+          enableDamping
 					dampingFactor={0.1}
 				/>
 			</Canvas>
