@@ -28,12 +28,6 @@ export default function HomePage() {
 					<h1 className="text-2xl font-bold text-foreground">
 						<span className="text-primary">恋</span>AI🏹
 					</h1>
-					<Button
-						variant="outline"
-						className="rounded-full bg-card/80 backdrop-blur-sm"
-					>
-						ログイン
-					</Button>
 				</header>
 
 				{/* Hero Section */}
