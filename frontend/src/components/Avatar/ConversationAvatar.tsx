@@ -13,6 +13,7 @@ interface ConversationAvatarProps {
 	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry";
 	gesture?: GestureType;
 	className?: string;
+	backgroundImage?: string;
 }
 
 /**
@@ -24,15 +25,32 @@ export default function ConversationAvatar({
 	emotion = "neutral",
 	gesture = "idle",
 	className = "",
+	backgroundImage,
 }: ConversationAvatarProps) {
 	return (
-		<div className={`relative ${className}`}>
+		<div
+			className={`relative ${className}`}
+			style={backgroundImage ? {
+				backgroundImage: `url(${backgroundImage})`,
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				backgroundRepeat: 'no-repeat',
+			} : undefined}
+		>
 			<Canvas
 				camera={{ position: [0, 1.6, 0.8], fov: 30 }}
-				gl={{ alpha: true, antialias: true }}
+				gl={{
+					alpha: true,
+					antialias: true,
+				}}
 				style={{ width: "100%", height: "100%" }}
+				onCreated={({ gl }) => {
+					if (backgroundImage) {
+						gl.setClearColor(0x000000, 0);
+					}
+				}}
 			>
-				<color attach="background" args={["#1a1a2e"]} />
+				{!backgroundImage && <color attach="background" args={['#1a1a2e']} />}
 				<ambientLight intensity={0.8} />
 				<directionalLight position={[3, 5, 2]} intensity={1.2} />
 				<directionalLight position={[-3, 3, -2]} intensity={0.6} />

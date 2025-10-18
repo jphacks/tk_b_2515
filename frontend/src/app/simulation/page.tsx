@@ -418,6 +418,7 @@ export default function SimulationPage() {
                     emotion={avatarEmotion}
                     gesture={avatarGesture}
                     className="w-full h-full"
+                    backgroundImage="/library-background.jpg"
                   />
                 </Suspense>
                 </div>

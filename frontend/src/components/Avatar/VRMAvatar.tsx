@@ -155,8 +155,7 @@ export default function VRMAvatar({
             }
             break;
 
-          case "idle": // アイドル（微妙な動きのみ）
-          default:
+          default: // idle - アイドル（微妙な動きのみ）
             if (leftUpperArm && leftUpperArmBase) {
               leftUpperArm.rotation.x =
                 leftUpperArmBase.x +

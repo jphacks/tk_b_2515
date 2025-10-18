@@ -4,8 +4,6 @@
  */
 
 // クライアント
-
-// biome-ignore assist/source/organizeImports: imports manually ordered for clarity
 export { apiClient } from "./client";
 // Speech-to-Text API
 export { speechToText } from "./speech";

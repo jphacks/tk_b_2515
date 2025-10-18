@@ -377,7 +377,7 @@ const getVoicesRoute = createRoute({
   },
 });
 
-api.openapi(getVoicesRoute, (async (c: any) => {
+api.openapi(getVoicesRoute, async (c: any) => {
   try {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
@@ -390,7 +390,7 @@ api.openapi(getVoicesRoute, (async (c: any) => {
     console.error("Error fetching voices:", error);
     return c.json({ error: "Failed to fetch voices" }, 500);
   }
-}) as any);
+});
 
 // 特定の音声情報を取得 with OpenAPI
 const getVoiceByIdRoute = createRoute({

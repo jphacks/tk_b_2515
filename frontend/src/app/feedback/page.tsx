@@ -262,7 +262,7 @@ function FeedbackContent() {
 								<ul className="space-y-3">
 									{activeGoodPoints.map((point, index) => (
 										<li
-											key={`${selectedCategory}-good-${index}`}
+											key={`${selectedCategory}-good-${point.substring(0, 50)}`}
 											className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
 										>
 											<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
@@ -295,7 +295,7 @@ function FeedbackContent() {
 								<ul className="space-y-3">
 									{activeImprovementPoints.map((point, index) => (
 										<li
-											key={`${selectedCategory}-improve-${index}`}
+											key={`${selectedCategory}-improve-${point.substring(0, 50)}`}
 											className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
 										>
 											<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
