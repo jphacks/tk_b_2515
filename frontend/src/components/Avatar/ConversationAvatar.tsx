@@ -1,9 +1,10 @@
 "use client";
 
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, useTexture } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import VRMAvatar from "./VRMAvatar";
+import * as THREE from "three";
 
 type GestureType = "idle" | "thinking" | "talking" | "armsCrossed" | "explaining" | "nodding";
 
@@ -13,6 +14,20 @@ interface ConversationAvatarProps {
 	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry";
 	gesture?: GestureType;
 	className?: string;
+}
+
+/**
+ * 背景画像を表示するコンポーネント
+ */
+function BackgroundImage() {
+	const texture = useTexture("/uec_library.jpg");
+
+	return (
+		<mesh position={[0, 1.65, -2]}>
+			<planeGeometry args={[8, 4.5]} />
+			<meshBasicMaterial map={texture} side={THREE.DoubleSide} />
+		</mesh>
+	);
 }
 
 /**
@@ -32,11 +47,12 @@ export default function ConversationAvatar({
         gl={{ alpha: true, antialias: true }}
         style={{ width: "100%", height: "100%" }}
       >
-				<color attach="background" args={["#1a1a2e"]} />
+				<color attach="background" args={["#000000"]} />
 				<ambientLight intensity={0.8} />
 				<directionalLight position={[3, 5, 2]} intensity={1.2} />
 				<directionalLight position={[-3, 3, -2]} intensity={0.6} />
         <Suspense fallback={null}>
+          <BackgroundImage />
           <VRMAvatar
             modelUrl={modelUrl}
             lipSyncValue={lipSyncValue}
