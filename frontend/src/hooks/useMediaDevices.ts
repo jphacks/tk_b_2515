@@ -29,6 +29,8 @@ export function useMediaDevices(
       setIsLoading(true);
       setError(null);
 
+      console.log('Starting media stream with options:', options);
+
       // MediaDevices APIがサポートされているか確認
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error(
@@ -38,16 +40,24 @@ export function useMediaDevices(
 
       // 既存のストリームがあれば停止
       if (streamRef.current) {
+        console.log('Stopping existing stream');
         stopStream();
       }
 
       const constraints = options ||
         initialOptions || { audio: true, video: true };
 
+      console.log('Requesting media with constraints:', constraints);
+
       // MediaDevices APIを使用してメディアストリームを取得
       const mediaStream = await navigator.mediaDevices.getUserMedia(
         constraints
       );
+
+      console.log('Media stream obtained successfully:', {
+        videoTracks: mediaStream.getVideoTracks().length,
+        audioTracks: mediaStream.getAudioTracks().length,
+      });
 
       streamRef.current = mediaStream;
       setStream(mediaStream);
