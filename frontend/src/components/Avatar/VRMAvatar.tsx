@@ -2,7 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import type * as THREE from "three";
+import * as THREE from "three";
 import { useVRM } from "@/hooks/useVRM";
 
 interface VRMAvatarProps {
@@ -11,7 +11,7 @@ interface VRMAvatarProps {
 }
 
 export default function VRMAvatar({
-  modelUrl,
+ modelUrl,
   lipSyncValue = 0,
 }: VRMAvatarProps) {
   const { vrm, loading, error } = useVRM(modelUrl);
@@ -32,6 +32,32 @@ export default function VRMAvatar({
     // VRM uses 'aa' (mouth open) expression for basic lip sync
     vrm.expressionManager.setValue("aa", lipSyncValue);
   }, [vrm, lipSyncValue]);
+
+  // Center and scale avatar once読み込み完了
+  useEffect(() => {
+    if (!vrm) return;
+
+    const scene = vrm.scene;
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+
+    box.getSize(size);
+    box.getCenter(center);
+
+    // センターを原点に合わせる
+    scene.position.sub(center);
+
+    // 目視でバストアップを映すようにオフセット
+    scene.position.y += 0.9;
+
+    // 顔が大きく見えるようにスケール調整
+    const targetHeight = 1.6;
+    if (size.y > 0) {
+      const scale = targetHeight / size.y;
+      scene.scale.setScalar(scale);
+    }
+  }, [vrm]);
 
   if (error) {
     console.error("VRM load error:", error);

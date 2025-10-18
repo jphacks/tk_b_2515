@@ -105,7 +105,8 @@ export default function SimulationPage() {
   });
 
   // デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
-  const avatarModelUrl = "/models/avatar.vrm";
+  // AliciaSolid.vrm を `/public/models/` に配置している想定
+  const avatarModelUrl = "/models/AliciaSolid.vrm";
 
   // MediaRecorderサポート情報をログ出力（開発時のデバッグ用）
   useEffect(() => {
@@ -286,7 +287,8 @@ export default function SimulationPage() {
           <div className="flex-1 relative bg-gradient-to-br from-black/95 via-primary/5 to-black/95">
             <div className="w-full h-full flex flex-col md:flex-row gap-2 p-2">
               {/* AI Avatar - Main Area (Left Side on desktop, Top on mobile) */}
-              <div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[300px] md:min-h-0">
+              <div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[360px] md:min-h-[420px]">
+                <div className="absolute inset-0">
                 <Suspense
                   fallback={
                     <div className="w-full h-full flex items-center justify-center">
@@ -305,6 +307,7 @@ export default function SimulationPage() {
                     className="w-full h-full"
                   />
                 </Suspense>
+                </div>
                 {/* AI Label */}
                 <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur-sm px-4 py-2 rounded-full border border-primary-foreground/20">
                   <p className="text-primary-foreground font-semibold text-sm flex items-center gap-2">
