@@ -108,8 +108,8 @@ export default function SimulationPage() {
   });
 
   // デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
-  // AliciaSolid.vrm を `/public/models/` に配置している想定
-  const avatarModelUrl = "/models/AliciaSolid.vrm";
+  // innocent_girl.vrm を `/public/models/` に配置している想定
+  const avatarModelUrl = "/models/innocent_girl.vrm";
 
   // MediaRecorderサポート情報をログ出力（開発時のデバッグ用）
   useEffect(() => {
