@@ -149,11 +149,14 @@ api.post("/sessions", async (c) => {
   } catch (error) {
     console.error("Error creating session:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return c.json({
-      error: "Failed to create session",
-      details: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined
-    }, 500);
+    return c.json(
+      {
+        error: "Failed to create session",
+        details: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      500
+    );
   }
 });
 
@@ -472,8 +475,9 @@ const ttsRoute = createRoute({
               description: "Text to convert to speech",
               example: "こんにちは、これはテストです",
             }),
-            voiceId: z.string().openapi({
-              description: "Voice ID to use for synthesis",
+            voiceId: z.string().optional().openapi({
+              description:
+                "Voice ID to use for synthesis (optional, uses default if not provided)",
               example: "21m00Tcm4TlvDq8ikWAM",
             }),
             modelId: z.string().optional().openapi({
@@ -527,7 +531,15 @@ api.openapi(ttsRoute, async (c) => {
 
     const { text, voiceId, modelId } = c.req.valid("json");
 
-    const audioStream = await textToSpeech(apiKey, text, voiceId, modelId);
+    // Use default voiceId if not provided (Rachel - a natural sounding voice)
+    const selectedVoiceId = voiceId || "KgETZ36CCLD1Cob4xpkv";
+
+    const audioStream = await textToSpeech(
+      apiKey,
+      text,
+      selectedVoiceId,
+      modelId
+    );
 
     // Set appropriate headers for audio streaming
     c.header("Content-Type", "audio/mpeg");

@@ -7,7 +7,7 @@ import { config } from "../config";
 
 export interface TextToSpeechRequest {
 	text: string;
-	voiceId: string;
+	voiceId?: string; // オプションに変更（バックエンドがデフォルトを使用）
 	modelId?: string;
 }
 
@@ -25,34 +25,54 @@ export interface TextToSpeechOptions {
 export async function textToSpeech(
 	request: TextToSpeechRequest,
 ): Promise<ReadableStream<Uint8Array>> {
-	const response = await fetch(`${config.api.baseUrl}/api/tts`, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
+	try {
+		// Build request body, only include voiceId if it's provided
+		const requestBody: Record<string, string> = {
 			text: request.text,
-			voiceId: request.voiceId,
 			modelId: request.modelId || "eleven_multilingual_v2",
-		}),
-	});
+		};
 
-	if (!response.ok) {
-		let errorMessage = `HTTP error! status: ${response.status}`;
-		try {
-			const errorData = await response.json();
-			errorMessage = errorData.error || errorMessage;
-		} catch {
-			// JSONのパースに失敗した場合はデフォルトのエラーメッセージを使用
+		if (request.voiceId) {
+			requestBody.voiceId = request.voiceId;
 		}
-		throw new Error(errorMessage);
-	}
 
-	if (!response.body) {
-		throw new Error("Response body is null");
-	}
+		const response = await fetch(`${config.api.baseUrl}/api/tts`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(requestBody),
+		});
 
-	return response.body;
+		if (!response.ok) {
+			let errorMessage = `HTTP error! status: ${response.status}`;
+			try {
+				const errorData = await response.json();
+				errorMessage = errorData.error || errorData.message || errorMessage;
+				// Include additional error details if available
+				if (errorData.details) {
+					errorMessage += ` - ${errorData.details}`;
+				}
+			} catch {
+				// JSONのパースに失敗した場合はデフォルトのエラーメッセージを使用
+			}
+			throw new Error(errorMessage);
+		}
+
+		if (!response.body) {
+			throw new Error("Response body is null");
+		}
+
+		return response.body;
+	} catch (error) {
+		// Re-throw with better error message if it's a network error
+		if (error instanceof TypeError && error.message.includes("fetch")) {
+			throw new Error(
+				`Network error: Failed to connect to TTS API at ${config.api.baseUrl}/api/tts. Make sure the backend server is running.`,
+			);
+		}
+		throw error;
+	}
 }
 
 /**
@@ -76,8 +96,8 @@ export async function textToSpeechUrl(
 		useCache = true,
 	} = options;
 
-	// キャッシュチェック
-	if (useCache) {
+	// キャッシュチェック（voiceIdがある場合のみ）
+	if (useCache && request.voiceId) {
 		const cachedUrl = audioCache.get(request.text, request.voiceId);
 		if (cachedUrl) {
 			console.log("TTS cache hit for:", request.text.substring(0, 50));
@@ -110,19 +130,30 @@ export async function textToSpeechUrl(
 			const blob = new Blob(chunks as BlobPart[], { type: "audio/mpeg" });
 			const audioUrl = URL.createObjectURL(blob);
 
-			// キャッシュに保存
-			if (useCache) {
+			// キャッシュに保存（voiceIdがある場合のみ）
+			if (useCache && request.voiceId) {
 				audioCache.set(request.text, request.voiceId, audioUrl);
 			}
 
 			return audioUrl;
 		} catch (error) {
-			lastError =
-				error instanceof Error ? error : new Error("Unknown error");
+			// Better error serialization
+			if (error instanceof Error) {
+				lastError = error;
+			} else if (typeof error === "object" && error !== null) {
+				// Try to extract meaningful information from the error object
+				const errorMsg = JSON.stringify(error, null, 2);
+				lastError = new Error(errorMsg);
+			} else {
+				lastError = new Error(String(error));
+			}
+
 			console.error(
 				`TTS attempt ${attempt + 1} failed:`,
 				lastError.message,
 			);
+			// Log full error details separately for better debugging
+			console.error("Full error details:", error);
 		}
 	}
 
@@ -150,8 +181,8 @@ export async function textToSpeechStreaming(
 }> {
 	const { useCache = true } = options;
 
-	// キャッシュチェック
-	if (useCache) {
+	// キャッシュチェック（voiceIdがある場合のみ）
+	if (useCache && request.voiceId) {
 		const cachedUrl = audioCache.get(request.text, request.voiceId);
 		if (cachedUrl) {
 			console.log(
@@ -182,8 +213,8 @@ export async function textToSpeechStreaming(
 	const blob = new Blob(chunks as BlobPart[], { type: "audio/mpeg" });
 	const audioUrl = URL.createObjectURL(blob);
 
-	// キャッシュに保存
-	if (useCache) {
+	// キャッシュに保存（voiceIdがある場合のみ）
+	if (useCache && request.voiceId) {
 		audioCache.set(request.text, request.voiceId, audioUrl);
 	}
 

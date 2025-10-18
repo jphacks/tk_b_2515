@@ -101,19 +101,15 @@ export async function generateConversationResponse(
     throw new Error("Last message must be from user");
   }
 
-  // チャットセッションを作成
-  const chat = client.chats.create({
+  // 会話履歴とシステムプロンプトを含めてリクエストを構築
+  const result = await client.models.generateContent({
     model: modelName,
-    history: contents.slice(0, -1), // 最後のメッセージ以外を履歴として使用
+    contents: contents,
     config: {
       temperature: options?.temperature ?? 0.9,
       maxOutputTokens: options?.maxTokens ?? 150,
       systemInstruction: systemPrompt,
     },
-  });
-
-  const result = await chat.sendMessage({
-    message: lastMessage.parts[0].text,
   });
 
   const responseText = result.text;
