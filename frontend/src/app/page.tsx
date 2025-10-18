@@ -53,7 +53,7 @@ export default function HomePage() {
 							<div className="flex justify-center mb-8">
 								<div className="relative w-80 h-80 md:w-96 md:h-96">
 									<Image
-										src="/avatar.png"
+										src="/innocent_girl.png"
 										alt="恋AI アバター"
 										fill
 										className="object-cover rounded-full drop-shadow-2xl border-4 border-primary/20"
