@@ -9,6 +9,7 @@ export interface FacialMetrics {
   smileIntensity: number; // 笑顔の強さ (0-1)
   isLookingAtTarget: boolean; // 対象（アバター）を見ているか
   gazeScore: number; // 視線スコア (0-1, 1が最適)
+  gazeVertical: "up" | "down" | "center"; // 視線の上下
   mouthCornerLeft: number; // 左口角の高さ
   mouthCornerRight: number; // 右口角の高さ
 }
@@ -35,6 +36,7 @@ const DEFAULT_METRICS: FacialMetrics = {
   smileIntensity: 0,
   isLookingAtTarget: false,
   gazeScore: 0,
+  gazeVertical: "center",
   mouthCornerLeft: 0,
   mouthCornerRight: 0,
 };
@@ -123,9 +125,13 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
   };
 
   // 視線判定：顔の向きとターゲット位置から計算
-  const calculateGaze = (
-    landmarks: { x: number; y: number; z: number }[]
-  ): { isLookingAtTarget: boolean; gazeScore: number } => {
+const calculateGaze = (
+  landmarks: { x: number; y: number; z: number }[]
+): {
+  isLookingAtTarget: boolean;
+  gazeScore: number;
+  verticalDirection: "up" | "down" | "center";
+} => {
     // 顔の主要ランドマーク
     const NOSE_TIP = 1;
     const LEFT_EYE = 33;
@@ -156,16 +162,21 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
     const verticalMatch = 1 - Math.abs(faceDirectionY - targetDirectionY) * 4;
 
     // 視線スコア（0-1、1がターゲットを見ている）
-    const gazeScore = Math.max(
-      0,
-      Math.min(1, (horizontalMatch + verticalMatch) / 2)
-    );
+  const gazeScore = Math.max(
+    0,
+    Math.min(1, (horizontalMatch + verticalMatch) / 2)
+  );
 
-    // ターゲットを見ている判定（閾値: 0.6以上）
-    const isLookingAtTarget = gazeScore > 0.6;
+  // ターゲットを見ている判定（閾値: 0.6以上）
+  const isLookingAtTarget = gazeScore > 0.6;
 
-    return { isLookingAtTarget, gazeScore };
-  };
+  // 視線の上下方向を判定
+  const verticalDelta = faceDirectionY - targetDirectionY;
+  const verticalDirection =
+    verticalDelta > 0.05 ? "down" : verticalDelta < -0.05 ? "up" : "center";
+
+  return { isLookingAtTarget, gazeScore, verticalDirection };
+};
 
   // フレームごとの分析処理
   const analyzeFrame = async (timestamp: number) => {
@@ -229,6 +240,7 @@ export function useFacialAnalysis(): UseFacialAnalysisReturn {
             smileIntensity: smileData.intensity,
             isLookingAtTarget: gazeData.isLookingAtTarget,
             gazeScore: gazeData.gazeScore,
+            gazeVertical: gazeData.verticalDirection,
             mouthCornerLeft: leftCorner.y,
             mouthCornerRight: rightCorner.y,
           };

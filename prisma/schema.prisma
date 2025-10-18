@@ -15,6 +15,7 @@ model Conversation {
   status    String    @default("active")
   messages  Message[]
   feedback  Feedback?
+  gestures  GestureMetrics?
 
   @@index([userId])
   @@map("conversations")
@@ -40,7 +41,27 @@ model Feedback {
   goodPoints         String       @map("good_points")
   improvementPoints  String       @map("improvement_points")
   overallScore       Int?         @map("overall_score")
+  gestureGoodPoints  String?      @map("gesture_good_points")
+  gestureImprovementPoints String? @map("gesture_improvement_points")
   conversation       Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@map("feedback")
+}
+
+model GestureMetrics {
+  id                String       @id @default(uuid())
+  conversationId    String       @unique @map("conversation_id")
+  totalSamples      Int          @default(0) @map("total_samples")
+  smilingSamples    Int          @default(0) @map("smiling_samples")
+  smileIntensityAvg Float        @default(0) @map("smile_intensity_avg")
+  smileIntensityMax Float        @default(0) @map("smile_intensity_max")
+  gazeScoreAvg      Float        @default(0) @map("gaze_score_avg")
+  lookingSamples    Int          @default(0) @map("looking_samples")
+  gazeUpSamples     Int          @default(0) @map("gaze_up_samples")
+  gazeDownSamples   Int          @default(0) @map("gaze_down_samples")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @default(now()) @updatedAt @map("updated_at")
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("gesture_metrics")
 }
