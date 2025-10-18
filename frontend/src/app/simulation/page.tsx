@@ -15,7 +15,14 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, Suspense, useEffect, useRef, useCallback, memo } from "react";
+import {
+  useState,
+  Suspense,
+  useEffect,
+  useRef,
+  useCallback,
+  memo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
@@ -52,7 +59,13 @@ const MemoizedVideoStream = memo(VideoStream);
 // メモ化された会話履歴コンポーネント
 const MemoizedConversationHistory = memo(ConversationHistory);
 
-type GestureType = "idle" | "thinking" | "talking" | "armsCrossed" | "explaining" | "nodding";
+type GestureType =
+  | "idle"
+  | "thinking"
+  | "talking"
+  | "armsCrossed"
+  | "explaining"
+  | "nodding";
 
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -60,7 +73,9 @@ export default function SimulationPage() {
   const [lipSyncValue, setLipSyncValue] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [avatarEmotion, setAvatarEmotion] = useState<"neutral" | "happy" | "sad" | "surprised" | "angry">("happy");
+  const [avatarEmotion, setAvatarEmotion] = useState<
+    "neutral" | "happy" | "sad" | "surprised" | "angry"
+  >("happy");
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
 
   // video要素への参照
@@ -155,11 +170,14 @@ export default function SimulationPage() {
   }, [facialMetrics]);
 
   // ビデオが準備できたら表情分析を開始
-  const handleVideoReady = useCallback((videoElement: HTMLVideoElement) => {
-    console.log("ビデオ準備完了、表情分析を開始します");
-    // アバターは画面左側にあるので、左側中央（x: 0.25, y: 0.5）を見るのが適切
-    startAnalysis(videoElement, { x: 0.25, y: 0.5 });
-  }, [startAnalysis]);
+  const handleVideoReady = useCallback(
+    (videoElement: HTMLVideoElement) => {
+      console.log("ビデオ準備完了、表情分析を開始します");
+      // アバターは画面左側にあるので、左側中央（x: 0.25, y: 0.5）を見るのが適切
+      startAnalysis(videoElement, { x: 0.25, y: 0.5 });
+    },
+    [startAnalysis]
+  );
 
   const handleStartConversation = useCallback(async () => {
     try {
@@ -176,7 +194,7 @@ export default function SimulationPage() {
       // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
       await startStream({
         video: {
-          width: { ideal: 640 },  // 解像度を下げて負荷軽減
+          width: { ideal: 640 }, // 解像度を下げて負荷軽減
           height: { ideal: 480 }, // 解像度を下げて負荷軽減
           frameRate: { ideal: 24 }, // フレームレートを下げて負荷軽減
           facingMode: "user",
@@ -234,7 +252,14 @@ export default function SimulationPage() {
     } else {
       window.location.href = "/feedback";
     }
-  }, [isRecording, stopRecording, stopAnalysis, endSession, stopStream, session?.id]);
+  }, [
+    isRecording,
+    stopRecording,
+    stopAnalysis,
+    endSession,
+    stopStream,
+    session?.id,
+  ]);
 
   const toggleRecording = useCallback(() => {
     if (!stream) return;
@@ -255,7 +280,9 @@ export default function SimulationPage() {
     const sendRecordedAudio = async () => {
       console.log("Sending recorded audio...");
       // audioBlobsを1つのBlobに結合
-      const audioBlob = new Blob(audioBlobs, { type: audioBlobs[0]?.type || "audio/webm" });
+      const audioBlob = new Blob(audioBlobs, {
+        type: audioBlobs[0]?.type || "audio/webm",
+      });
       await sendAudio(audioBlob);
       // 録音をクリア
       clearRecording();
@@ -268,15 +295,20 @@ export default function SimulationPage() {
   useEffect(() => {
     if (!conversationStarted) return;
 
-    const emotions: Array<"neutral" | "happy" | "sad" | "surprised" | "angry"> = [
-      "happy", "happy", "happy", // happy を多めに
-      "neutral", "neutral",
-      "surprised",
-    ];
+    const emotions: Array<"neutral" | "happy" | "sad" | "surprised" | "angry"> =
+      [
+        "happy",
+        "happy",
+        "happy", // happy を多めに
+        "neutral",
+        "neutral",
+        "surprised",
+      ];
 
     // 10〜20秒ごとにランダムに感情を変える
     const emotionInterval = setInterval(() => {
-      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      const randomEmotion =
+        emotions[Math.floor(Math.random() * emotions.length)];
       setAvatarEmotion(randomEmotion);
     }, 10000 + Math.random() * 10000);
 
@@ -296,8 +328,15 @@ export default function SimulationPage() {
       setAvatarGesture("talking");
     } else {
       // それ以外はアイドル状態
-      const gestures: GestureType[] = ["idle", "idle", "idle", "armsCrossed", "explaining"];
-      const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+      const gestures: GestureType[] = [
+        "idle",
+        "idle",
+        "idle",
+        "armsCrossed",
+        "explaining",
+      ];
+      const randomGesture =
+        gestures[Math.floor(Math.random() * gestures.length)];
       setAvatarGesture(randomGesture);
     }
   }, [isRecording, isProcessing, lipSyncValue]);
@@ -362,7 +401,8 @@ export default function SimulationPage() {
                 {mediaError?.message.includes("拒否") && (
                   <div className="pt-2 border-t border-destructive/20">
                     <p className="text-xs text-center text-muted-foreground">
-                      💡 ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
+                      💡
+                      ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
                     </p>
                   </div>
                 )}
@@ -400,26 +440,27 @@ export default function SimulationPage() {
               {/* AI Avatar - Main Area (Left Side on desktop, Top on mobile) */}
               <div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[360px] md:min-h-[420px]">
                 <div className="absolute inset-0">
-                <Suspense
-                  fallback={
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="text-center space-y-4">
-                        <Heart className="w-16 h-16 text-primary animate-pulse mx-auto" />
-                        <p className="text-muted-foreground">
-                          AI女子を読み込み中...
-                        </p>
+                  <Suspense
+                    fallback={
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-center space-y-4">
+                          <Heart className="w-16 h-16 text-primary animate-pulse mx-auto" />
+                          <p className="text-muted-foreground">
+                            AI女子を読み込み中...
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  }
-                >
-                  <ConversationAvatar
-                    modelUrl={avatarModelUrl}
-                    lipSyncValue={lipSyncValue}
-                    emotion={avatarEmotion}
-                    gesture={avatarGesture}
-                    className="w-full h-full"
-                  />
-                </Suspense>
+                    }
+                  >
+                    <ConversationAvatar
+                      modelUrl={avatarModelUrl}
+                      lipSyncValue={lipSyncValue}
+                      emotion={avatarEmotion}
+                      gesture={avatarGesture}
+                      className="w-full h-full"
+                      backgroundImage="/library-background.jpg"
+                    />
+                  </Suspense>
                 </div>
                 {/* AI Label */}
                 <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur-sm px-4 py-2 rounded-full border border-primary-foreground/20">
@@ -482,7 +523,10 @@ export default function SimulationPage() {
             </div>
 
             {/* Error Messages - Floating Top Center */}
-            {(mediaError || recorderError || facialError || conversationError) && (
+            {(mediaError ||
+              recorderError ||
+              facialError ||
+              conversationError) && (
               <div className="absolute top-6 left-1/2 -translate-x-1/2 max-w-lg z-50">
                 <div className="bg-destructive/95 backdrop-blur-md text-destructive-foreground px-6 py-4 rounded-lg shadow-2xl border-2 border-destructive space-y-2">
                   <p className="text-sm font-bold text-center flex items-center justify-center gap-2">
@@ -498,7 +542,8 @@ export default function SimulationPage() {
                   {mediaError?.message.includes("拒否") && (
                     <div className="pt-2 border-t border-destructive-foreground/20">
                       <p className="text-xs text-center text-destructive-foreground/90">
-                        💡 ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
+                        💡
+                        ブラウザのアドレスバー横のカメラアイコンをクリックして、アクセスを許可してください
                       </p>
                     </div>
                   )}
@@ -565,7 +610,9 @@ export default function SimulationPage() {
 
             <div
               className={`max-w-4xl mx-auto px-6 space-y-4 transition-all duration-300 overflow-hidden ${
-                showControls ? "py-6 max-h-96 opacity-100" : "py-0 max-h-0 opacity-0"
+                showControls
+                  ? "py-6 max-h-96 opacity-100"
+                  : "py-0 max-h-0 opacity-0"
               }`}
             >
               {/* Status Text */}
