@@ -7,19 +7,7 @@ import { Card } from "@/components/ui/card";
 export default function HomePage() {
 	return (
 		<div className="min-h-screen flex flex-col relative">
-			{/* Background Image */}
-			<div className="fixed inset-0 z-0">
-				<Image
-					src="/background.png"
-					alt="Background"
-					fill
-					className="object-cover"
-					priority
-					quality={100}
-				/>
-				{/* Overlay for better text readability */}
-				<div className="absolute inset-0 bg-background/30 backdrop-blur-[2px]" />
-			</div>
+
 
 			{/* Content with higher z-index */}
 			<div className="relative z-10 min-h-screen flex flex-col">
