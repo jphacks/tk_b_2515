@@ -179,40 +179,6 @@ export default function SimulationPage() {
     [startAnalysis]
   );
 
-  const handleStartConversation = useCallback(async () => {
-    try {
-      gestureStatsRef.current = {
-        totalSamples: 0,
-        smilingSamples: 0,
-        smileIntensitySum: 0,
-        smileIntensityMax: 0,
-        gazeScoreSum: 0,
-        lookingSamples: 0,
-        gazeUpSamples: 0,
-        gazeDownSamples: 0,
-      };
-      // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
-      await startStream({
-        video: {
-          width: { ideal: 640 }, // 解像度を下げて負荷軽減
-          height: { ideal: 480 }, // 解像度を下げて負荷軽減
-          frameRate: { ideal: 24 }, // フレームレートを下げて負荷軽減
-          facingMode: "user",
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-      // 会話セッションを開始
-      await startSession();
-      setConversationStarted(true);
-    } catch (error) {
-      console.error("Failed to start conversation:", error);
-    }
-  }, [startStream, startSession]);
-
   const handleEndConversation = useCallback(async () => {
     // 録音を停止
     if (isRecording) {
