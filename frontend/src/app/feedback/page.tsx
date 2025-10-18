@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { feedbackApi } from "@/lib/api";
 import type { Feedback } from "@/types/api";
@@ -66,13 +66,54 @@ function FeedbackContent() {
 		fetchFeedback();
 	}, [sessionId]);
 
-	// フィードバックのテキストを改行で分割して配列に変換
-	const goodPointsList = feedback?.goodPoints
-		.split("\n")
-		.filter((line) => line.trim());
-	const improvementPointsList = feedback?.improvementPoints
-		.split("\n")
-		.filter((line) => line.trim());
+	const [selectedCategory, setSelectedCategory] = useState<
+		"gesture" | "conversation"
+	>("conversation");
+
+	const conversationGoodPointsList = useMemo(() => {
+		if (!feedback) return [];
+		return feedback.goodPoints
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+	}, [feedback]);
+
+	const conversationImprovementPointsList = useMemo(() => {
+		if (!feedback) return [];
+		return feedback.improvementPoints
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+	}, [feedback]);
+
+	const gestureGoodPointsList = useMemo(() => {
+		if (!feedback?.gestureGoodPoints) return [];
+		return feedback.gestureGoodPoints
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+	}, [feedback]);
+
+	const gestureImprovementPointsList = useMemo(() => {
+		if (!feedback?.gestureImprovementPoints) return [];
+		return feedback.gestureImprovementPoints
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean);
+	}, [feedback]);
+
+	const activeGoodPoints =
+		selectedCategory === "conversation"
+			? conversationGoodPointsList
+			: gestureGoodPointsList;
+
+	const activeImprovementPoints =
+		selectedCategory === "conversation"
+			? conversationImprovementPointsList
+			: gestureImprovementPointsList;
+
+	const categoryLabel =
+		selectedCategory === "conversation" ? "会話" : "仕草";
 
 	return (
 		<div className="min-h-screen flex flex-col">
@@ -153,10 +194,10 @@ function FeedbackContent() {
 				) : (
 					<div className="max-w-3xl w-full space-y-6">
           {/* Avatar */}
-          <div className="flex justify-center">
-            <div className="relative w-32 h-32">
-              <Image
-                src="/../../public/avatar.png"
+						<div className="flex justify-center">
+							<div className="relative w-32 h-32">
+								<Image
+									src="/avatar.png"
                 alt="恋AI アバター"
                 fill
                 className="object-cover rounded-full drop-shadow-lg border-2 border-primary/20"
@@ -174,18 +215,38 @@ function FeedbackContent() {
             </p>
           </div>
 
-          {/* Overall Score */}
-          <Card className="p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground font-medium">
-                総合スコア
-              </p>
-              <div className="text-6xl font-bold text-primary">
-                {feedback.overallScore}
-              </div>
-              <p className="text-sm text-muted-foreground">/ 100点</p>
-            </div>
-          </Card>
+						{/* Overall Score */}
+						<Card className="p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+							<div className="space-y-2">
+				<p className="text-sm text-muted-foreground font-medium">
+					総合スコア
+				</p>
+				<div className="text-6xl font-bold text-primary">
+					{feedback.overallScore}
+				</div>
+				<p className="text-sm text-muted-foreground">/ 100点</p>
+			</div>
+		</Card>
+
+						{/* Category Toggle */}
+						<div className="flex justify-center gap-4">
+							<Button
+								type="button"
+								variant={selectedCategory === "conversation" ? "default" : "outline"}
+								className="rounded-full px-6"
+								onClick={() => setSelectedCategory("conversation")}
+							>
+								会話
+							</Button>
+							<Button
+								type="button"
+								variant={selectedCategory === "gesture" ? "default" : "outline"}
+								className="rounded-full px-6"
+								onClick={() => setSelectedCategory("gesture")}
+							>
+								仕草
+							</Button>
+						</div>
 
 						{/* Good Points */}
 						<Card className="p-6 border-2 space-y-4">
@@ -194,37 +255,63 @@ function FeedbackContent() {
 									<ThumbsUp className="w-5 h-5 text-primary" />
 								</div>
 								<h2 className="text-xl font-semibold text-foreground">
-									良かった点
+									良かった点（{categoryLabel}）
 								</h2>
 							</div>
-							<ul className="space-y-3">
-								{goodPointsList?.map((point) => (
-									<li key={point} className="flex gap-3">
-										<span className="text-primary mt-1">✓</span>
-										<span className="text-muted-foreground">{point}</span>
-									</li>
-								))}
-							</ul>
+							{activeGoodPoints.length > 0 ? (
+								<ul className="space-y-3">
+									{activeGoodPoints.map((point, index) => (
+										<li
+											key={`${selectedCategory}-good-${index}`}
+											className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
+										>
+											<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+												{index + 1}
+											</div>
+											<p className="font-semibold text-foreground">{point}</p>
+										</li>
+									))}
+								</ul>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									{selectedCategory === "gesture"
+										? "カメラ分析データがまだありません。カメラアクセスを許可して会話すると表示されます。"
+										: "良かった点が記録されていません。"}
+								</p>
+							)}
 						</Card>
 
-						{/* Improvements */}
+						{/* Improvement Points */}
 						<Card className="p-6 border-2 space-y-4">
 							<div className="flex items-center gap-2">
 								<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
 									<Lightbulb className="w-5 h-5 text-accent" />
 								</div>
 								<h2 className="text-xl font-semibold text-foreground">
-									改善できる点
+									改善点（{categoryLabel}）
 								</h2>
 							</div>
-							<ul className="space-y-3">
-								{improvementPointsList?.map((point) => (
-									<li key={point} className="flex gap-3">
-										<span className="text-accent mt-1">→</span>
-										<span className="text-muted-foreground">{point}</span>
-									</li>
-								))}
-							</ul>
+							{activeImprovementPoints.length > 0 ? (
+								<ul className="space-y-3">
+									{activeImprovementPoints.map((point, index) => (
+										<li
+											key={`${selectedCategory}-improve-${index}`}
+											className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
+										>
+											<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
+												{index + 1}
+											</div>
+											<p className="font-semibold text-foreground">{point}</p>
+										</li>
+									))}
+								</ul>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									{selectedCategory === "gesture"
+										? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
+										: "改善点が記録されていません。"}
+								</p>
+							)}
 						</Card>
 
 						{/* Action Buttons */}

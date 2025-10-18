@@ -26,6 +26,8 @@ import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import dynamic from "next/dynamic";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
+import { gestureApi } from "@/lib/api";
+import type { SaveGestureMetricsRequest } from "@/types/api";
 
 // VRMアバターを動的インポート（SSR回避）
 const ConversationAvatar = dynamic(
@@ -84,6 +86,7 @@ export default function SimulationPage() {
 
   // 表情分析機能（メトリクスは現在未使用だが、バックグラウンドで分析を実行）
   const {
+    metrics: facialMetrics,
     error: facialError,
     startAnalysis,
     stopAnalysis,
@@ -111,10 +114,43 @@ export default function SimulationPage() {
   // AliciaSolid.vrm を `/public/models/` に配置している想定
   const avatarModelUrl = "/models/AliciaSolid.vrm";
 
+  const gestureStatsRef = useRef({
+    totalSamples: 0,
+    smilingSamples: 0,
+    smileIntensitySum: 0,
+    smileIntensityMax: 0,
+    gazeScoreSum: 0,
+    lookingSamples: 0,
+    gazeUpSamples: 0,
+    gazeDownSamples: 0,
+  });
+
   // MediaRecorderサポート情報をログ出力（開発時のデバッグ用）
   useEffect(() => {
     logMediaRecorderSupport();
   }, []);
+
+  useEffect(() => {
+    if (!facialMetrics) return;
+    const stats = gestureStatsRef.current;
+    stats.totalSamples += 1;
+    stats.smileIntensitySum += facialMetrics.smileIntensity;
+    stats.gazeScoreSum += facialMetrics.gazeScore;
+    if (facialMetrics.smileIntensity > stats.smileIntensityMax) {
+      stats.smileIntensityMax = facialMetrics.smileIntensity;
+    }
+    if (facialMetrics.isSmiling) {
+      stats.smilingSamples += 1;
+    }
+    if (facialMetrics.isLookingAtTarget) {
+      stats.lookingSamples += 1;
+    }
+    if (facialMetrics.gazeVertical === "up") {
+      stats.gazeUpSamples += 1;
+    } else if (facialMetrics.gazeVertical === "down") {
+      stats.gazeDownSamples += 1;
+    }
+  }, [facialMetrics]);
 
   // ビデオが準備できたら表情分析を開始
   const handleVideoReady = useCallback((videoElement: HTMLVideoElement) => {
@@ -125,6 +161,16 @@ export default function SimulationPage() {
 
   const handleStartConversation = useCallback(async () => {
     try {
+      gestureStatsRef.current = {
+        totalSamples: 0,
+        smilingSamples: 0,
+        smileIntensitySum: 0,
+        smileIntensityMax: 0,
+        gazeScoreSum: 0,
+        lookingSamples: 0,
+        gazeUpSamples: 0,
+        gazeDownSamples: 0,
+      };
       // カメラとマイクへのアクセスを開始（パフォーマンス重視設定）
       await startStream({
         video: {
@@ -155,6 +201,28 @@ export default function SimulationPage() {
     // 表情分析を停止
     stopAnalysis();
     // 会話セッションを終了
+    if (session?.id) {
+      const stats = gestureStatsRef.current;
+      if (stats.totalSamples > 0) {
+        const payload: SaveGestureMetricsRequest = {
+          totalSamples: stats.totalSamples,
+          smilingSamples: stats.smilingSamples,
+          smileIntensityAvg: stats.smileIntensitySum / stats.totalSamples,
+          smileIntensityMax: stats.smileIntensityMax,
+          gazeScoreAvg: stats.gazeScoreSum / stats.totalSamples,
+          lookingSamples: stats.lookingSamples,
+          gazeUpSamples: stats.gazeUpSamples,
+          gazeDownSamples: stats.gazeDownSamples,
+        };
+
+        try {
+          await gestureApi.saveMetrics(session.id, payload);
+        } catch (error) {
+          console.error("Failed to save gesture metrics:", error);
+        }
+      }
+    }
+
     await endSession();
     // メディアストリームを停止
     stopStream();
