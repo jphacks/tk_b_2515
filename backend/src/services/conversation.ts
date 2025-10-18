@@ -126,13 +126,27 @@ export async function generateConversationResponse(
  * @param messages 会話メッセージの配列
  * @returns フィードバック（良かった点と改善点）
  */
+export interface GestureSummary {
+  totalSamples: number;
+  smilingSamples: number;
+  smileIntensityAvg: number;
+  smileIntensityMax: number;
+  gazeScoreAvg: number;
+  lookingSamples: number;
+  gazeUpSamples: number;
+  gazeDownSamples: number;
+}
+
 export async function generateConversationFeedback(
   apiKey: string,
-  messages: ConversationMessage[]
+  messages: ConversationMessage[],
+  gestureSummary?: GestureSummary
 ): Promise<{
   goodPoints: string;
   improvementPoints: string;
-  overallScore: number;
+  overallScore: number | null;
+  gestureGoodPoints?: string;
+  gestureImprovementPoints?: string;
 }> {
   const client = getGeminiClient(apiKey) as GoogleGenAI;
 
@@ -141,10 +155,25 @@ export async function generateConversationFeedback(
     .map((msg) => `${msg.role === "user" ? "ユーザー" : "AI"}: ${msg.content}`)
     .join("\n");
 
-  const prompt = `以下の会話を分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
+  const gestureInfo = gestureSummary
+    ? `仕草計測データ:
+- 総サンプル数: ${gestureSummary.totalSamples}
+- 笑顔検出回数: ${gestureSummary.smilingSamples}
+- 笑顔強度平均: ${gestureSummary.smileIntensityAvg.toFixed(2)}
+- 笑顔強度最大: ${gestureSummary.smileIntensityMax.toFixed(2)}
+- 視線スコア平均: ${gestureSummary.gazeScoreAvg.toFixed(2)}
+- 視線がターゲットを向いていた回数: ${gestureSummary.lookingSamples}
+- 視線が上方向だった回数: ${gestureSummary.gazeUpSamples}
+- 視線が下方向だった回数: ${gestureSummary.gazeDownSamples}`
+    : "仕草データはありません";
+
+  const prompt = `以下の会話と仕草データを分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
 
 【会話内容】
 ${conversationText}
+
+【仕草データ】
+${gestureInfo}
 
 【評価基準】
 以下の観点で評価してください：
@@ -176,12 +205,29 @@ ${conversationText}
 - ユーザーの発言が短すぎる場合：-3点/回
 - 相手の話に対する反応が薄い場合：-5点
 
+【仕草評価基準】
+- 笑顔が多いほど好印象。笑顔の総数や平均強度が高い場合は肯定的に評価する。
+- 瞳孔が開いている（興味が高い）と判断できる場合は、相手に興味を持っている印象としてプラス評価。
+- 視線がターゲットに向いている時間が長いほど良い。視線が下方向に落ちている時間が長い場合は自信がない印象と判断する。
+- 視線が上方向に向く回数が多い場合は、「嘘をついている／ごまかしている」と疑われやすい点を注意喚起する。
+- 視線スコア（視線の安定度）が高い場合はプラス評価とする。
+- 手で顔を隠す、唇を舐める等の緊張や不安を想起させる仕草が多い場合は減点対象として触れる。
+- 数値データが提供されていない項目については、推測せず「データ不足」と明記する。
+- 会話と仕草の両方を総合的に考慮して、最終的な総合スコア（1〜100）を決定する。
+
 【フィードバック形式】
 以下のJSON形式で応答してください：
 {
-  "goodPoints": "良かった点（具体的に2-3点）",
-  "improvementPoints": "改善できる点（具体的に2-3点）",
-  "overallScore": 評価点数（1-100百分率で）
+  "conversation": {
+    "goodPoints": ["会話面の良かった点"...],
+    "improvementPoints": ["会話面の改善点"...],
+    "score": 会話面のスコア（1-100）
+  },
+  "gestures": {
+    "goodPoints": ["仕草面の良かった点"...],
+    "improvementPoints": ["仕草面の改善点"...]
+  },
+  "overallScore": 会話と仕草を総合したスコア（1-100）
 }
 
 【注意】
@@ -206,9 +252,33 @@ ${conversationText}
   }
 
   const feedback = JSON.parse(jsonMatch[0]);
+
+  const conversationFeedback = feedback.conversation ?? {};
+  const gestureFeedback = feedback.gestures ?? {};
+
+  const toText = (value: unknown): string => {
+    if (Array.isArray(value)) {
+      return value.join("\n");
+    }
+    if (typeof value === "string") {
+      return value;
+    }
+    return "";
+  };
+
   return {
-    goodPoints: feedback.goodPoints,
-    improvementPoints: feedback.improvementPoints,
-    overallScore: feedback.overallScore,
+    goodPoints: toText(conversationFeedback.goodPoints ?? feedback.goodPoints),
+    improvementPoints: toText(
+      conversationFeedback.improvementPoints ?? feedback.improvementPoints,
+    ),
+    overallScore:
+      (typeof feedback.overallScore === "number" ? feedback.overallScore : null) ??
+      (typeof conversationFeedback.score === "number"
+        ? conversationFeedback.score
+        : null),
+    gestureGoodPoints: toText(gestureFeedback.goodPoints ?? feedback.gestureGoodPoints),
+    gestureImprovementPoints: toText(
+      gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints,
+    ),
   };
 }

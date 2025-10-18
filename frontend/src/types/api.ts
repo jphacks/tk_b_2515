@@ -47,6 +47,8 @@ export interface Feedback {
 	conversationId: string;
 	createdAt: string;
 	updatedAt: string;
+	gestureGoodPoints?: string | null;
+	gestureImprovementPoints?: string | null;
 }
 
 // 会話履歴型定義
@@ -67,6 +69,7 @@ export interface ConversationSession {
 	updatedAt: string;
 	messages?: Message[];
 	feedback?: Feedback;
+	gestures?: GestureMetrics;
 }
 
 // API レスポンス型定義（セッション）
@@ -124,4 +127,34 @@ export interface GenerateFeedbackRequest {
 
 export interface GenerateFeedbackResponse {
 	feedback: Feedback;
+}
+
+export interface GestureMetrics {
+	id: string;
+	conversationId: string;
+	totalSamples: number;
+	smilingSamples: number;
+	smileIntensityAvg: number;
+	smileIntensityMax: number;
+	gazeScoreAvg: number;
+	lookingSamples: number;
+	gazeUpSamples: number;
+	gazeDownSamples: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface SaveGestureMetricsRequest {
+	totalSamples: number;
+	smilingSamples: number;
+	smileIntensityAvg: number;
+	smileIntensityMax: number;
+	gazeScoreAvg: number;
+	lookingSamples: number;
+	gazeUpSamples: number;
+	gazeDownSamples: number;
+}
+
+export interface SaveGestureMetricsResponse {
+	metrics: GestureMetrics;
 }

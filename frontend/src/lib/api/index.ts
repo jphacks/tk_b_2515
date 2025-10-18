@@ -18,5 +18,7 @@ export { checkHealth, getVoiceById, getVoices } from "./voices";
 export { sessionApi, messageApi, conversationApi } from "./conversation";
 // フィードバック関連API
 export { feedbackApi } from "./feedback";
+// 仕草関連API
+export { gestureApi } from "./gestures";
 // 音声キャッシュ
 export { audioCache } from "../cache/audioCache";

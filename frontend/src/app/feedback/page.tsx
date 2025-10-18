@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { feedbackApi } from "@/lib/api";
 import type { Feedback } from "@/types/api";
@@ -69,13 +69,13 @@ function FeedbackContent() {
     fetchFeedback();
   }, [sessionId]);
 
-  // フィードバックのテキストを改行で分割して配列に変換
-  const goodPointsList = feedback?.goodPoints
-    .split("\n")
-    .filter((line) => line.trim());
-  const improvementPointsList = feedback?.improvementPoints
-    .split("\n")
-    .filter((line) => line.trim());
+	// フィードバックのテキストを改行で分割して配列に変換
+	const goodPointsList = feedback?.goodPoints
+		.split("\n")
+		.filter((line) => line.trim());
+	const improvementPointsList = feedback?.improvementPoints
+		.split("\n")
+		.filter((line) => line.trim());
 
   return (
     <div className="min-h-screen flex flex-col gradient-pink">
@@ -96,97 +96,78 @@ function FeedbackContent() {
         <div className="w-32" /> {/* Spacer for alignment */}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-8">
-        {isLoading ? (
-          <div className="text-center space-y-6 animate-fade-in-up">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto soft-shadow">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            </div>
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-xl font-medium">
-                フィードバックを生成中...
-              </p>
-              <p className="text-muted-foreground text-sm">
-                AIがあなたの会話を分析しています
-              </p>
+			{/* Main Content */}
+			<main className="flex-1 flex items-center justify-center p-6">
+				{isLoading ? (
+					<div className="text-center space-y-4">
+						<Loader2 className="w-16 h-16 text-primary animate-spin mx-auto" />
+						<p className="text-muted-foreground text-lg">
+							フィードバックを生成中...
+						</p>
+						<p className="text-muted-foreground text-sm">
+							AIがあなたの会話を分析しています
+						</p>
+					</div>
+				) : error ? (
+					<div className="max-w-md w-full space-y-6">
+						<Card className="p-8 border-2 border-destructive/20">
+							<div className="text-center space-y-4">
+								<AlertCircle className="w-16 h-16 text-destructive mx-auto" />
+								<h2 className="text-2xl font-bold text-foreground">
+									{error.includes("会話が記録されていません")
+										? "会話がまだありません"
+										: "エラーが発生しました"}
+								</h2>
+								<p className="text-muted-foreground">{error}</p>
+								<div className="flex flex-col gap-3">
+									<Link href="/simulation">
+										<Button size="lg" className="rounded-full w-full">
+											<RotateCcw className="w-5 h-5 mr-2" />
+											会話を始める
+										</Button>
+									</Link>
+									<Link href="/">
+										<Button size="lg" variant="outline" className="rounded-full w-full">
+											<ArrowLeft className="w-5 h-5 mr-2" />
+											ホームに戻る
+										</Button>
+									</Link>
+								</div>
+							</div>
+						</Card>
+					</div>
+				) : !feedback ? (
+					<div className="max-w-md w-full space-y-6">
+						<Card className="p-8 border-2">
+							<div className="text-center space-y-4">
+								<AlertCircle className="w-16 h-16 text-muted-foreground mx-auto" />
+								<h2 className="text-2xl font-bold text-foreground">
+									フィードバックがありません
+								</h2>
+								<p className="text-muted-foreground">
+									会話セッションが見つかりませんでした
+								</p>
+								<Link href="/simulation">
+									<Button size="lg" className="rounded-full mt-4">
+										会話を始める
+									</Button>
+								</Link>
+							</div>
+						</Card>
+					</div>
+				) : (
+					<div className="max-w-3xl w-full space-y-6">
+          {/* Avatar */}
+          <div className="flex justify-center">
+            <div className="relative w-32 h-32">
+              <Image
+                src="/../../public/avatar.png"
+                alt="恋AI アバター"
+                fill
+                className="object-cover rounded-full drop-shadow-lg border-2 border-primary/20"
+              />
             </div>
           </div>
-        ) : error ? (
-          <div className="max-w-lg w-full space-y-6 animate-fade-in-up">
-            <Card className="text-center space-y-6">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center mx-auto soft-shadow">
-                <AlertCircle className="w-10 h-10 text-destructive" />
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">
-                  {error.includes("会話が記録されていません")
-                    ? "会話がまだありません"
-                    : "エラーが発生しました"}
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">{error}</p>
-              </div>
-              <div className="flex flex-col gap-4">
-                <Link href="/simulation">
-                  <Button size="lg" className="w-full heart-effect">
-                    <RotateCcw className="w-5 h-5 mr-2" />
-                    会話を始める
-                  </Button>
-                </Link>
-                <Link href="/">
-                  <Button size="lg" variant="outline" className="w-full">
-                    <ArrowLeft className="w-5 h-5 mr-2" />
-                    ホームに戻る
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          </div>
-        ) : !feedback ? (
-          <div className="max-w-lg w-full space-y-6 animate-fade-in-up">
-            <Card className="text-center space-y-6">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-muted/20 to-muted/10 flex items-center justify-center mx-auto soft-shadow">
-                <AlertCircle className="w-10 h-10 text-muted-foreground" />
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">
-                  フィードバックがありません
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  会話セッションが見つかりませんでした
-                </p>
-              </div>
-              <Link href="/simulation">
-                <Button size="lg" className="heart-effect">
-                  会話を始める
-                </Button>
-              </Link>
-            </Card>
-          </div>
-        ) : (
-          <div className="max-w-4xl w-full space-y-8 animate-fade-in-up">
-            {/* Avatar */}
-            <div className="flex justify-center">
-              <div className="relative w-40 h-40 animate-gentle-bounce">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 blur-xl scale-110" />
-                <Image
-                  src="/avatar.png"
-                  alt="恋AI アバター"
-                  fill
-                  className="object-cover rounded-full soft-shadow-lg border-4 border-primary/30 relative z-10"
-                />
-                {/* Floating hearts around avatar */}
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center soft-shadow animate-soft-pulse">
-                  <Heart className="w-3 h-3 text-primary-foreground fill-current" />
-                </div>
-                <div
-                  className="absolute -bottom-1 -left-1 w-5 h-5 bg-gradient-to-br from-accent to-accent/80 rounded-full flex items-center justify-center soft-shadow animate-soft-pulse"
-                  style={{ animationDelay: "1s" }}
-                >
-                  <Sparkles className="w-2 h-2 text-accent-foreground" />
-                </div>
-              </div>
-            </div>
 
             {/* Title */}
             <div className="text-center space-y-4">
@@ -198,90 +179,58 @@ function FeedbackContent() {
               </p>
             </div>
 
-            {/* Overall Score */}
-            <Card
-              className="text-center space-y-6 animate-fade-in-up"
-              style={{ animationDelay: "0.1s" }}
-            >
-              <div className="space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto soft-shadow">
-                  <Star className="w-8 h-8 text-primary" />
-                </div>
-                <p className="text-muted-foreground font-medium text-lg">
-                  総合スコア
-                </p>
-                <div className="text-7xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {feedback.overallScore}
-                </div>
-                <p className="text-muted-foreground">/ 100点</p>
+          {/* Overall Score */}
+          <Card className="p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground font-medium">
+                総合スコア
+              </p>
+              <div className="text-6xl font-bold text-primary">
+                {feedback.overallScore}
               </div>
-            </Card>
+              <p className="text-sm text-muted-foreground">/ 100点</p>
+            </div>
+          </Card>
 
-            {/* Good Points */}
-            <Card
-              className="space-y-6 animate-fade-in-up"
-              style={{ animationDelay: "0.2s" }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center soft-shadow">
-                  <ThumbsUp className="w-6 h-6 text-primary" />
-                </div>
-                <h2 className="text-2xl font-semibold text-foreground">
-                  良かった点
-                </h2>
-              </div>
-              <ul className="space-y-4">
-                {goodPointsList?.map((point, index) => (
-                  <li
-                    key={point}
-                    className="flex gap-4 animate-fade-in-up"
-                    style={{ animationDelay: `${0.3 + index * 0.1}s` }}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-primary-foreground text-sm font-bold">
-                        ✓
-                      </span>
-                    </div>
-                    <span className="text-muted-foreground leading-relaxed">
-                      {point}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+						{/* Good Points */}
+						<Card className="p-6 border-2 space-y-4">
+							<div className="flex items-center gap-2">
+								<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+									<ThumbsUp className="w-5 h-5 text-primary" />
+								</div>
+								<h2 className="text-xl font-semibold text-foreground">
+									良かった点
+								</h2>
+							</div>
+							<ul className="space-y-3">
+								{goodPointsList?.map((point) => (
+									<li key={point} className="flex gap-3">
+										<span className="text-primary mt-1">✓</span>
+										<span className="text-muted-foreground">{point}</span>
+									</li>
+								))}
+							</ul>
+						</Card>
 
-            {/* Improvements */}
-            <Card
-              className="space-y-6 animate-fade-in-up"
-              style={{ animationDelay: "0.3s" }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center soft-shadow">
-                  <Lightbulb className="w-6 h-6 text-accent" />
-                </div>
-                <h2 className="text-2xl font-semibold text-foreground">
-                  改善できる点
-                </h2>
-              </div>
-              <ul className="space-y-4">
-                {improvementPointsList?.map((point, index) => (
-                  <li
-                    key={point}
-                    className="flex gap-4 animate-fade-in-up"
-                    style={{ animationDelay: `${0.4 + index * 0.1}s` }}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-accent-foreground text-sm font-bold">
-                        →
-                      </span>
-                    </div>
-                    <span className="text-muted-foreground leading-relaxed">
-                      {point}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+						{/* Improvements */}
+						<Card className="p-6 border-2 space-y-4">
+							<div className="flex items-center gap-2">
+								<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+									<Lightbulb className="w-5 h-5 text-accent" />
+								</div>
+								<h2 className="text-xl font-semibold text-foreground">
+									改善できる点
+								</h2>
+							</div>
+							<ul className="space-y-3">
+								{improvementPointsList?.map((point) => (
+									<li key={point} className="flex gap-3">
+										<span className="text-accent mt-1">→</span>
+										<span className="text-muted-foreground">{point}</span>
+									</li>
+								))}
+							</ul>
+						</Card>
 
             {/* Action Buttons */}
             <div

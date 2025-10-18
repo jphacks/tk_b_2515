@@ -13,6 +13,17 @@ import {
   generateConversationFeedback,
 } from "../services/conversation";
 
+const gestureMetricsSchema = z.object({
+  totalSamples: z.number().int().min(0),
+  smilingSamples: z.number().int().min(0),
+  smileIntensityAvg: z.number().min(0),
+  smileIntensityMax: z.number().min(0),
+  gazeScoreAvg: z.number().min(0),
+  lookingSamples: z.number().int().min(0),
+  gazeUpSamples: z.number().int().min(0),
+  gazeDownSamples: z.number().int().min(0),
+});
+
 const api = new OpenAPIHono<{
   Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
 }>();
@@ -217,6 +228,58 @@ api.patch("/sessions/:sessionId/finish", async (c) => {
   } catch (error) {
     console.error("Error finishing session:", error);
     return c.json({ error: "Failed to finish session" }, 500);
+  }
+});
+
+// 仕草データを保存
+api.post("/sessions/:sessionId/gestures", async (c) => {
+  try {
+    const sessionId = c.req.param("sessionId");
+    const body = await c.req.json();
+    const parsed = gestureMetricsSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return c.json({ error: "Invalid gesture metrics payload" }, 400);
+    }
+
+    const session = await prisma.conversation.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      return c.json({ error: "Session not found" }, 404);
+    }
+
+    const metrics = await prisma.gestureMetrics.upsert({
+      where: { conversationId: sessionId },
+      create: {
+        conversationId: sessionId,
+        totalSamples: parsed.data.totalSamples,
+        smilingSamples: parsed.data.smilingSamples,
+        smileIntensityAvg: parsed.data.smileIntensityAvg,
+        smileIntensityMax: parsed.data.smileIntensityMax,
+        gazeScoreAvg: parsed.data.gazeScoreAvg,
+        lookingSamples: parsed.data.lookingSamples,
+        gazeUpSamples: parsed.data.gazeUpSamples,
+        gazeDownSamples: parsed.data.gazeDownSamples,
+      },
+      update: {
+        totalSamples: parsed.data.totalSamples,
+        smilingSamples: parsed.data.smilingSamples,
+        smileIntensityAvg: parsed.data.smileIntensityAvg,
+        smileIntensityMax: parsed.data.smileIntensityMax,
+        gazeScoreAvg: parsed.data.gazeScoreAvg,
+        lookingSamples: parsed.data.lookingSamples,
+        gazeUpSamples: parsed.data.gazeUpSamples,
+        gazeDownSamples: parsed.data.gazeDownSamples,
+        updatedAt: new Date(),
+      },
+    });
+
+    return c.json({ metrics });
+  } catch (error) {
+    console.error("Error saving gesture metrics:", error);
+    return c.json({ error: "Failed to save gesture metrics" }, 500);
   }
 });
 
@@ -652,6 +715,7 @@ api.openapi(generateResponseRoute, async (c) => {
         messages: {
           orderBy: { createdAt: "asc" },
         },
+        gestures: true,
       },
     });
 
@@ -739,6 +803,8 @@ const generateFeedbackRoute = createRoute({
               goodPoints: z.string(),
               improvementPoints: z.string(),
               overallScore: z.number().nullable(),
+              gestureGoodPoints: z.string().nullable().optional(),
+              gestureImprovementPoints: z.string().nullable().optional(),
               createdAt: z.string(),
             }),
           }),
@@ -794,6 +860,7 @@ api.openapi(generateFeedbackRoute, async (c) => {
         messages: {
           orderBy: { createdAt: "asc" },
         },
+        gestures: true,
       },
     });
 
@@ -814,15 +881,26 @@ api.openapi(generateFeedbackRoute, async (c) => {
     // フィードバックを生成
     const feedbackData = await generateConversationFeedback(
       apiKey,
-      conversationHistory
+      conversationHistory,
+      session.gestures
+        ? {
+            totalSamples: session.gestures.totalSamples,
+            smilingSamples: session.gestures.smilingSamples,
+            smileIntensityAvg: session.gestures.smileIntensityAvg,
+            smileIntensityMax: session.gestures.smileIntensityMax,
+            gazeScoreAvg: session.gestures.gazeScoreAvg,
+            lookingSamples: session.gestures.lookingSamples,
+            gazeUpSamples: session.gestures.gazeUpSamples,
+            gazeDownSamples: session.gestures.gazeDownSamples,
+          }
+        : undefined
     );
 
-    const goodPointsStr = Array.isArray(feedbackData.goodPoints)
-      ? feedbackData.goodPoints.join("\n")
-      : feedbackData.goodPoints;
-    const improvementPointsStr = Array.isArray(feedbackData.improvementPoints)
-      ? feedbackData.improvementPoints.join("\n")
-      : feedbackData.improvementPoints;
+    const goodPointsStr = feedbackData.goodPoints;
+    const improvementPointsStr = feedbackData.improvementPoints;
+    const gestureGoodPointsStr = feedbackData.gestureGoodPoints ?? "";
+    const gestureImprovementPointsStr =
+      feedbackData.gestureImprovementPoints ?? "";
 
     // フィードバックを保存（既存のフィードバックがあればupsert）
     const savedFeedback = await prisma.feedback.upsert({
@@ -833,11 +911,15 @@ api.openapi(generateFeedbackRoute, async (c) => {
         goodPoints: goodPointsStr,
         improvementPoints: improvementPointsStr,
         overallScore: feedbackData.overallScore,
+        gestureGoodPoints: gestureGoodPointsStr,
+        gestureImprovementPoints: gestureImprovementPointsStr,
       },
       create: {
         goodPoints: goodPointsStr,
         improvementPoints: improvementPointsStr,
         overallScore: feedbackData.overallScore,
+        gestureGoodPoints: gestureGoodPointsStr,
+        gestureImprovementPoints: gestureImprovementPointsStr,
         conversationId: sessionId,
       },
     });
