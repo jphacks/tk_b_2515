@@ -6,6 +6,14 @@ export const config = {
 		baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787",
 	},
 
+	// TTS設定
+	tts: {
+		voiceId:
+			process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID ||
+			process.env.ELEVENLABS_VOICE_ID ||
+			"",
+	},
+
 	// Supabase設定
 	supabase: {
 		url: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
