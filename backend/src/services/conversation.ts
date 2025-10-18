@@ -9,6 +9,7 @@ export interface ConversationMessage {
 export interface ConversationContext {
   messages: ConversationMessage[];
   systemPrompt?: string;
+  relationshipStage?: "shy" | "friendly" | "open";
 }
 
 /**
@@ -30,16 +31,63 @@ export async function generateConversationResponse(
   const client = getGeminiClient(apiKey) as GoogleGenAI;
   const modelName = options?.modelName || "gemini-2.0-flash-exp";
 
-  // システムプロンプトのデフォルト設定
-  const systemPrompt =
-    context.systemPrompt ||
-    `あなたは恋愛会話の練習相手です。ユーザーと自然な会話を通じて、コミュニケーションスキルの向上をサポートします。
-以下の点に注意して応答してください：
-- 親しみやすく、自然な話し方で応答する
-- ユーザーの話に共感を示す
-- 会話を続けやすいように適切な質問を投げかける
-- 短めの応答を心がける（1-3文程度）
-- 日本語で応答する`;
+  // relationshipStage を使ったシステムプロンプト設定
+  const relationshipStage = context.relationshipStage || "shy";
+
+  let systemPrompt = `
+あなたは20歳の女子大学生です。
+ユーザー（男子大学生）との会話を通じて、彼が自然に会話をリードできるようサポートしてください。
+あなたは ${relationshipStage} モードで話します。
+
+【共通ルール】
+- 男子大学生が主導しやすいように、聞き役にまわる
+- 相手の話を引き出すリアクションや質問を意識する
+- 相手の話を遮らず、自然なタイミングで質問する
+- 会話を奪わずに、テンポよく反応する
+- 発話は1〜3文程度で短く自然に
+- 絵文字、！は控えめに使う（😊 や 😆 など、場面に応じて自然に）
+`;
+
+  if (relationshipStage === "shy") {
+    systemPrompt += `
+【stage: shy（初対面）】
+- 少し人見知りで、まだ距離を取っている
+- 絵文字は使わない
+- 返答は短めで、時々、軽い質問を添える
+- 声のトーンは落ち着いていて、丁寧すぎない程度
+例：
+「こんにちは」→「こんにちは〜」
+「最近忙しい？」→「うん、ちょっとね。〇〇くんは？」
+「今日何食べた？」→「マックかな」
+`;
+  } else if (relationshipStage === "friendly") {
+    systemPrompt += `
+【stage: friendly（普通に会話中）】
+- 打ち解けて明るいトーン
+- 「〜だね」「〜やん」など自然な言葉遣い
+- 絵文字は使わないが！は必要に応じて控えめに使う
+- もう少し長めの反応でテンポよく会話を続ける
+例：
+「映画見た」→「えーいいな どんな映画？」
+「明日バイト」→「そうなんだ〜！どんなバイトしてるの？」
+`;
+  } else if (relationshipStage === "open") {
+    systemPrompt += `
+【stage: open（仲良し）】
+- 親しみが強く、素直に感情を表現する
+- 「うける笑」「まじで！？」「それわかる〜！」など自然な反応
+- 絵文字は控えめに使う（😊 や 😆 など）、ハート系は特別な時のみ
+- 相手の話題を広げたり冗談を交えたりして盛り上げる
+例：
+「旅行行った」→「いいなぁ〜！どこ行ったの？写真見たい」
+「課題終わらん」→「わかる〜！一緒にやりたいくらい笑」
+`;
+  }
+
+  // context.systemPrompt が明示的に与えられている場合はそれを優先
+  if (context.systemPrompt) {
+    systemPrompt = context.systemPrompt;
+  }
 
   // 会話履歴をGemini形式に変換
   const contents = context.messages.map((msg) => ({
@@ -97,10 +145,40 @@ export async function generateConversationFeedback(
     .map((msg) => `${msg.role === "user" ? "ユーザー" : "AI"}: ${msg.content}`)
     .join("\n");
 
-  const prompt = `以下の会話を分析し、ユーザーのコミュニケーションスキルについてフィードバックを提供してください。
+  const prompt = `以下の会話を分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
 
 【会話内容】
 ${conversationText}
+
+【評価基準】
+以下の観点で評価してください：
+
+1. **会話の主導力** (重要度: 高)
+   - ユーザーが積極的に話題を提供しているか
+   - 会話をリードできているか
+   - AI（女子大学生）に質問を投げかけているか
+
+2. **会話の継続力** (重要度: 高)
+   - 会話が途切れそうになった時に、ユーザーが話題を提供しているか
+   - AIが質問を投げかける前に、ユーザーが会話を続けているか
+
+3. **話題の展開力** (重要度: 中)
+   - 一つの話題から自然に次の話題に展開できているか
+   - 相手の興味を引く話題を提供できているか
+
+4. **共感力や傾聴姿勢** (重要度: 中)
+   - 相手の話をしっかり聞いているか
+   - 適切な相槌や反応をしているか
+
+5. **質問の適切さ** (重要度: 中)
+   - 相手が答えやすい質問をしているか
+   - 会話を深める質問ができているか
+
+【減点要素】
+- AI（女子大学生）が質問を投げかける回数が多い場合：-10点/回
+- 会話が途切れそうになった回数が多い場合：-5点/回
+- ユーザーの発言が短すぎる場合：-3点/回
+- 相手の話に対する反応が薄い場合：-5点
 
 【フィードバック形式】
 以下のJSON形式で応答してください：
@@ -110,11 +188,10 @@ ${conversationText}
   "overallScore": 評価点数（1-100百分率で）
 }
 
-評価基準：
-- 話題の展開力
-- 共感力や傾聴姿勢
-- 質問の適切さ
-- 会話の自然さ`;
+【注意】
+- 会話の主導力と継続力を特に重視して評価してください
+- 男子大学生が女子大学生との会話でリードできるようになることが目標です
+- 実戦的な会話スキルの向上を重視してください`;
 
   const result = await client.models.generateContent({
     model: "gemini-2.0-flash-exp",
