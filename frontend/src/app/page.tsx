@@ -1,4 +1,4 @@
-import { MessageCircle, Sparkles, TrendingUp } from "lucide-react";
+import { MessageCircle, Sparkles, TrendingUp, ArrowLeft, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,23 @@ export default function HomePage() {
 
 			{/* Content with higher z-index */}
 			<div className="relative z-10 min-h-screen flex flex-col">
-				{/* Header */}
-				<header className="p-6 flex items-center justify-between">
-					<h1 className="text-2xl font-bold text-foreground">
-						<span className="text-primary">恋</span>AI🏹
-					</h1>
+				{/* Header (simulation と同じスタイルに合わせる) */}
+				<header className="p-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+					<Link href="/">
+						<Button
+							variant="ghost"
+							size="sm"
+							className="rounded-full hover:bg-primary/10"
+						>
+							<ArrowLeft className="w-4 h-4 mr-2" />
+							ホームへ
+						</Button>
+					</Link>
+					<div className="flex items-center gap-2">
+						<Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
+						<span className="font-bold text-foreground text-lg">恋ai</span>
+					</div>
+					<div className="w-24" /> {/* Spacer for alignment */}
 				</header>
 
 				{/* Hero Section */}
