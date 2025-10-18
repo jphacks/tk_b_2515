@@ -26,6 +26,7 @@ import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
 import { ConversationHistory } from "@/components/ConversationHistory";
 import dynamic from "next/dynamic";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
+import { config } from "@/lib/config";
 import { gestureApi } from "@/lib/api";
 import type { SaveGestureMetricsRequest } from "@/types/api";
 
@@ -108,6 +109,7 @@ export default function SimulationPage() {
     sendAudio,
   } = useConversation({
     onLipSyncUpdate: handleLipSyncUpdate,
+    ttsVoiceId: config.tts.voiceId || undefined,
   });
 
   // デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
