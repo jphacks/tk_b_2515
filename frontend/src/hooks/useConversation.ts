@@ -9,7 +9,6 @@ import type { ConversationSession, Message } from "@/types/api";
 import { useLipSync } from "./useLipSync";
 
 interface UseConversationOptions {
-	voiceId: string;
 	systemPrompt?: string;
 	onAudioReady?: (audioUrl: string) => void;
 	onLipSyncUpdate?: (value: number) => void;
@@ -24,7 +23,7 @@ interface ConversationState {
 }
 
 export function useConversation(options: UseConversationOptions) {
-	const { voiceId, systemPrompt, onAudioReady, onLipSyncUpdate } = options;
+	const { systemPrompt, onAudioReady, onLipSyncUpdate } = options;
 
 	const [state, setState] = useState<ConversationState>({
 		session: null,
@@ -107,7 +106,7 @@ export function useConversation(options: UseConversationOptions) {
 				});
 				const sttResult = await speechToText({
 					audio: audioFile,
-					voiceId,
+					// voiceIdは指定せず、バックエンドのデフォルトを使用
 				});
 
 				console.log("STT Result:", sttResult.text);
@@ -132,25 +131,77 @@ export function useConversation(options: UseConversationOptions) {
 				}));
 
 				// 3. TTS: AIの応答を音声に変換
+				console.log("Starting TTS for text:", aiResponse.response);
 				const audioUrl = await textToSpeechUrl({
 					text: aiResponse.response,
-					voiceId,
+					// voiceIdは指定せず、バックエンドのデフォルトを使用
 				});
 
-				console.log("TTS Audio URL:", audioUrl);
+				console.log("TTS Audio URL created:", audioUrl);
 
 				// 音声を再生
 				const audio = new Audio(audioUrl);
 				audioRef.current = audio;
 
+				// 音量を確認（デフォルトは1.0）
+				audio.volume = 1.0;
+				console.log("Audio volume set to:", audio.volume);
+
+				console.log("Audio element created, waiting for metadata...");
+
+				// loadイベントとcanplayイベントも監視
+				audio.addEventListener('loadeddata', () => {
+					console.log("Audio data loaded");
+				});
+
+				audio.addEventListener('canplay', () => {
+					console.log("Audio can play");
+				});
+
 				audio.onloadedmetadata = () => {
-					audio.play().catch((err) => {
-						console.error("Audio playback failed:", err);
-						setState((prev) => ({
-							...prev,
-							error: new Error("Audio playback failed"),
-						}));
-					});
+					console.log("Audio metadata loaded, duration:", audio.duration);
+					console.log("Audio readyState:", audio.readyState);
+					console.log("Attempting to play audio...");
+
+					// 再生を試行
+					const playPromise = audio.play();
+
+					if (playPromise !== undefined) {
+						playPromise
+							.then(() => {
+								console.log("Audio playback started successfully!");
+								console.log("Audio is playing:", !audio.paused);
+								console.log("Audio current time:", audio.currentTime);
+							})
+							.catch((err) => {
+								console.error("Audio playback failed:", err);
+								console.error("Error name:", err.name);
+								console.error("Error message:", err.message);
+
+								// NotAllowedErrorの場合はユーザーインタラクションが必要
+								if (err.name === 'NotAllowedError') {
+									console.warn("Audio playback blocked by browser autoplay policy. User interaction required.");
+								}
+
+								setState((prev) => ({
+									...prev,
+									error: new Error(`Audio playback failed: ${err.message}`),
+								}));
+							});
+					}
+				};
+
+				audio.onerror = (err) => {
+					console.error("Audio loading error:", err);
+					console.error("Audio error details:", audio.error);
+					if (audio.error) {
+						console.error("Audio error code:", audio.error.code);
+						console.error("Audio error message:", audio.error.message);
+					}
+					setState((prev) => ({
+						...prev,
+						error: new Error("Audio loading failed"),
+					}));
 				};
 
 				setState((prev) => ({
@@ -174,7 +225,7 @@ export function useConversation(options: UseConversationOptions) {
 				return null;
 			}
 		},
-		[state.session, voiceId, systemPrompt, onAudioReady],
+		[state.session, systemPrompt, onAudioReady],
 	);
 
 	// クリーンアップ

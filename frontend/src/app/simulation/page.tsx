@@ -49,12 +49,16 @@ const MemoizedVideoStream = memo(VideoStream);
 // メモ化された会話履歴コンポーネント
 const MemoizedConversationHistory = memo(ConversationHistory);
 
+type GestureType = "idle" | "thinking" | "talking" | "armsCrossed" | "explaining" | "nodding";
+
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [lipSyncValue, setLipSyncValue] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [avatarEmotion, setAvatarEmotion] = useState<"neutral" | "happy" | "sad" | "surprised" | "angry">("happy");
+  const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
 
   // video要素への参照
   const videoStreamRef = useRef<VideoStreamRef>(null);
@@ -100,7 +104,6 @@ export default function SimulationPage() {
     endSession,
     sendAudio,
   } = useConversation({
-    voiceId: "21m00Tcm4TlvDq8ikWAM", // デフォルトの音声ID（後で設定可能にする）
     onLipSyncUpdate: handleLipSyncUpdate,
   });
 
@@ -190,6 +193,44 @@ export default function SimulationPage() {
 
     sendRecordedAudio();
   }, [audioBlobs, isRecording, session, sendAudio, clearRecording]);
+
+  // ランダムな感情変化（会話が始まったら）
+  useEffect(() => {
+    if (!conversationStarted) return;
+
+    const emotions: Array<"neutral" | "happy" | "sad" | "surprised" | "angry"> = [
+      "happy", "happy", "happy", // happy を多めに
+      "neutral", "neutral",
+      "surprised",
+    ];
+
+    // 10〜20秒ごとにランダムに感情を変える
+    const emotionInterval = setInterval(() => {
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      setAvatarEmotion(randomEmotion);
+    }, 10000 + Math.random() * 10000);
+
+    return () => clearInterval(emotionInterval);
+  }, [conversationStarted]);
+
+  // 録音・処理状態に応じてジェスチャーを変化させる
+  useEffect(() => {
+    if (isRecording) {
+      // 録音中はうなずいたり、傾聴の姿勢
+      setAvatarGesture("nodding");
+    } else if (isProcessing) {
+      // 処理中は考え中のジェスチャー
+      setAvatarGesture("thinking");
+    } else if (lipSyncValue > 0.1) {
+      // 話している時は手を動かす
+      setAvatarGesture("talking");
+    } else {
+      // それ以外はアイドル状態
+      const gestures: GestureType[] = ["idle", "idle", "idle", "armsCrossed", "explaining"];
+      const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+      setAvatarGesture(randomGesture);
+    }
+  }, [isRecording, isProcessing, lipSyncValue]);
 
   const toggleVideo = useCallback(() => {
     if (stream) {
@@ -304,6 +345,8 @@ export default function SimulationPage() {
                   <ConversationAvatar
                     modelUrl={avatarModelUrl}
                     lipSyncValue={lipSyncValue}
+                    emotion={avatarEmotion}
+                    gesture={avatarGesture}
                     className="w-full h-full"
                   />
                 </Suspense>
