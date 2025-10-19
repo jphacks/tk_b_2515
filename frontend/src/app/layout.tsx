@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "恋AI🏹 - AIコミュニケーション・コーチング",
+	title: "❤️恋AI  - AIコミュニケーション・コーチング",
 	description:
 		"VTuberのようなAIアバターとのリアルタイム会話で、あなたのコミュニケーション能力を楽しく向上させましょう",
 };

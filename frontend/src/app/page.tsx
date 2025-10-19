@@ -16,7 +16,7 @@ export default function HomePage() {
 					<div className="w-24" /> {/* Left spacer to keep title centered */}
 					<div className="flex items-center gap-2">
 						<Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-						<span className="font-bold text-foreground text-lg">恋ai</span>
+						<span className="font-bold text-foreground text-lg">恋AI</span>
 					</div>
 					<div className="w-24" /> {/* Spacer for alignment */}
 				</header>
@@ -115,7 +115,12 @@ export default function HomePage() {
 
 				{/* Footer */}
 				<footer className="p-6 text-center text-muted-foreground text-sm">
-					<p>© 2025 恋AI🏹 - JPHACKS 2025 Project</p>
+					<p>
+						© 2025 
+						<Heart className="inline w-4 h-4 text-primary align-middle mx-2" />
+            恋AI
+						- JPHACKS 2025 Project
+					</p>
 				</footer>
 			</div>
 		</div>
