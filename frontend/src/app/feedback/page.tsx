@@ -10,12 +10,13 @@ import {
 	RotateCcw,
 	Loader2,
 	AlertCircle,
+	TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { feedbackApi } from "@/lib/api";
+import { feedbackApi, sessionApi } from "@/lib/api";
 import type { Feedback } from "@/types/api";
 
 function FeedbackContent() {
@@ -25,6 +26,15 @@ function FeedbackContent() {
 	const [feedback, setFeedback] = useState<Feedback | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [scoreHistory, setScoreHistory] = useState<
+		{
+			sessionId: string;
+			score: number;
+			createdAt: string;
+		}[]
+	>([]);
+	const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+	const [historyError, setHistoryError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchFeedback = async () => {
@@ -41,6 +51,24 @@ function FeedbackContent() {
 					sessionId,
 				});
 				setFeedback(result.feedback);
+				if (result.feedback.overallScore !== null) {
+					const score = result.feedback.overallScore;
+					setScoreHistory((prev) => {
+						const next = prev.filter(
+							(item) => item.sessionId !== sessionId,
+						);
+						next.push({
+							sessionId,
+							score,
+							createdAt: result.feedback.createdAt,
+						});
+						return next.sort(
+							(a, b) =>
+								new Date(a.createdAt).getTime() -
+								new Date(b.createdAt).getTime(),
+						);
+					});
+				}
 			} catch (err) {
 				console.error("Failed to generate feedback:", err);
 
@@ -65,6 +93,45 @@ function FeedbackContent() {
 
 		fetchFeedback();
 	}, [sessionId]);
+
+	useEffect(() => {
+		const fetchScoreHistory = async () => {
+			try {
+				setIsHistoryLoading(true);
+				setHistoryError(null);
+				const sessions = await sessionApi.getSessions();
+				const historyData = sessions
+					.flatMap((session) => {
+						const score = session.feedback?.overallScore;
+						if (typeof score !== "number") {
+							return [];
+						}
+						const createdAt =
+							session.feedback?.createdAt ?? session.createdAt;
+						return [
+							{
+								sessionId: session.id,
+								score,
+								createdAt,
+							},
+						];
+					})
+					.sort(
+						(a, b) =>
+							new Date(a.createdAt).getTime() -
+							new Date(b.createdAt).getTime(),
+					);
+				setScoreHistory(historyData);
+			} catch (err) {
+				console.error("Failed to fetch score history:", err);
+				setHistoryError("過去のスコア履歴を取得できませんでした。");
+			} finally {
+				setIsHistoryLoading(false);
+			}
+		};
+
+		void fetchScoreHistory();
+	}, []);
 
 	const [selectedCategory, setSelectedCategory] = useState<
 		"gesture" | "conversation"
@@ -114,6 +181,81 @@ function FeedbackContent() {
 
 	const categoryLabel =
 		selectedCategory === "conversation" ? "会話" : "仕草";
+
+	const scoreChartMetrics = useMemo(() => {
+		if (scoreHistory.length === 0) {
+			return {
+				points: [] as {
+					sessionId: string;
+					score: number;
+					createdAt: string;
+					x: number;
+					y: number;
+				}[],
+				polyline: "",
+				ticks: [100, 75, 50, 25, 0],
+				minBound: 0,
+				maxBound: 100,
+				range: 100,
+			};
+		}
+
+		const scores = scoreHistory.map((item) => item.score);
+		const minScore = Math.min(...scores);
+		const maxScore = Math.max(...scores);
+
+		const minBound = Math.min(0, Math.floor(minScore / 10) * 10);
+		const maxBound = Math.max(100, Math.ceil(maxScore / 10) * 10);
+		const range = maxBound - minBound || 1;
+
+		const points = scoreHistory.map((item, index) => {
+			const x =
+				scoreHistory.length === 1
+					? 50
+					: (index / (scoreHistory.length - 1)) * 100;
+			const y = 100 - ((item.score - minBound) / range) * 100;
+			return { ...item, x, y };
+		});
+
+		const polyline = points
+			.map(({ x, y }) => `${x},${y}`)
+			.join(" ");
+
+		const defaultTicks = [100, 75, 50, 25, 0];
+		const tickSet = new Set<number>();
+		for (const tick of defaultTicks) {
+			if (tick <= maxBound && tick >= minBound) {
+				tickSet.add(tick);
+			}
+		}
+		tickSet.add(maxBound);
+		tickSet.add(minBound);
+		const ticks = Array.from(tickSet).sort((a, b) => b - a);
+
+		return {
+			points,
+			polyline,
+			ticks,
+			minBound,
+			maxBound,
+			range,
+		};
+	}, [scoreHistory]);
+
+	const formattedScoreHistory = useMemo(() => {
+		return scoreHistory.map((item, index) => {
+			const date = new Date(item.createdAt);
+			const label = new Intl.DateTimeFormat("ja-JP", {
+				month: "numeric",
+				day: "numeric",
+			}).format(date);
+
+			return {
+				...item,
+				label: `${label} (${index + 1})`,
+			};
+		});
+	}, [scoreHistory]);
 
 	return (
 		<div className="min-h-screen flex flex-col">
@@ -311,6 +453,126 @@ function FeedbackContent() {
 										? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
 										: "改善点が記録されていません。"}
 								</p>
+							)}
+						</Card>
+
+						{/* Score History */}
+						<Card className="p-6 border-2 space-y-4">
+							<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+								<div className="flex items-center gap-2">
+									<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+										<TrendingUp className="w-5 h-5 text-primary" />
+									</div>
+									<div>
+										<h2 className="text-xl font-semibold text-foreground">
+											これまでのスコア推移
+										</h2>
+										<p className="text-sm text-muted-foreground">
+											過去のセッションで獲得した総合スコアの変化を確認できます
+										</p>
+									</div>
+								</div>
+								{isHistoryLoading && (
+									<div className="flex items-center gap-2 text-sm text-muted-foreground">
+										<Loader2 className="w-4 h-4 animate-spin" />
+										読み込み中
+									</div>
+								)}
+							</div>
+							{historyError ? (
+								<p className="text-sm text-destructive">{historyError}</p>
+							) : scoreHistory.length === 0 ? (
+								<p className="text-sm text-muted-foreground">
+									まだスコア履歴がありません。練習を続けるとここにスコアが表示されます。
+								</p>
+							) : (
+								<>
+									<div className="relative h-56 w-full">
+										<svg
+											className="absolute inset-0 w-full h-full"
+											viewBox="0 0 100 100"
+											preserveAspectRatio="none"
+										>
+											{scoreChartMetrics.ticks.map((tick) => {
+												const y =
+													100 -
+													((tick - scoreChartMetrics.minBound) /
+														scoreChartMetrics.range) *
+														100;
+												return (
+													<line
+														key={`grid-${tick}`}
+														x1="0"
+														x2="100"
+														y1={y}
+														y2={y}
+														stroke="currentColor"
+														strokeOpacity="0.1"
+														strokeWidth="0.5"
+													/>
+												);
+											})}
+											{scoreChartMetrics.points.length > 1 && (
+												<polyline
+													points={scoreChartMetrics.polyline}
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													className="text-primary"
+												/>
+											)}
+											{scoreChartMetrics.points.map((point) => (
+												<g key={point.sessionId}>
+													<circle
+														cx={point.x}
+														cy={point.y}
+														r="2.5"
+														fill="var(--color-chart-1)"
+														stroke="var(--color-chart-1)"
+														strokeWidth="1"
+													/>
+												</g>
+											))}
+										</svg>
+										<div className="absolute inset-0 pointer-events-none text-xs text-muted-foreground">
+											{scoreChartMetrics.ticks.map((tick) => {
+												const y =
+													100 -
+													((tick - scoreChartMetrics.minBound) /
+														scoreChartMetrics.range) *
+														100;
+												return (
+													<div
+														key={`label-${tick}`}
+														className="absolute left-0 -translate-y-1/2"
+														style={{ top: `${y}%` }}
+													>
+														<span className="rounded-md bg-background/70 px-2 py-0.5">
+															{tick}
+														</span>
+													</div>
+												);
+											})}
+										</div>
+									</div>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+										{formattedScoreHistory.map((item) => (
+											<div
+												key={`${item.sessionId}-${item.createdAt}`}
+												className="rounded-lg border border-border/60 bg-card/60 px-4 py-3"
+											>
+												<p className="text-sm font-medium text-muted-foreground">
+													{item.label}
+												</p>
+												<p className="text-lg font-semibold text-foreground">
+													{item.score} 点
+												</p>
+											</div>
+										))}
+									</div>
+								</>
 							)}
 						</Card>
 
