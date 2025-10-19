@@ -3,6 +3,10 @@
 <!-- ![恋AI](./docs/renai-title.jpg) -->
 [![恋AI](./docs/renai-title.jpg)](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
 
+### 各種リンク
+- 恋AI: https://renailove.vercel.app
+- 紹介動画: https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE
+
 ### 背景（製品開発のきっかけ、課題等）
 
 #### きっかけ
@@ -154,4 +158,3 @@ ID: d0460af01d81d6bfe968320336ca9f07f4c26a7b
 - 特に力を入れた部分をファイルリンク、または commit_id を記載してください。 -->
 
 <!-- [![IMAGE ALT TEXT HERE]()](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE) -->
-![VIDEO ALT TEXT HERE](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
