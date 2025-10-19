@@ -398,10 +398,9 @@ export default function SimulationPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full hover:bg-primary/10"
+            className="rounded-full bg-[#f7c6d5] text-foreground hover:bg-[#ef5784ff] shadow-sm"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            ホームへ
+            ホーム
           </Button>
         </Link>
         <div className="flex items-center gap-2">

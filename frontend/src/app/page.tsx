@@ -17,8 +17,8 @@ export default function HomePage() {
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header (simulation と同じスタイルに合わせる) */}
         <header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+          {/* Left: icon */}
           <div className="w-24 flex items-center justify-center h-full">
-            {/* Put image inside a relative box sized to 80% of header height and use fill */}
             <div className="relative h-[80%] w-[80%]">
               <Image
                 src="/a.png"
@@ -28,11 +28,27 @@ export default function HomePage() {
               />
             </div>
           </div>
+
+          {/* Center: title */}
           <div className="flex items-center gap-2">
             <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
             <span className="font-bold text-foreground text-lg">恋AI</span>
           </div>
-          <div className="w-24" /> {/* Spacer for alignment */}
+
+          {/* Right: Home button */}
+          <div className="w-24 flex items-center justify-center">
+            <Link href="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full hover:bg-primary/10"
+              >
+                {/* Keep ArrowLeft for a recognizable 'back/home' affordance */}
+                
+                ホーム
+              </Button>
+            </Link>
+          </div>
         </header>
 
         {/* Hero Section */}
