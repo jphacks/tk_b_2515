@@ -46,6 +46,7 @@ export async function generateConversationResponse(
 - 会話を奪わずに、テンポよく反応する
 - 発話は1〜3文程度で短く自然に
 - 絵文字、！は控えめに使う（😊 や 😆 など、場面に応じて自然に）
+- "○○さん"は"きみ"に変換する
 `;
 
   if (relationshipStage === "shy") {
