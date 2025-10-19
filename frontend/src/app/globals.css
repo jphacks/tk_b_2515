@@ -177,21 +177,9 @@
   }
 
   /* Adding sparkle animation for subtitle */
-  @keyframes sparkle {
-    0%,
-    100% {
-      text-shadow: 0 0 10px rgba(255, 107, 157, 0.8),
-        0 0 20px rgba(255, 107, 157, 0.6), 0 0 30px rgba(255, 107, 157, 0.4),
-        0 0 40px rgba(192, 132, 252, 0.3);
-    }
-    50% {
-      text-shadow: 0 0 20px rgba(255, 107, 157, 1),
-        0 0 30px rgba(255, 107, 157, 0.8), 0 0 40px rgba(255, 107, 157, 0.6),
-        0 0 50px rgba(192, 132, 252, 0.5), 0 0 60px rgba(192, 132, 252, 0.3);
-    }
-  }
-
+  /* Replace animated sparkle with a subtle static pink shadow to avoid excessive highlight */
   .sparkle-text {
-    animation: sparkle 2s ease-in-out infinite;
+    /* Soft sakura pink shadow */
+    text-shadow: 0 8px 24px rgba(247, 198, 213, 0.25);
   }
 }
