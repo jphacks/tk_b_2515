@@ -40,7 +40,7 @@ export default function HomePage() {
 								AIコミュニケーション・コーチング
 							</div>
 							<h2 className="text-6xl md:text-7xl lg:text-8xl font-bold text-balance drop-shadow-lg sparkle-text">
-								<span className="text-yellow-400">AI女子と会話練習！</span>
+								<span style={{ color: '#ef5784ff' }}>AI女子と会話練習！</span> {/* #f7c6d5 */}
 							</h2>
 							<p className="text-xl text-foreground text-pretty max-w-2xl mx-auto drop-shadow">
 								VTuberのようなAIアバターとのリアルタイム会話で、
