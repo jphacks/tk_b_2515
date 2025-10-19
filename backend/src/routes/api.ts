@@ -595,7 +595,7 @@ api.openapi(ttsRoute, async (c) => {
     const { text, voiceId, modelId } = c.req.valid("json");
 
     // Use default voiceId if not provided (Rachel - a natural sounding voice)
-    const selectedVoiceId = voiceId || "KgETZ36CCLD1Cob4xpkv";
+    const selectedVoiceId = voiceId || "lhTvHflPVOqgSWyuWQry";
 
     const audioStream = await textToSpeech(
       apiKey,
