@@ -29,7 +29,7 @@ export async function generateConversationResponse(
   }
 ): Promise<string> {
   const client = getGeminiClient(apiKey) as GoogleGenAI;
-  const modelName = options?.modelName || "gemini-2.0-flash-exp";
+  const modelName = options?.modelName || "	gemini-2.5-flash-lite";
 
   // relationshipStage を使ったシステムプロンプト設定
   const relationshipStage = context.relationshipStage || "shy";
@@ -235,7 +235,7 @@ ${gestureInfo}
 - 実戦的な会話スキルの向上を重視してください`;
 
   const result = await client.models.generateContent({
-    model: "gemini-2.0-flash-exp",
+    model: "gemini-2.5-flash-lite",
     contents: prompt,
   });
 
@@ -268,16 +268,20 @@ ${gestureInfo}
   return {
     goodPoints: toText(conversationFeedback.goodPoints ?? feedback.goodPoints),
     improvementPoints: toText(
-      conversationFeedback.improvementPoints ?? feedback.improvementPoints,
+      conversationFeedback.improvementPoints ?? feedback.improvementPoints
     ),
     overallScore:
-      (typeof feedback.overallScore === "number" ? feedback.overallScore : null) ??
+      (typeof feedback.overallScore === "number"
+        ? feedback.overallScore
+        : null) ??
       (typeof conversationFeedback.score === "number"
         ? conversationFeedback.score
         : null),
-    gestureGoodPoints: toText(gestureFeedback.goodPoints ?? feedback.gestureGoodPoints),
+    gestureGoodPoints: toText(
+      gestureFeedback.goodPoints ?? feedback.gestureGoodPoints
+    ),
     gestureImprovementPoints: toText(
-      gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints,
+      gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints
     ),
   };
 }
