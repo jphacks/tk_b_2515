@@ -76,38 +76,44 @@ export default function HomePage() {
 
 							{/* Feature Cards Below Button */}
 							<div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-								<Card className="p-6 space-y-3 border-2 hover:border-primary transition-colors bg-card/80 backdrop-blur-sm">
-									<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-										<MessageCircle className="w-6 h-6 text-primary" />
+								<Card className="p-6 space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
+									<div className="flex items-start gap-4">
+										<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+											<MessageCircle className="w-6 h-6 text-primary" />
+										</div>
+										<h3 className="text-lg font-semibold text-card-foreground mt-1">
+											リアルタイム会話
+										</h3>
 									</div>
-									<h3 className="text-lg font-semibold text-card-foreground">
-										リアルタイム会話
-									</h3>
-									<p className="text-muted-foreground text-sm">
+									<p className="text-muted-foreground text-sm mt-2">
 										AIアバターと自然な会話を楽しみながら、コミュニケーションスキルを磨けます
 									</p>
 								</Card>
 
-								<Card className="p-6 space-y-3 border-2 hover:border-accent transition-colors bg-card/80 backdrop-blur-sm">
-									<div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-										<TrendingUp className="w-6 h-6 text-accent" />
+								<Card className="p-6 space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
+									<div className="flex items-start gap-4">
+										<div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+											<TrendingUp className="w-6 h-6 text-accent" />
+										</div>
+										<h3 className="text-lg font-semibold text-card-foreground mt-1">
+											的確なフィードバック
+										</h3>
 									</div>
-									<h3 className="text-lg font-semibold text-card-foreground">
-										的確なフィードバック
-									</h3>
-									<p className="text-muted-foreground text-sm">
+									<p className="text-muted-foreground text-sm mt-2">
 										会話終了後、AIが良かった点と改善点を分析してアドバイスします
 									</p>
 								</Card>
 
-								<Card className="p-6 space-y-3 border-2 hover:border-primary transition-colors bg-card/80 backdrop-blur-sm">
-									<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-										<Sparkles className="w-6 h-6 text-primary" />
+								<Card className="p-6 space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
+									<div className="flex items-start gap-4">
+										<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+											<Sparkles className="w-6 h-6 text-primary" />
+										</div>
+										<h3 className="text-lg font-semibold text-card-foreground mt-1">
+											安心して練習
+										</h3>
 									</div>
-									<h3 className="text-lg font-semibold text-card-foreground">
-										安心して練習
-									</h3>
-									<p className="text-muted-foreground text-sm">
+									<p className="text-muted-foreground text-sm mt-2">
 										匿名で利用可能。失敗を恐れず、何度でも練習できる安全な環境です
 									</p>
 								</Card>
