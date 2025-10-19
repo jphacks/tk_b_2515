@@ -491,7 +491,7 @@ function FeedbackContent() {
 										<svg
 											className="absolute inset-0 w-full h-full"
 											viewBox="0 0 100 100"
-											preserveAspectRatio="none"
+											preserveAspectRatio="xMidYMid meet"
 										>
 											{scoreChartMetrics.ticks.map((tick) => {
 												const y =
@@ -517,7 +517,7 @@ function FeedbackContent() {
 													points={scoreChartMetrics.polyline}
 													fill="none"
 													stroke="currentColor"
-													strokeWidth="2"
+													strokeWidth="1.25"
 													strokeLinecap="round"
 													strokeLinejoin="round"
 													className="text-primary"
@@ -528,10 +528,10 @@ function FeedbackContent() {
 													<circle
 														cx={point.x}
 														cy={point.y}
-														r="2.5"
+														r="1.6"
 														fill="var(--color-chart-1)"
 														stroke="var(--color-chart-1)"
-														strokeWidth="1"
+														strokeWidth="0.75"
 													/>
 												</g>
 											))}
