@@ -12,8 +12,18 @@ export default function HomePage() {
 			{/* Content with higher z-index */}
 			<div className="relative z-10 min-h-screen flex flex-col">
 				{/* Header (simulation と同じスタイルに合わせる) */}
-				<header className="p-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
-					<div className="w-24" /> {/* Left spacer to keep title centered */}
+				<header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+					<div className="w-24 flex items-center justify-center h-full">
+						{/* Put image inside a relative box sized to 80% of header height and use fill */}
+						<div className="relative h-[80%] w-[80%]">
+							<Image
+								src="/a.png"
+								alt="恋AIのアイコン"
+								fill
+								className="object-cover rounded-full"
+							/>
+						</div>
+					</div>
 					<div className="flex items-center gap-2">
 						<Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
 						<span className="font-bold text-foreground text-lg">恋AI</span>

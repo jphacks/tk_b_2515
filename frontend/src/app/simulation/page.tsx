@@ -367,7 +367,7 @@ export default function SimulationPage() {
         </Link>
         <div className="flex items-center gap-2">
           <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-          <span className="font-bold text-foreground text-lg">恋ai</span>
+          <span className="font-bold text-foreground text-lg">恋AI</span>
         </div>
         <div className="w-24" /> {/* Spacer for alignment */}
       </header>
