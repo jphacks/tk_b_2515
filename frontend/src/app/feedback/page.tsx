@@ -524,7 +524,7 @@ function FeedbackContent() {
                           points={scoreChartMetrics.polyline}
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth="0.8"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           className="text-primary"
@@ -535,10 +535,10 @@ function FeedbackContent() {
                           <circle
                             cx={point.x}
                             cy={point.y}
-                            r="2.5"
+                            r="1.2"
                             fill="var(--color-chart-1)"
                             stroke="var(--color-chart-1)"
-                            strokeWidth="1"
+                            strokeWidth="0.5"
                           />
                         </g>
                       ))}
