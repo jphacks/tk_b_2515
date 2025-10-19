@@ -1,6 +1,7 @@
 # 純愛を求める男子学生のためのアプリ、"恋 AI(renai)"。
 
-![恋AI](./docs/renai-title.jpg)
+<!-- ![恋AI](./docs/renai-title.jpg) -->
+[![恋AI](./docs/renai-title.jpg)](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
 
 ### 背景（製品開発のきっかけ、課題等）
 
@@ -47,7 +48,7 @@ AI が自動フィードバックとして「ここが良かった」、「こ�
 ### 解決出来ること
 
 現実で異性との会話を盛り上げる方法を自然に身に着けられる。
-自信をもって、他人とコミュニケーションが取れる。
+自信をもって、女性とコミュニケーションが取れる。
 
 ### 今後の展望
 
@@ -94,10 +95,11 @@ AI が自動フィードバックとして「ここが良かった」、「こ�
 - フィードバック時に、今までの点数のグラフを表示させることで、継続的にこのアプリを楽しんでもらう動機づくりを演出した。 (HackDay 中)
 - **デプロイした** (HackDay 中)
 [url](https://renailove.vercel.app)
+
 ## 開発技術
 
 ### 活用した技術
-お
+
 #### API・データ
 
 1. API
@@ -107,23 +109,15 @@ AI が自動フィードバックとして「ここが良かった」、「こ�
 - Hono
 - OPENAPI
 
+2. DB,ORM
+
+- Prisma, Supabase
 
 #### フレームワーク・ライブラリ・モジュール
 
 **フロントエンド**
 
 - Nextjs, React, Typescript, TailwindCSS,
-
-**API**
-
-- Google Gemini API (会話生成)
-- ElevenLabs API (音声合成)
-- Hono
-- OPENAPI
-
-**DB,ORM**
-
-- Prisma, Supabase
 
 **インフラ**
 
@@ -138,19 +132,26 @@ AI が自動フィードバックとして「ここが良かった」、「こ�
 - WSL2
 - Mac
 
+#### 3Dアバター
+
+VRoid Project. AvatarSample_A. VRoid Hub, 2021-06-29, https://hub.vroid.com/characters/2843975675147313744/models/5644550979324015604
+
 ### 独自技術
 
 #### ハッカソンで開発した独自機能・技術
 
 - 表情の読み取り
-  
+- 言語、非言語的両面からの会話のフィードバック
+- 瞬き、表情、手のしぐさ
 
 #### 注力した部分のコミット
 
 - 親密度を段階的に評価することで、会話の盛り上がりを再現。絵文字を使うことで親密度の表現幅を広げることに挑戦
+
 ID: d0460af01d81d6bfe968320336ca9f07f4c26a7b
 
-- 独自で開発したものの内容をこちらに記載してください
-- 特に力を入れた部分をファイルリンク、または commit_id を記載してください。
+<!-- - 独自で開発したものの内容をこちらに記載してください
+- 特に力を入れた部分をファイルリンク、または commit_id を記載してください。 -->
 
-[![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
+<!-- [![IMAGE ALT TEXT HERE]()](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE) -->
+![VIDEO ALT TEXT HERE](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
