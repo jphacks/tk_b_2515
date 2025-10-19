@@ -30,6 +30,7 @@ export default function VRMAvatar({
   const groupRef = useRef<THREE.Group>(null);
   const blinkTimerRef = useRef(0);
   const [isBlinking, setIsBlinking] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const gestureTimeRef = useRef(0);
   const initialBonesRef = useRef<Map<string, THREE.Euler>>(new Map());
   const baseScaleRef = useRef(1); // 基本スケールを保存
@@ -265,7 +266,13 @@ export default function VRMAvatar({
 
   // Center and scale avatar once読み込み完了
   useEffect(() => {
-    if (!vrm) return;
+    if (!vrm) {
+      setIsReady(false);
+      return;
+    }
+
+    setIsReady(false);
+    initialBonesRef.current = new Map();
 
     const scene = vrm.scene;
     const box = new THREE.Box3().setFromObject(scene);
@@ -337,6 +344,8 @@ export default function VRMAvatar({
         }
       });
     }
+
+    setIsReady(true);
   }, [vrm]);
 
   if (error) {
@@ -350,14 +359,9 @@ export default function VRMAvatar({
     );
   }
 
-  if (loading || !vrm) {
-    // ローディング中は簡単な形状を表示
-    return (
-      <mesh>
-        <boxGeometry args={[1, 2, 1]} />
-        <meshStandardMaterial color="gray" />
-      </mesh>
-    );
+  if (loading || !vrm || !isReady) {
+    // VRMの初期配置が完了するまでは描画しない
+    return null;
   }
 
   return (
