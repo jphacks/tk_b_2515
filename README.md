@@ -1,6 +1,6 @@
 # 純愛を求める男子学生のためのアプリ、"恋 AI(renai)"。
 
-![恋AI](./docs/renaipic_kari.png)
+![恋AI](./renai_bg_title.jpg)
 
 ### 背景（製品開発のきっかけ、課題等）
 
