@@ -11,28 +11,31 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Content with higher z-index */}
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Header (simulation と同じスタイルに合わせる) */}
-        <header className="p-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:bg-primary/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              ホームへ
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-            <span className="font-bold text-foreground text-lg">恋ai</span>
-          </div>
-          <div className="w-24" /> {/* Spacer for alignment */}
-        </header>
+	return (
+		<div className="min-h-screen flex flex-col relative">
+
+
+			{/* Content with higher z-index */}
+			<div className="relative z-10 min-h-screen flex flex-col">
+				{/* Header (simulation と同じスタイルに合わせる) */}
+				<header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+					<div className="w-24 flex items-center justify-center h-full">
+						{/* Put image inside a relative box sized to 80% of header height and use fill */}
+						<div className="relative h-[80%] w-[80%]">
+							<Image
+								src="/a.png"
+								alt="恋AIのアイコン"
+								fill
+								className="object-cover rounded-full"
+							/>
+						</div>
+					</div>
+					<div className="flex items-center gap-2">
+						<Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
+						<span className="font-bold text-foreground text-lg">恋AI</span>
+					</div>
+					<div className="w-24" /> {/* Spacer for alignment */}
+				</header>
 
         {/* Hero Section */}
         <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
@@ -129,14 +132,16 @@ export default function HomePage() {
           </div>
         </main>
 
-        {/* Footer */}
-        <footer className="p-6 text-center text-muted-foreground text-sm">
-          <p>
-            © 2025 恋AI♡ - JPHACKS 2025 <br />
-            Project by 調布恋AI連合
-          </p>
-        </footer>
-      </div>
-    </div>
-  );
+				{/* Footer */}
+				<footer className="p-6 text-center text-muted-foreground text-sm">
+					<p>
+						© 2025 
+						<Heart className="inline w-4 h-4 text-primary align-middle mx-2" />
+            恋AI
+						- JPHACKS 2025 Project
+					</p>
+				</footer>
+			</div>
+		</div>
+	);
 }
