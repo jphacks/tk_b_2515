@@ -196,12 +196,12 @@ function FeedbackContent() {
           {/* Avatar */}
 						<div className="flex justify-center">
 							<div className="relative w-32 h-32">
-								<Image
-									src="/avatar.png"
-                alt="恋AI アバター"
-                fill
-                className="object-cover rounded-full drop-shadow-lg border-2 border-primary/20"
-              />
+																<Image
+																		src="/IMG_8059.webp"
+								alt="恋AI アバター"
+								fill
+								className="object-cover rounded-full drop-shadow-lg border-2 border-primary/20"
+							/>
             </div>
           </div>
 
