@@ -1,6 +1,6 @@
 # 純愛を求める男子学生のためのアプリ、"恋 AI(renai)"
 
-<!-- ![恋AI](./docs/renai-title.jpg) -->
+[恋 AI](./docs/renai-title.jpg)
 
 <<<<<<< Updated upstream
 [![恋AI](./docs/renai-title.jpg)](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
@@ -12,10 +12,6 @@
 
 ## 製品概要
 
-=======
-## 製品概要
-
->>>>>>> Stashed changes
 **恋 AI(renai)** は、AI との 3D リアルタイム会話シミュレーションを通じて、コミュニケーションスキルを向上させる Web アプリケーションです。
 
 🌐 **デプロイ URL**: [https://renai-frontend.vercel.app/](https://renai-frontend.vercel.app/)
@@ -26,32 +22,21 @@
 
 ### きっかけ
 
-理工系の学校は往々にして女子率が低く、女性経験が少ない男子生徒が多い。それを手助けできるアプリケーションが作りたかった。嘘です。ほんとは単純に彼女が欲しすぎました。
-
-僕らは彼女がいない理系国立大生で、恋愛指南書や無料の女性との会話方法を学ぼうと奮起していたが、ずっとうまくいっていない。
+理工系の学校は往々にして女子率が低い。これは内閣府のデータとしても顕著である。（分野別にみた、入学者に占める女性比率の全国数値は、「理学」分野が 30.2％、「工学」分野が 15.2％）出典: [令和 3 年度「理工系分野の選択に関する調査研究」概要](https://www.gender.go.jp/research/kenkyu/pdf/riko_sentaku_research_r03_gaiyo.pdf)そのため女性との会話経験が少ない男子生徒が多い。この問題を解決できるアプリケーションが作りたかった。
+また、僕たち自身も多くのメンバーが女性と交流機会が少ない理系大生で、恋愛指南書や無料の女性との会話方法を学ぼうと奮起していたが、ずっとうまくいっていない。
 
 **いくら YouTube や本などで学習をしても、実際に話す経験が足りず、またオタク特有のきょどったり目線が合わない、ボソボソ喋るなどは客観的に見ることが出来ないため、その根本を解決する必要があると感じた。**
 
 ### 課題
 
-**ペルソナ**: 異性との交流が少ない理系大学生、異性と話すのが苦手な人、つまり自分たち。
+**ペルソナ**: 異性との交流が少ない理系大学生、異性と話すのが苦手な人、私たち
 
-<<<<<<< Updated upstream
-1. **話題や質問が浮かばない人** - 言語コミュニケーションの課題
-2. **声や表情や仕草がぎこちない人** - 非言語コミュニケーションの課題
-
-本アプリは、この **言語** と **非言語** の二つの視点からフィードバックを提供することで、ユーザーの課題解決を目指します。
-
-=======
-これを細分化すると、会話が苦手な人は大きく分けて **2 パターン** 存在すると考えました：
+これを細分化すると、会話が苦手な人は大きく分けて **2 パターン** 存在すると考えました。
 
 1. **話題や質問が浮かばない人** - 言語コミュニケーションの課題
 2. **声や表情や仕草がぎこちない人** - 非言語コミュニケーションの課題
 
 本アプリは、この **言語** と **非言語** の二つの視点からフィードバックを提供することで、ユーザーの課題解決を目指します。
-
->>>>>>> Stashed changes
----
 
 ## 製品説明（具体的な製品の説明）
 
@@ -72,6 +57,7 @@
 従来の AI 会話アプリはテキスト形式のみの場合が多いですが、本アプリでは以下を実現しました：
 
 #### 音声合成(TTS)とリップシンク
+
 <<<<<<< Updated upstream
 
 - **ElevenLabs API** による高品質な日本語音声合成
@@ -174,48 +160,29 @@ Google Gemini による詳細な会話分析を行います：
 - 会話: 「相手の趣味を掘り下げられる質問が ◎」
 - 表情: 「視線が安定していて好印象でした。もう少し笑顔があるとさらに良いです」
 
----
-
-## 解決できること
-=======
-- **ElevenLabs API** による高品質な日本語音声合成
-- **リアルタイム音声解析** - Web Audio API（AnalyserNode）で音声の周波数データを取得
-- **人間の音声周波数範囲(300-3400Hz)** のみを抽出して分析精度を向上
-- **スムーズなアニメーション** - アタック時間50ms、リリース時間100msで自然な口の開閉を実現
-- **FFTサイズ2048** で高精度な周波数分析を実施
-
-#### 3D アバター制御
-- **@pixiv/three-vrm** を活用したVRMモデルのレンダリング
-- **リップシンク値(0-1)** に基づいてアバターの口形状（Viseme）を制御
-- **瞬き、表情、手のしぐさ** をリアルに再現
-
-#### 会話フロー
-1. **STT（音声→テキスト）** - Web Speech APIまたはElevenLabs STTで音声認識
-2. **AI応答生成** - Google Gemini 2.5 Flashで自然な会話を生成
-3. **TTS（テキスト→音声）** - ElevenLabs APIで音声合成
-4. **リップシンク再生** - 音声に同期してアバターの口を動かす
->>>>>>> Stashed changes
-
 これにより、**既存サービスよりもリアルな会話体験** を実現しています。
 
 ### 2. 表情・視線の高度な分析（HackDay 中）
 
-MediaPipe Face Landmarker を活用し、**478点の顔ランドマーク**からユーザーの非言語コミュニケーションをリアルタイムに評価します：
+MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**からユーザーの非言語コミュニケーションをリアルタイムに評価します：
 
 #### 視線追跡アルゴリズム
+
 - **顔の向きを計算** - 鼻先(landmark #1)と両目の中心(#33, #263)の相対位置から顔の向きを算出
 - **ターゲット方向との一致度** - 顔の向きとアバターの位置(デフォルト: 左側中央 x=0.25, y=0.5)を比較
-- **視線スコア(0-1)** - 水平・垂直方向の一致度から算出。0.6以上で「相手を見ている」と判定
+- **視線スコア(0-1)** - 水平・垂直方向の一致度から算出。0.6 以上で「相手を見ている」と判定
 - **視線方向の判定** - 上下方向の視線を検出(up/down/center)し、視線が逸れる傾向を分析
 
 #### 笑顔検出アルゴリズム
+
 - **口角の位置を分析** - 左右の口角(#61, #291)と上下唇中央(#13, #14)から口の中心を計算
 - **笑顔強度(0-1)** - 口角が口の中心より上にある度合いから笑顔の強さを算出
-- **笑顔判定** - 強度0.3以上で「笑顔」と判定
+- **笑顔判定** - 強度 0.3 以上で「笑顔」と判定
 
 #### パフォーマンス最適化
-- **3fps（333ms間隔）で分析** - CPU負荷を抑えつつリアルタイム性を確保
-- **GPU処理** - MediaPipeのGPU delegateを活用して高速処理
+
+- **3fps（333ms 間隔）で分析** - CPU 負荷を抑えつつリアルタイム性を確保
+- **GPU 処理** - MediaPipe の GPU delegate を活用して高速処理
 - **差分更新** - 大きな変化がある場合のみ状態を更新し、不要な再レンダリングを防止
 
 **会話の基本は相手の目を見ること！** 非言語コミュニケーションに踏み込んだ評価に挑戦しました。
@@ -239,7 +206,9 @@ MediaPipe Face Landmarker を活用し、**478点の顔ランドマーク**か�
 Google Gemini による詳細な会話分析を行います：
 
 #### 会話評価（言語面）
+
 **評価基準（重要度順）**
+
 1. **会話の主導力（高）** - ユーザーが積極的に話題を提供し、会話をリードできているか
 2. **会話の継続力（高）** - 会話が途切れそうな時に、ユーザーが話題を提供しているか
 3. **話題の展開力（中）** - 一つの話題から自然に次の話題に展開できているか
@@ -247,23 +216,28 @@ Google Gemini による詳細な会話分析を行います：
 5. **質問の適切さ（中）** - 相手が答えやすく、会話を深める質問ができているか
 
 **減点要素**
-- AIが質問を投げかける回数が多い: -10点/回
-- 会話が途切れそうになった回数: -5点/回
-- ユーザーの発言が短すぎる: -3点/回
+
+- AI が質問を投げかける回数が多い: -10 点/回
+- 会話が途切れそうになった回数: -5 点/回
+- ユーザーの発言が短すぎる: -3 点/回
 
 #### 仕草評価（非言語面）
+
 **評価基準**
+
 - **笑顔の頻度と強度** - `smilingSamples`、`smileIntensityAvg`、`smileIntensityMax`から評価
-- **視線の安定性** - `gazeScoreAvg`（0-1、1が最適）で視線の安定度を測定
+- **視線の安定性** - `gazeScoreAvg`（0-1、1 が最適）で視線の安定度を測定
 - **視線の方向** - `gazeUpSamples`が多いと「嘘をついている/ごまかしている」と判断
 - **視線が下向き** - `gazeDownSamples`が多いと「自信がない」と判断
-- **視線がキョロキョロ** - 視線スコア平均が0.5未満、または視線が上下に向いた回数の合計が総サンプル数の20%超で「挙動不審」と評価
+- **視線がキョロキョロ** - 視線スコア平均が 0.5 未満、または視線が上下に向いた回数の合計が総サンプル数の 20%超で「挙動不審」と評価
 
 #### 総合スコア算出
-- 言語面と非言語面を統合して **0-100点** で評価
+
+- 言語面と非言語面を統合して **0-100 点** で評価
 - 具体的な改善点と良かった点を提示
 
 **フィードバック例**:
+
 - 会話: 「相手の趣味を掘り下げられる質問が ◎」
 - 表情: 「視線が安定していて好印象でした。もう少し笑顔があるとさらに良いです」
 
@@ -315,35 +289,6 @@ MediaPipe を活用し、高度な表情・視線分析を実現しました：
 - **非言語コミュニケーションの評価** - 心理学のサイトを参考に、唇や手で顔を隠したときにマイナス評価を与える（HackDay 中）
 
 **実装**: [frontend/src/hooks/useFacialAnalysis.ts](frontend/src/hooks/useFacialAnalysis.ts)
-<<<<<<< Updated upstream
-
-### 3. AI フィードバックシステム
-
-Google Gemini を活用した包括的なフィードバックシステムを構築しました：
-
-- **会話終了後の詳細分析** - Google Gemini 2.5 Flash による高度な会話評価（HackDay 中）
-- **言語、非言語の 2 方面** から良かった点と改善点を提示（HackDay 中）
-- **総合スコア（0-100 点）の算出** - 会話の主導力、継続力、展開力などを評価（HackDay 前）
-- **具体的なアドバイスの提供** - 次回の改善につながる実践的なフィードバック（HackDay 前）
-
-**実装**: [backend/src/services/conversation.ts#L142-L289](backend/src/services/conversation.ts#L142-L289)
-
-### 4. 会話履歴管理
-
-Prisma と Supabase を活用し、堅牢なデータ管理を実現しました：
-
-- **Prisma + Supabase** による堅牢なデータ管理（HackDay 中）
-- **セッションごとの会話記録** - 各会話を一意に識別して保存（HackDay 中）
-- **メッセージの時系列保存** - ユーザーと AI の全発言を記録（HackDay 前）
-- **音声ファイルの保存** - TTS で生成した音声を Supabase Storage に保存（HackDay 中）
-
-**スキーマ**: [prisma/schema.prisma](prisma/schema.prisma)
-
-### 5. UX へのこだわり
-
-ユーザー体験を向上させるため、以下の工夫を行いました：
-=======
->>>>>>> Stashed changes
 
 ### 3. AI フィードバックシステム
 
@@ -384,53 +329,53 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 #### フロントエンド
 
-| 技術 | 用途 |
-|------|------|
-| **Next.js 15** (App Router) | React フレームワーク |
-| **React Three Fiber** | Three.js の React ラッパー |
-| **@pixiv/three-vrm** | VRM モデルの読み込みとレンダリング |
-| **MediaPipe Tasks Vision** | 顔認識と視線追跡 |
-| **TypeScript** | 型安全な開発 |
-| **TailwindCSS 4** | スタイリング |
-| **Radix UI** | アクセシブルな UI コンポーネント |
+| 技術                        | 用途                               |
+| --------------------------- | ---------------------------------- |
+| **Next.js 15** (App Router) | React フレームワーク               |
+| **React Three Fiber**       | Three.js の React ラッパー         |
+| **@pixiv/three-vrm**        | VRM モデルの読み込みとレンダリング |
+| **MediaPipe Tasks Vision**  | 顔認識と視線追跡                   |
+| **TypeScript**              | 型安全な開発                       |
+| **TailwindCSS 4**           | スタイリング                       |
+| **Radix UI**                | アクセシブルな UI コンポーネント   |
 
 #### バックエンド
 
-| 技術 | 用途 |
-|------|------|
-| **Hono** | 軽量な Web フレームワーク |
-| **Cloudflare Workers** | エッジコンピューティング環境 |
-| **@hono/zod-openapi** | OpenAPI スキーマ生成 |
-| **Prisma** | ORM（Object-Relational Mapping） |
-| **Supabase (PostgreSQL)** | データベース |
-| **Supabase Storage** | 音声ファイル保存 |
+| 技術                      | 用途                             |
+| ------------------------- | -------------------------------- |
+| **Hono**                  | 軽量な Web フレームワーク        |
+| **Cloudflare Workers**    | エッジコンピューティング環境     |
+| **@hono/zod-openapi**     | OpenAPI スキーマ生成             |
+| **Prisma**                | ORM（Object-Relational Mapping） |
+| **Supabase (PostgreSQL)** | データベース                     |
+| **Supabase Storage**      | 音声ファイル保存                 |
 
 #### AI・API
 
-| 技術 | 用途 |
-|------|------|
+| 技術                        | 用途                         |
+| --------------------------- | ---------------------------- |
 | **Google Gemini 2.5 Flash** | 会話生成とフィードバック分析 |
-| **ElevenLabs API** | 高品質な音声合成（TTS） |
-| **Web Speech API** | 音声認識（STT） |
+| **ElevenLabs API**          | 高品質な音声合成（TTS）      |
+| **Web Speech API**          | 音声認識（STT）              |
 
 #### インフラ
 
-| 技術 | 用途 |
-|------|------|
-| **Vercel** | フロントエンドホスティング |
-| **Cloudflare Workers** | バックエンドホスティング |
-| **Supabase** | データベース・ストレージ |
-| **pnpm** | モノレポ管理 |
+| 技術                   | 用途                       |
+| ---------------------- | -------------------------- |
+| **Vercel**             | フロントエンドホスティング |
+| **Cloudflare Workers** | バックエンドホスティング   |
+| **Supabase**           | データベース・ストレージ   |
+| **pnpm**               | モノレポ管理               |
 
 #### 開発環境
 
-| 技術 | 用途 |
-|------|------|
-| **WSL2** | Windows 上の Linux 環境 |
-| **Mac** | macOS での開発 |
-| **Claude Code** | AI ペアプログラミング |
-| **Biome** | リンター・フォーマッター |
-| **Husky** | Git フック管理 |
+| 技術            | 用途                     |
+| --------------- | ------------------------ |
+| **WSL2**        | Windows 上の Linux 環境  |
+| **Mac**         | macOS での開発           |
+| **Claude Code** | AI ペアプログラミング    |
+| **Biome**       | リンター・フォーマッター |
+| **Husky**       | Git フック管理           |
 
 ### システムアーキテクチャ
 
@@ -497,17 +442,18 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 **478 点の顔ランドマーク**を用いた高精度な非言語コミュニケーション分析システムです。
 
 **技術的詳細**
-- **顔ランドマーク検出** - MediaPipe Face Landmarkerで478点の顔特徴点を検出
+
+- **顔ランドマーク検出** - MediaPipe Face Landmarker で 478 点の顔特徴点を検出
 - **視線追跡アルゴリズム**
   - 鼻先(#1)と両目の中心(#33, #263)から顔の向きを算出
   - アバター位置(x=0.25, y=0.5)との一致度を計算
-  - 視線スコア(0-1)を算出し、0.6以上で「相手を見ている」と判定
+  - 視線スコア(0-1)を算出し、0.6 以上で「相手を見ている」と判定
 - **笑顔検出アルゴリズム**
   - 左右の口角(#61, #291)と上下唇中央(#13, #14)から笑顔強度を計算
-  - 強度0.3以上で「笑顔」と判定
+  - 強度 0.3 以上で「笑顔」と判定
 - **パフォーマンス最適化**
-  - 3fps（333ms間隔）で分析し、CPU負荷を抑制
-  - GPU delegateを活用した高速処理
+  - 3fps（333ms 間隔）で分析し、CPU 負荷を抑制
+  - GPU delegate を活用した高速処理
 
 **実装**: [frontend/src/hooks/useFacialAnalysis.ts](frontend/src/hooks/useFacialAnalysis.ts)
 
@@ -516,12 +462,13 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 **Web Audio API**を活用した音声に同期した自然な口の動きを実現しました。
 
 **技術的詳細**
-- **周波数分析** - AnalyserNodeでFFTサイズ2048の高精度な周波数分析
-- **人間の音声抽出** - 300-3400Hzの周波数範囲のみを抽出して分析精度を向上
+
+- **周波数分析** - AnalyserNode で FFT サイズ 2048 の高精度な周波数分析
+- **人間の音声抽出** - 300-3400Hz の周波数範囲のみを抽出して分析精度を向上
 - **スムーズアニメーション**
   - アタック時間: 50ms（口が開くまでの時間）
   - リリース時間: 100ms（口が閉じるまでの時間）
-- **リップシンク値(0-1)** に基づいてVRMアバターの口形状（Viseme）を制御
+- **リップシンク値(0-1)** に基づいて VRM アバターの口形状（Viseme）を制御
 
 **実装**: [frontend/src/hooks/useLipSync.ts](frontend/src/hooks/useLipSync.ts)
 
@@ -530,15 +477,17 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 **Google Gemini 2.5 Flash**を活用し、会話を多角的に評価して具体的な改善点を提示します。
 
 **評価項目**
+
 - **言語面**: 会話の主導力、継続力、話題の展開力、共感力、質問の適切さ
 - **非言語面**: 笑顔の頻度・強度、視線の安定性、視線の方向（上下）
-- **減点要素**: AIの質問回数(-10点/回)、会話の途切れ(-5点/回)、短い発言(-3点/回)
+- **減点要素**: AI の質問回数(-10 点/回)、会話の途切れ(-5 点/回)、短い発言(-3 点/回)
 
 **データフロー**
-1. Prismaで会話履歴とGestureMetrics（仕草データ）を取得
-2. Gemini APIにプロンプトと会話データを送信
-3. JSON形式のフィードバックを受信・パース
-4. Supabaseに保存し、フロントエンドで表示
+
+1. Prisma で会話履歴と GestureMetrics（仕草データ）を取得
+2. Gemini API にプロンプトと会話データを送信
+3. JSON 形式のフィードバックを受信・パース
+4. Supabase に保存し、フロントエンドで表示
 
 **実装**: [backend/src/services/conversation.ts#L142-L289](backend/src/services/conversation.ts#L142-L289)
 
@@ -554,10 +503,13 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 ### 1. カスタムフックによる状態管理
 
 #### useFacialAnalysis（表情分析フック）
+
 **使用技術**: MediaPipe Tasks Vision, React Hooks
 
 **独自実装内容**
-- **478点の顔ランドマークから独自の計算式で視線・笑顔を分析**
+
+- **478 点の顔ランドマークから独自の計算式で視線・笑顔を分析**
+
   ```typescript
   // 視線スコアの計算（独自アルゴリズム）
   const horizontalMatch = 1 - Math.abs(faceDirectionX - targetDirectionX) * 3;
@@ -567,22 +519,30 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
   // 笑顔強度の計算（独自アルゴリズム）
   const intensity = Math.max(0, Math.min(1, (leftLift + rightLift) * 10));
   ```
-- **requestAnimationFrameを用いたリアルタイム分析ループ**
-- **3fps（333ms間隔）の独自フレームレート制御でパフォーマンス最適化**
-- **タイムスタンプの単調増加を保証する独自ロジック**（MediaPipeの制約に対応）
+
+- **requestAnimationFrame を用いたリアルタイム分析ループ**
+- **3fps（333ms 間隔）の独自フレームレート制御でパフォーマンス最適化**
+- **タイムスタンプの単調増加を保証する独自ロジック**（MediaPipe の制約に対応）
 
 **ファイル**: [frontend/src/hooks/useFacialAnalysis.ts](frontend/src/hooks/useFacialAnalysis.ts)
 
 #### useLipSync（リップシンクフック）
+
 **使用技術**: Web Audio API, React Hooks
 
 **独自実装内容**
-- **周波数帯域フィルタリング**（300-3400Hzの人間の音声範囲のみを抽出）
+
+- **周波数帯域フィルタリング**（300-3400Hz の人間の音声範囲のみを抽出）
   ```typescript
-  const minBin = Math.floor((frequencyRange.min * analyser.fftSize) / sampleRate);
-  const maxBin = Math.floor((frequencyRange.max * analyser.fftSize) / sampleRate);
+  const minBin = Math.floor(
+    (frequencyRange.min * analyser.fftSize) / sampleRate
+  );
+  const maxBin = Math.floor(
+    (frequencyRange.max * analyser.fftSize) / sampleRate
+  );
   ```
 - **アタック/リリース制御による自然なアニメーション**
+
   ```typescript
   // アタック（口を開く）
   const attackRate = deltaTime / attackTime;
@@ -592,26 +552,31 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
   const releaseRate = deltaTime / releaseTime;
   newValue = Math.max(current - (current - target) * releaseRate, target);
   ```
-- **FFTサイズ2048の高精度な周波数分析設定**
+
+- **FFT サイズ 2048 の高精度な周波数分析設定**
 
 **ファイル**: [frontend/src/hooks/useLipSync.ts](frontend/src/hooks/useLipSync.ts)
 
 #### useConversation（会話管理フック）
+
 **使用技術**: React Hooks, Custom API Client
 
 **独自実装内容**
-- **STT → AI応答生成 → TTS → リップシンク再生の統合フロー管理**
-- **音声再生の自動エラーハンドリング**（ブラウザのautoplay制限に対応）
-- **状態管理の最適化**（セッション、メッセージ、音声URL、エラーを一元管理）
+
+- **STT → AI 応答生成 → TTS → リップシンク再生の統合フロー管理**
+- **音声再生の自動エラーハンドリング**（ブラウザの autoplay 制限に対応）
+- **状態管理の最適化**（セッション、メッセージ、音声 URL、エラーを一元管理）
 
 **ファイル**: [frontend/src/hooks/useConversation.ts](frontend/src/hooks/useConversation.ts)
 
-### 2. Gemini AIを活用した親密度システム
+### 2. Gemini AI を活用した親密度システム
 
 **使用技術**: Google Gemini 2.5 Flash, TypeScript
 
 **独自実装内容**
-- **3段階の親密度（shy/friendly/open）に応じた動的システムプロンプト生成**
+
+- **3 段階の親密度（shy/friendly/open）に応じた動的システムプロンプト生成**
+
   ```typescript
   let systemPrompt = `あなたは ${relationshipStage} モードで話します。`;
 
@@ -621,10 +586,11 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
     systemPrompt += `打ち解けて明るいトーン...`;
   }
   ```
+
 - **絵文字使用の段階的制御ルール**の実装
 - **男子大学生が会話をリードできるような聞き役プロンプト設計**
 
-**コミットID**: [d0460af](https://github.com/jphacks/tk_b_2515/commit/d0460af01d81d6bfe968320336ca9f07f4c26a7b)
+**コミット ID**: [d0460af](https://github.com/jphacks/tk_b_2515/commit/d0460af01d81d6bfe968320336ca9f07f4c26a7b)
 **ファイル**: [backend/src/services/conversation.ts#L34-L92](backend/src/services/conversation.ts#L34-L92)
 
 ### 3. 心理学に基づく会話フィードバック評価システム
@@ -632,29 +598,34 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 **使用技術**: Google Gemini 2.5 Flash, Prisma, PostgreSQL
 
 **独自実装内容**
-- **5段階の評価基準（重要度付き）を設計**
+
+- **5 段階の評価基準（重要度付き）を設計**
   - 会話の主導力（高）、継続力（高）、展開力（中）、共感力（中）、質問の適切さ（中）
 - **減点システムの独自ルール設計**
-  - AIの質問回数: -10点/回
-  - 会話の途切れ: -5点/回
-  - 短い発言: -3点/回
+  - AI の質問回数: -10 点/回
+  - 会話の途切れ: -5 点/回
+  - 短い発言: -3 点/回
 - **視線の不安定性を数値化**
   ```typescript
   // 視線スコア平均が0.5未満、または上下視線が20%超で「挙動不審」
-  if (gazeScoreAvg < 0.5 || (gazeUpSamples + gazeDownSamples) / totalSamples > 0.2) {
+  if (
+    gazeScoreAvg < 0.5 ||
+    (gazeUpSamples + gazeDownSamples) / totalSamples > 0.2
+  ) {
     // 改善点に「視線がキョロキョロ動きまくっていて少し挙動不審」を追加
   }
   ```
-- **JSON形式のフィードバックを自動パース**してSupabaseに保存
+- **JSON 形式のフィードバックを自動パース**して Supabase に保存
 
 **ファイル**: [backend/src/services/conversation.ts#L142-L289](backend/src/services/conversation.ts#L142-L289)
 
-### 4. Hono + Zod + OpenAPIによる型安全なAPI設計
+### 4. Hono + Zod + OpenAPI による型安全な API 設計
 
 **使用技術**: Hono, @hono/zod-openapi, Zod
 
 **独自実装内容**
-- **OpenAPIスキーマを自動生成**する型安全なAPIルート設計
+
+- **OpenAPI スキーマを自動生成**する型安全な API ルート設計
   ```typescript
   const generateResponseRoute = createRoute({
     method: "post",
@@ -675,17 +646,18 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
     // ...
   });
   ```
-- **Zodバリデーションによる入力検証**（GestureMetricsなど）
-- **Cloudflare Workersへのデプロイ最適化**
+- **Zod バリデーションによる入力検証**（GestureMetrics など）
+- **Cloudflare Workers へのデプロイ最適化**
 
 **ファイル**: [backend/src/routes/api.ts](backend/src/routes/api.ts)
 
-### 5. Prismaスキーマ設計とリレーション管理
+### 5. Prisma スキーマ設計とリレーション管理
 
 **使用技術**: Prisma, PostgreSQL (Supabase)
 
 **独自実装内容**
-- **1対多、1対1のリレーションを持つ正規化されたスキーマ設計**
+
+- **1 対多、1 対 1 のリレーションを持つ正規化されたスキーマ設計**
   - `Conversation` 1:N `Message`
   - `Conversation` 1:1 `Feedback`
   - `Conversation` 1:1 `GestureMetrics`
@@ -694,12 +666,13 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **ファイル**: [prisma/schema.prisma](prisma/schema.prisma)
 
-### 6. React Three Fiber + VRMアバター制御
+### 6. React Three Fiber + VRM アバター制御
 
 **使用技術**: React Three Fiber, @pixiv/three-vrm, Three.js
 
 **独自実装内容**
-- **VRMモデルのロード・レンダリング最適化**
+
+- **VRM モデルのロード・レンダリング最適化**
 - **リップシンク値に基づいた口形状（Viseme）の動的制御**
 - **カメラアングルとライティングの調整**
 
@@ -710,6 +683,7 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 **使用技術**: Vercel, Cloudflare Workers, Supabase
 
 **独自実装内容**
+
 - **モノレポ構成**（frontend/backend）のマルチ環境デプロイ
 - **環境変数管理**（ELEVENLABS_API_KEY, GEMINI_API_KEY, DATABASE_URL）
 - **Vercel（フロントエンド）+ Cloudflare Workers（バックエンド）のハイブリッド構成**
@@ -754,29 +728,23 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 └── docs/              # ドキュメント
 ```
 
-### 主要なAPIエンドポイント
+### 主要な API エンドポイント
 
-| エンドポイント | メソッド | 説明 |
-|--------------|---------|------|
-| `/api/sessions` | POST | 新しい会話セッションを作成 |
-| `/api/sessions/:sessionId` | GET | セッションの詳細を取得 |
-| `/api/sessions/:sessionId/finish` | PATCH | セッションを終了 |
-| `/api/sessions/:sessionId/gestures` | POST | 仕草データ（GestureMetrics）を保存 |
-| `/api/sessions/:sessionId/messages` | POST | メッセージを保存 |
-| `/api/conversation/generate` | POST | AIの応答を生成（Gemini） |
-| `/api/conversation/feedback` | POST | 会話のフィードバックを生成 |
-| `/api/stt` | POST | 音声をテキストに変換（STT） |
-| `/api/tts` | POST | テキストを音声に変換（TTS） |
-| `/api/voices` | GET | 利用可能な音声一覧を取得 |
+| エンドポイント                      | メソッド | 説明                               |
+| ----------------------------------- | -------- | ---------------------------------- |
+| `/api/sessions`                     | POST     | 新しい会話セッションを作成         |
+| `/api/sessions/:sessionId`          | GET      | セッションの詳細を取得             |
+| `/api/sessions/:sessionId/finish`   | PATCH    | セッションを終了                   |
+| `/api/sessions/:sessionId/gestures` | POST     | 仕草データ（GestureMetrics）を保存 |
+| `/api/sessions/:sessionId/messages` | POST     | メッセージを保存                   |
+| `/api/conversation/generate`        | POST     | AI の応答を生成（Gemini）          |
+| `/api/conversation/feedback`        | POST     | 会話のフィードバックを生成         |
+| `/api/stt`                          | POST     | 音声をテキストに変換（STT）        |
+| `/api/tts`                          | POST     | テキストを音声に変換（TTS）        |
+| `/api/voices`                       | GET      | 利用可能な音声一覧を取得           |
 
 ---
 
 ## セットアップ
 
 詳細なセットアップ手順は [docs/setup.md](docs/setup.md) を参照してください。
-
----
-
-## デモ動画
-
-[![恋AI デモ動画](https://jphacks.com/wp-content/uploads/2025/05/JPHACKS2025_ogp.jpg)](https://www.youtube.com/watch?v=lA9EluZugD8)
