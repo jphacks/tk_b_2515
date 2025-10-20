@@ -1,8 +1,5 @@
 # 純愛を求める男子学生のためのアプリ、"恋 AI(renai)"
 
-[恋 AI](./docs/renai-title.jpg)
-
-<<<<<<< Updated upstream
 [![恋AI](./docs/renai-title.jpg)](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
 
 ### 各種リンク
@@ -57,8 +54,6 @@
 従来の AI 会話アプリはテキスト形式のみの場合が多いですが、本アプリでは以下を実現しました：
 
 #### 音声合成(TTS)とリップシンク
-
-<<<<<<< Updated upstream
 
 - **ElevenLabs API** による高品質な日本語音声合成
 - **リアルタイム音声解析** - Web Audio API（AnalyserNode）で音声の周波数データを取得
