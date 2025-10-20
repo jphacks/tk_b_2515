@@ -4,7 +4,7 @@
 
 ### 各種リンク
 
-### →→→ 恋 AI: https://renailove.vercel.app ←←←　ここから使ってみてください！！**
+### →→→ 恋 AI: https://renailove.vercel.app ←←←　ここから使ってみてください！！
 - 紹介動画: https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE
 
 ## 製品概要
