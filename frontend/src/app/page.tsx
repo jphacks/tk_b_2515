@@ -151,7 +151,7 @@ export default function HomePage() {
           <p>
             © 2025
             <Heart className="inline w-4 h-4 text-primary align-middle mx-2" />
-            恋AI - JPHACKS 2025 Project
+            恋AI - JPHACKS 2025 Projected by 調布恋AI連合
           </p>
         </footer>
       </div>
