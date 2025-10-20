@@ -4,14 +4,12 @@
 
 ### 各種リンク
 
-→→→- 恋 AI: https://renailove.vercel.app ←←←　ここから使ってみてください！！
+### →→→ 恋 AI: https://renailove.vercel.app ←←←　ここから使ってみてください！！**
 - 紹介動画: https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE
 
 ## 製品概要
 
 **恋 AI(renai)** は、AI との 3D リアルタイム会話シミュレーションを通じて、コミュニケーションスキルを向上させる Web アプリケーションです。
-
-🌐 **デプロイ URL**: [https://renai-frontend.vercel.app/](https://renai-frontend.vercel.app/)
 
 ---
 
@@ -24,6 +22,7 @@
 
 **いくら YouTube や本などで学習をしても、実際に話す経験が足りず、またオタク特有のきょどったり目線が合わない、ボソボソ喋るなどは客観的に見ることが出来ないため、その根本を解決する必要があると感じた。**
 
+
 ### 課題
 
 **ペルソナ**: 異性との交流が少ない理系大学生、異性と話すのが苦手な人、私たち
@@ -35,9 +34,10 @@
 
 本アプリは、この **言語** と **非言語** の二つの視点からフィードバックを提供することで、ユーザーの課題解決を目指します。
 
-## 製品説明（具体的な製品の説明）
 
-![アーキテクチャー図](./docs/architecture.png)
+
+
+## 製品説明（具体的な製品の説明）
 
 恋 AI は以下の **3 つのステップ** でユーザーをサポートします：
 
@@ -46,6 +46,7 @@
 3. **AI フィードバック** - Google Gemini による会話の詳細分析と具体的なアドバイスを提供
 
 ---
+
 
 ## 特長
 
@@ -76,6 +77,7 @@
 
 これにより、**既存サービスよりもリアルな会話体験** を実現しています。
 
+
 ### 2. 表情・視線の高度な分析（HackDay 中）
 
 MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**からユーザーの非言語コミュニケーションをリアルタイムに評価します：
@@ -101,6 +103,7 @@ MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**か�
 
 **会話の基本は相手の目を見ること！** 非言語コミュニケーションに踏み込んだ評価に挑戦しました。
 
+
 ### 3. 親密度システムによる段階的会話（HackDay 中）
 
 **[コミット ID: d0460af](https://github.com/jphacks/tk_b_2515/commit/d0460af01d81d6bfe968320336ca9f07f4c26a7b)**
@@ -114,6 +117,7 @@ MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**か�
 親密度を段階的に評価することで **会話の盛り上がりを再現** し、絵文字を使うことで親密度の表現幅を広げることに挑戦しました。
 
 **実装**: [backend/src/services/conversation.ts#L34-L92](backend/src/services/conversation.ts#L34-L92)
+
 
 ### 4. 言語・非言語の 2 方面フィードバック（HackDay 中）
 
@@ -157,6 +161,7 @@ Google Gemini による詳細な会話分析を行います：
 
 これにより、**既存サービスよりもリアルな会話体験** を実現しています。
 
+
 ### 2. 表情・視線の高度な分析（HackDay 中）
 
 MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**からユーザーの非言語コミュニケーションをリアルタイムに評価します：
@@ -182,6 +187,7 @@ MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**か�
 
 **会話の基本は相手の目を見ること！** 非言語コミュニケーションに踏み込んだ評価に挑戦しました。
 
+
 ### 3. 親密度システムによる段階的会話（HackDay 中）
 
 **[コミット ID: d0460af](https://github.com/jphacks/tk_b_2515/commit/d0460af01d81d6bfe968320336ca9f07f4c26a7b)**
@@ -195,6 +201,7 @@ MediaPipe Face Landmarker を活用し、**478 点の顔ランドマーク**か�
 親密度を段階的に評価することで **会話の盛り上がりを再現** し、絵文字を使うことで親密度の表現幅を広げることに挑戦しました。
 
 **実装**: [backend/src/services/conversation.ts#L34-L92](backend/src/services/conversation.ts#L34-L92)
+
 
 ### 4. 言語・非言語の 2 方面フィードバック（HackDay 中）
 
@@ -238,6 +245,8 @@ Google Gemini による詳細な会話分析を行います：
 
 ---
 
+
+
 ## 解決できること
 
 本アプリを使うことで、以下のことが可能になります：
@@ -247,6 +256,7 @@ Google Gemini による詳細な会話分析を行います：
 - 客観的に自分の会話スタイルや非言語表現を把握できる
 
 ---
+
 
 ## 今後の展望
 
@@ -260,7 +270,10 @@ Google Gemini による詳細な会話分析を行います：
 
 ---
 
+
+
 ## 注力したこと（こだわり等）
+
 
 ### 1. リアルタイム会話シミュレーション
 
@@ -274,6 +287,7 @@ Google Gemini による詳細な会話分析を行います：
 
 **実装**: [frontend/src/components/Avatar/](frontend/src/components/Avatar/)
 
+
 ### 2. 表情分析機能
 
 MediaPipe を活用し、高度な表情・視線分析を実現しました：
@@ -284,6 +298,7 @@ MediaPipe を活用し、高度な表情・視線分析を実現しました：
 - **非言語コミュニケーションの評価** - 心理学のサイトを参考に、唇や手で顔を隠したときにマイナス評価を与える（HackDay 中）
 
 **実装**: [frontend/src/hooks/useFacialAnalysis.ts](frontend/src/hooks/useFacialAnalysis.ts)
+
 
 ### 3. AI フィードバックシステム
 
@@ -296,6 +311,7 @@ Google Gemini を活用した包括的なフィードバックシステムを構
 
 **実装**: [backend/src/services/conversation.ts#L142-L289](backend/src/services/conversation.ts#L142-L289)
 
+
 ### 4. 会話履歴管理
 
 Prisma と Supabase を活用し、堅牢なデータ管理を実現しました：
@@ -307,6 +323,7 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **スキーマ**: [prisma/schema.prisma](prisma/schema.prisma)
 
+
 ### 5. UX へのこだわり
 
 ユーザー体験を向上させるため、以下の工夫を行いました：
@@ -317,6 +334,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 - **本番環境へデプロイ** - Vercel + Cloudflare Workers で本番環境を構築（HackDay 中）
 
 ---
+
+
 
 ## 開発技術
 
@@ -417,6 +436,9 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 ---
 
+
+![アーキテクチャー図](./docs/architecture.png)
+
 ## 独自技術・注力ポイント
 
 ### ハッカソンで開発した独自機能
@@ -486,12 +508,15 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **実装**: [backend/src/services/conversation.ts#L142-L289](backend/src/services/conversation.ts#L142-L289)
 
+
 ### 特に力を入れたコミット
 
 - **親密度システムの実装**: [d0460af](https://github.com/jphacks/tk_b_2515/commit/d0460af01d81d6bfe968320336ca9f07f4c26a7b)
   - 親密度に段階を追加し、絵文字の多様性を抑制することで自然な会話を実現しました
 
 ---
+
+
 
 ## 独自で開発したもの（ツール・ライブラリを活用した実装）
 
@@ -520,6 +545,7 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 - **タイムスタンプの単調増加を保証する独自ロジック**（MediaPipe の制約に対応）
 
 **ファイル**: [frontend/src/hooks/useFacialAnalysis.ts](frontend/src/hooks/useFacialAnalysis.ts)
+
 
 #### useLipSync（リップシンクフック）
 
@@ -552,6 +578,7 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **ファイル**: [frontend/src/hooks/useLipSync.ts](frontend/src/hooks/useLipSync.ts)
 
+
 #### useConversation（会話管理フック）
 
 **使用技術**: React Hooks, Custom API Client
@@ -563,6 +590,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 - **状態管理の最適化**（セッション、メッセージ、音声 URL、エラーを一元管理）
 
 **ファイル**: [frontend/src/hooks/useConversation.ts](frontend/src/hooks/useConversation.ts)
+
+
 
 ### 2. Gemini AI を活用した親密度システム
 
@@ -587,6 +616,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **コミット ID**: [d0460af](https://github.com/jphacks/tk_b_2515/commit/d0460af01d81d6bfe968320336ca9f07f4c26a7b)
 **ファイル**: [backend/src/services/conversation.ts#L34-L92](backend/src/services/conversation.ts#L34-L92)
+
+
 
 ### 3. 心理学に基づく会話フィードバック評価システム
 
@@ -613,6 +644,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 - **JSON 形式のフィードバックを自動パース**して Supabase に保存
 
 **ファイル**: [backend/src/services/conversation.ts#L142-L289](backend/src/services/conversation.ts#L142-L289)
+
+
 
 ### 4. Hono + Zod + OpenAPI による型安全な API 設計
 
@@ -646,6 +679,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **ファイル**: [backend/src/routes/api.ts](backend/src/routes/api.ts)
 
+
+
 ### 5. Prisma スキーマ設計とリレーション管理
 
 **使用技術**: Prisma, PostgreSQL (Supabase)
@@ -673,6 +708,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 **ファイル**: [frontend/src/hooks/useVRM.ts](frontend/src/hooks/useVRM.ts), [frontend/src/components/Avatar/](frontend/src/components/Avatar/)
 
+
+
 ### 7. デプロイ・インフラ構築
 
 **使用技術**: Vercel, Cloudflare Workers, Supabase
@@ -685,6 +722,8 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 - **Supabase PostgreSQL + Storage**の統合
 
 ---
+
+
 
 ## プロジェクト構成
 
