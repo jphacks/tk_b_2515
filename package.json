@@ -5,7 +5,7 @@
 	"description": "恋AI - AI-powered conversation practice application",
 	"packageManager": "pnpm@10.14.0",
 	"scripts": {
-		"dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+		"dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
 		"dev:frontend": "pnpm --filter frontend dev",
 		"dev:backend": "pnpm --filter backend dev",
 		"build:frontend": "pnpm --filter frontend build",
