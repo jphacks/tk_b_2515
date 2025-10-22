@@ -44,7 +44,7 @@ app.use(
 
 // ルート
 app.get("/", (c) => {
-  return c.text("Hello Hono!");
+  return c.text("Hello Maki!");
 });
 
 // APIルート

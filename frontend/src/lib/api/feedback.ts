@@ -1,10 +1,10 @@
-import { apiClient } from "./client";
 import type {
 	CreateFeedbackRequest,
 	CreateFeedbackResponse,
 	GenerateFeedbackRequest,
 	GenerateFeedbackResponse,
 } from "@/types/api";
+import { apiClient } from "./client";
 
 /**
  * フィードバックAPI

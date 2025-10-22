@@ -148,10 +148,7 @@ export async function textToSpeechUrl(
 				lastError = new Error(String(error));
 			}
 
-			console.error(
-				`TTS attempt ${attempt + 1} failed:`,
-				lastError.message,
-			);
+			console.error(`TTS attempt ${attempt + 1} failed:`, lastError.message);
 			// Log full error details separately for better debugging
 			console.error("Full error details:", error);
 		}
@@ -159,9 +156,7 @@ export async function textToSpeechUrl(
 
 	// すべてのリトライが失敗した場合
 	if (fallbackToSilence) {
-		console.warn(
-			"TTS failed after all retries, falling back to silent audio",
-		);
+		console.warn("TTS failed after all retries, falling back to silent audio");
 		return createSilentAudio();
 	}
 

@@ -12,11 +12,11 @@ config({ path: resolve(__dirname, "../../.env") });
 const port = Number(process.env.PORT) || 8787;
 console.log(process.env.NEXT_PUBLIC_API_URL);
 serve(
-  {
-    fetch: app.fetch,
-    port,
-  },
-  () => {
-    console.log(`Server is running on http://localhost:${port}`);
-  }
+	{
+		fetch: app.fetch,
+		port,
+	},
+	() => {
+		console.log(`Server is running on http://localhost:${port}`);
+	},
 );

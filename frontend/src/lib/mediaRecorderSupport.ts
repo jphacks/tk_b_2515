@@ -50,7 +50,10 @@ export function logMediaRecorderSupport(): void {
 	const support = checkMediaRecorderSupport();
 
 	console.log("=== MediaRecorder サポート情報 ===");
-	console.log("サポート状況:", support.isSupported ? "✓ サポート" : "✗ 非サポート");
+	console.log(
+		"サポート状況:",
+		support.isSupported ? "✓ サポート" : "✗ 非サポート",
+	);
 
 	if (support.isSupported) {
 		console.log("推奨MIMEタイプ:", support.recommendedMimeType || "なし");

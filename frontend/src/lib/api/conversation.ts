@@ -1,14 +1,14 @@
-import { apiClient } from "./client";
 import type {
 	ConversationSession,
-	CreateSessionResponse,
-	GetSessionResponse,
-	GetSessionsResponse,
 	CreateMessageRequest,
 	CreateMessageResponse,
+	CreateSessionResponse,
 	GenerateConversationRequest,
 	GenerateConversationResponse,
+	GetSessionResponse,
+	GetSessionsResponse,
 } from "@/types/api";
+import { apiClient } from "./client";
 
 /**
  * セッション管理API
@@ -29,8 +29,7 @@ export const sessionApi = {
 	 * すべての会話セッションを取得
 	 */
 	async getSessions(): Promise<ConversationSession[]> {
-		const response =
-			await apiClient.get<GetSessionsResponse>("/sessions");
+		const response = await apiClient.get<GetSessionsResponse>("/sessions");
 		return response.sessions;
 	},
 

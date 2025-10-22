@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-	sessionApi,
 	conversationApi,
+	sessionApi,
 	speechToText,
 	textToSpeechUrl,
 } from "@/lib/api";
@@ -51,8 +51,7 @@ export function useConversation(options: UseConversationOptions) {
 			}));
 			return session;
 		} catch (error) {
-			const err =
-				error instanceof Error ? error : new Error("Unknown error");
+			const err = error instanceof Error ? error : new Error("Unknown error");
 			setState((prev) => ({
 				...prev,
 				error: err,
@@ -74,8 +73,7 @@ export function useConversation(options: UseConversationOptions) {
 				isProcessing: false,
 			}));
 		} catch (error) {
-			const err =
-				error instanceof Error ? error : new Error("Unknown error");
+			const err = error instanceof Error ? error : new Error("Unknown error");
 			setState((prev) => ({
 				...prev,
 				error: err,
@@ -172,8 +170,7 @@ export function useConversation(options: UseConversationOptions) {
 
 				return aiResponse.assistantMessage;
 			} catch (error) {
-				const err =
-					error instanceof Error ? error : new Error("Unknown error");
+				const err = error instanceof Error ? error : new Error("Unknown error");
 				console.error("Conversation error:", err);
 				setState((prev) => ({
 					...prev,
@@ -183,7 +180,7 @@ export function useConversation(options: UseConversationOptions) {
 				return null;
 			}
 		},
-		[state.session, systemPrompt, ttsVoiceId, onAudioReady]
+		[state.session, systemPrompt, ttsVoiceId, onAudioReady],
 	);
 
 	// クリーンアップ

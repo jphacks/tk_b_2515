@@ -2,39 +2,39 @@
 
 import {
   ArrowLeft,
+  ChevronDown,
+  ChevronUp,
   Heart,
+  Loader2,
+  MessageSquare,
   Mic,
   MicOff,
   Phone,
   Video,
   VideoOff,
-  Loader2,
-  MessageSquare,
   X,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  useState,
+  memo,
   Suspense,
+  useCallback,
   useEffect,
   useRef,
-  useCallback,
-  memo,
+  useState,
 } from "react";
+import { ConversationHistory } from "@/components/ConversationHistory";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useMediaDevices } from "@/hooks/useMediaDevices";
-import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
-import { useConversation } from "@/hooks/useConversation";
 import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
-import { ConversationHistory } from "@/components/ConversationHistory";
-import dynamic from "next/dynamic";
-import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
-import { config } from "@/lib/config";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useConversation } from "@/hooks/useConversation";
+import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
+import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { gestureApi } from "@/lib/api";
+import { config } from "@/lib/config";
+import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 import type { SaveGestureMetricsRequest } from "@/types/api";
 
 // VRMアバターを動的インポート（SSR回避）

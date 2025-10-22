@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Smile, Frown, AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Frown, Smile } from "lucide-react";
 import type { FacialMetrics } from "@/hooks/useFacialAnalysis";
 
 interface FacialFeedbackProps {
@@ -86,9 +86,7 @@ export function FacialFeedback({
 						) : (
 							<Frown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
 						)}
-						<span className="text-xs font-semibold text-foreground">
-							笑顔
-						</span>
+						<span className="text-xs font-semibold text-foreground">笑顔</span>
 					</div>
 					<div className="space-y-1">
 						<div className="flex items-center justify-between text-xs text-muted-foreground">
