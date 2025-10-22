@@ -70,7 +70,11 @@ export function useLipSync(
 			// 人間の音声周波数範囲のみを分析
 			let sum = 0;
 			let count = 0;
-			for (let i = minBin; i <= maxBin && i < dataArrayRef.current.length; i++) {
+			for (
+				let i = minBin;
+				i <= maxBin && i < dataArrayRef.current.length;
+				i++
+			) {
 				sum += dataArrayRef.current[i];
 				count++;
 			}
@@ -100,10 +104,7 @@ export function useLipSync(
 			} else {
 				// リリース（口を閉じる）
 				const releaseRate = deltaTime / releaseTime;
-				newValue = Math.max(
-					current - (current - target) * releaseRate,
-					target,
-				);
+				newValue = Math.max(current - (current - target) * releaseRate, target);
 			}
 
 			currentValueRef.current = newValue;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
 export interface VideoStreamProps {
 	stream: MediaStream | null;
@@ -69,7 +69,9 @@ export const VideoStream = forwardRef<VideoStreamRef, VideoStreamProps>(
 				onVideoReady(videoElement);
 			};
 
-			videoElement.addEventListener("loadedmetadata", handleLoadedMetadata, { once: true });
+			videoElement.addEventListener("loadedmetadata", handleLoadedMetadata, {
+				once: true,
+			});
 
 			// 既にメタデータがロード済みの場合は即座に呼び出す
 			if (videoElement.readyState >= 1) {
@@ -77,7 +79,10 @@ export const VideoStream = forwardRef<VideoStreamRef, VideoStreamProps>(
 			}
 
 			return () => {
-				videoElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+				videoElement.removeEventListener(
+					"loadedmetadata",
+					handleLoadedMetadata,
+				);
 			};
 		}, [stream, onVideoReady]);
 
@@ -89,7 +94,7 @@ export const VideoStream = forwardRef<VideoStreamRef, VideoStreamProps>(
 				autoPlay={autoPlay}
 				playsInline={playsInline}
 				style={{
-					transform: 'scaleX(-1)', // ミラー表示（ユーザーが見やすいように）
+					transform: "scaleX(-1)", // ミラー表示（ユーザーが見やすいように）
 				}}
 			/>
 		);

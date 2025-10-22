@@ -67,7 +67,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
 					if (!mimeType) {
 						// フォールバック: MIMEタイプなしで試す
-						console.warn("サポートされている音声MIMEタイプが見つかりませんでした。デフォルト設定を使用します。");
+						console.warn(
+							"サポートされている音声MIMEタイプが見つかりませんでした。デフォルト設定を使用します。",
+						);
 					}
 				}
 
@@ -75,7 +77,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 					? {
 							mimeType,
 							audioBitsPerSecond: options?.audioBitsPerSecond || 128000,
-					  }
+						}
 					: {};
 
 				// MediaRecorderのインスタンスを作成（音声ストリームのみ使用）

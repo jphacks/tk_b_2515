@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/card";
 import { Heart, User } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { Message } from "@/types/api";
 
 interface ConversationHistoryProps {
@@ -13,9 +13,7 @@ export function ConversationHistory({
 }: ConversationHistoryProps) {
 	if (messages.length === 0) {
 		return (
-			<div
-				className={`flex items-center justify-center h-full ${className}`}
-			>
+			<div className={`flex items-center justify-center h-full ${className}`}>
 				<div className="text-center space-y-2">
 					<p className="text-muted-foreground text-sm">
 						まだ会話が始まっていません
@@ -73,13 +71,10 @@ export function ConversationHistory({
 									{isUser ? "あなた" : "AI女子"}
 								</span>
 								<span className="text-xs text-muted-foreground">
-									{new Date(message.createdAt).toLocaleTimeString(
-										"ja-JP",
-										{
-											hour: "2-digit",
-											minute: "2-digit",
-										},
-									)}
+									{new Date(message.createdAt).toLocaleTimeString("ja-JP", {
+										hour: "2-digit",
+										minute: "2-digit",
+									})}
 								</span>
 							</div>
 							<p className="text-sm leading-relaxed whitespace-pre-wrap">

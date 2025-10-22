@@ -1,15 +1,15 @@
-import { getGeminiClient } from "./ai-client";
 import type { GoogleGenAI } from "@google/genai";
+import { getGeminiClient } from "./ai-client";
 
 export interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
+	role: "user" | "assistant";
+	content: string;
 }
 
 export interface ConversationContext {
-  messages: ConversationMessage[];
-  systemPrompt?: string;
-  relationshipStage?: "shy" | "friendly" | "open";
+	messages: ConversationMessage[];
+	systemPrompt?: string;
+	relationshipStage?: "shy" | "friendly" | "open";
 }
 
 /**
@@ -20,21 +20,21 @@ export interface ConversationContext {
  * @returns AIによる応答テキスト
  */
 export async function generateConversationResponse(
-  apiKey: string,
-  context: ConversationContext,
-  options?: {
-    temperature?: number;
-    maxTokens?: number;
-    modelName?: string;
-  }
+	apiKey: string,
+	context: ConversationContext,
+	options?: {
+		temperature?: number;
+		maxTokens?: number;
+		modelName?: string;
+	},
 ): Promise<string> {
-  const client = getGeminiClient(apiKey) as GoogleGenAI;
-  const modelName = options?.modelName || "	gemini-2.5-flash-lite";
+	const client = getGeminiClient(apiKey) as GoogleGenAI;
+	const modelName = options?.modelName || "	gemini-2.5-flash-lite";
 
-  // relationshipStage を使ったシステムプロンプト設定
-  const relationshipStage = context.relationshipStage || "shy";
+	// relationshipStage を使ったシステムプロンプト設定
+	const relationshipStage = context.relationshipStage || "shy";
 
-  let systemPrompt = `
+	let systemPrompt = `
 あなたは20歳の女子大学生です。
 ユーザー（男子大学生）との会話を通じて、彼が自然に会話をリードできるようサポートしてください。
 あなたは ${relationshipStage} モードで話します。
@@ -50,8 +50,8 @@ export async function generateConversationResponse(
 - ユーザーを呼ぶときは常に「君」と呼び、名前に「君」を付ける呼び方は絶対にしない
 `;
 
-  if (relationshipStage === "shy") {
-    systemPrompt += `
+	if (relationshipStage === "shy") {
+		systemPrompt += `
 【stage: shy（初対面）】
 - 少し人見知りで、まだ距離を取っている
 - 絵文字は使わない
@@ -62,8 +62,8 @@ export async function generateConversationResponse(
 「最近忙しい？」→「うん、ちょっとね。〇〇くんは？」
 「今日何食べた？」→「マックかな」
 `;
-  } else if (relationshipStage === "friendly") {
-    systemPrompt += `
+	} else if (relationshipStage === "friendly") {
+		systemPrompt += `
 【stage: friendly（普通に会話中）】
 - 打ち解けて明るいトーン
 - 「〜だね」「〜やん」など自然な言葉遣い
@@ -73,8 +73,8 @@ export async function generateConversationResponse(
 「映画見た」→「えーいいな どんな映画？」
 「明日バイト」→「そうなんだ〜！どんなバイトしてるの？」
 `;
-  } else if (relationshipStage === "open") {
-    systemPrompt += `
+	} else if (relationshipStage === "open") {
+		systemPrompt += `
 【stage: open（仲良し）】
 - 親しみが強く、素直に感情を表現する
 - 「うける笑」「まじで！？」「それわかる〜！」など自然な反応
@@ -84,42 +84,42 @@ export async function generateConversationResponse(
 「旅行行った」→「いいなぁ〜！どこ行ったの？写真見たい」
 「課題終わらん」→「わかる〜！一緒にやりたいくらい笑」
 `;
-  }
+	}
 
-  // context.systemPrompt が明示的に与えられている場合はそれを優先
-  if (context.systemPrompt) {
-    systemPrompt = context.systemPrompt;
-  }
+	// context.systemPrompt が明示的に与えられている場合はそれを優先
+	if (context.systemPrompt) {
+		systemPrompt = context.systemPrompt;
+	}
 
-  // 会話履歴をGemini形式に変換
-  const contents = context.messages.map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
+	// 会話履歴をGemini形式に変換
+	const contents = context.messages.map((msg) => ({
+		role: msg.role === "assistant" ? "model" : "user",
+		parts: [{ text: msg.content }],
+	}));
 
-  // 最後のユーザーメッセージで応答を生成
-  const lastMessage = contents[contents.length - 1];
-  if (!lastMessage || lastMessage.role !== "user") {
-    throw new Error("Last message must be from user");
-  }
+	// 最後のユーザーメッセージで応答を生成
+	const lastMessage = contents[contents.length - 1];
+	if (!lastMessage || lastMessage.role !== "user") {
+		throw new Error("Last message must be from user");
+	}
 
-  // 会話履歴とシステムプロンプトを含めてリクエストを構築
-  const result = await client.models.generateContent({
-    model: modelName,
-    contents: contents,
-    config: {
-      temperature: options?.temperature ?? 0.9,
-      maxOutputTokens: options?.maxTokens ?? 150,
-      systemInstruction: systemPrompt,
-    },
-  });
+	// 会話履歴とシステムプロンプトを含めてリクエストを構築
+	const result = await client.models.generateContent({
+		model: modelName,
+		contents: contents,
+		config: {
+			temperature: options?.temperature ?? 0.9,
+			maxOutputTokens: options?.maxTokens ?? 150,
+			systemInstruction: systemPrompt,
+		},
+	});
 
-  const responseText = result.text;
-  if (!responseText) {
-    throw new Error("No response text generated");
-  }
+	const responseText = result.text;
+	if (!responseText) {
+		throw new Error("No response text generated");
+	}
 
-  return responseText;
+	return responseText;
 }
 
 /**
@@ -129,36 +129,36 @@ export async function generateConversationResponse(
  * @returns フィードバック（良かった点と改善点）
  */
 export interface GestureSummary {
-  totalSamples: number;
-  smilingSamples: number;
-  smileIntensityAvg: number;
-  smileIntensityMax: number;
-  gazeScoreAvg: number;
-  lookingSamples: number;
-  gazeUpSamples: number;
-  gazeDownSamples: number;
+	totalSamples: number;
+	smilingSamples: number;
+	smileIntensityAvg: number;
+	smileIntensityMax: number;
+	gazeScoreAvg: number;
+	lookingSamples: number;
+	gazeUpSamples: number;
+	gazeDownSamples: number;
 }
 
 export async function generateConversationFeedback(
-  apiKey: string,
-  messages: ConversationMessage[],
-  gestureSummary?: GestureSummary
+	apiKey: string,
+	messages: ConversationMessage[],
+	gestureSummary?: GestureSummary,
 ): Promise<{
-  goodPoints: string;
-  improvementPoints: string;
-  overallScore: number | null;
-  gestureGoodPoints?: string;
-  gestureImprovementPoints?: string;
+	goodPoints: string;
+	improvementPoints: string;
+	overallScore: number | null;
+	gestureGoodPoints?: string;
+	gestureImprovementPoints?: string;
 }> {
-  const client = getGeminiClient(apiKey) as GoogleGenAI;
+	const client = getGeminiClient(apiKey) as GoogleGenAI;
 
-  // 会話履歴をテキストに変換
-  const conversationText = messages
-    .map((msg) => `${msg.role === "user" ? "ユーザー" : "AI"}: ${msg.content}`)
-    .join("\n");
+	// 会話履歴をテキストに変換
+	const conversationText = messages
+		.map((msg) => `${msg.role === "user" ? "ユーザー" : "AI"}: ${msg.content}`)
+		.join("\n");
 
-  const gestureInfo = gestureSummary
-    ? `仕草計測データ:
+	const gestureInfo = gestureSummary
+		? `仕草計測データ:
 - 総サンプル数: ${gestureSummary.totalSamples}
 - 笑顔検出回数: ${gestureSummary.smilingSamples}
 - 笑顔強度平均: ${gestureSummary.smileIntensityAvg.toFixed(2)}
@@ -167,9 +167,9 @@ export async function generateConversationFeedback(
 - 視線がターゲットを向いていた回数: ${gestureSummary.lookingSamples}
 - 視線が上方向だった回数: ${gestureSummary.gazeUpSamples}
 - 視線が下方向だった回数: ${gestureSummary.gazeDownSamples}`
-    : "仕草データはありません";
+		: "仕草データはありません";
 
-  const prompt = `以下の会話と仕草データを分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
+	const prompt = `以下の会話と仕草データを分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
 
 【会話内容】
 ${conversationText}
@@ -236,54 +236,54 @@ ${gestureInfo}
 - 男子大学生が女子大学生との会話でリードできるようになることが目標です
 - 実戦的な会話スキルの向上を重視してください`;
 
-  const result = await client.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: prompt,
-  });
+	const result = await client.models.generateContent({
+		model: "gemini-2.5-flash-lite",
+		contents: prompt,
+	});
 
-  const responseText = result.text;
-  if (!responseText) {
-    throw new Error("No response text generated for feedback");
-  }
+	const responseText = result.text;
+	if (!responseText) {
+		throw new Error("No response text generated for feedback");
+	}
 
-  // JSONを抽出してパース
-  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Failed to parse feedback response");
-  }
+	// JSONを抽出してパース
+	const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+	if (!jsonMatch) {
+		throw new Error("Failed to parse feedback response");
+	}
 
-  const feedback = JSON.parse(jsonMatch[0]);
+	const feedback = JSON.parse(jsonMatch[0]);
 
-  const conversationFeedback = feedback.conversation ?? {};
-  const gestureFeedback = feedback.gestures ?? {};
+	const conversationFeedback = feedback.conversation ?? {};
+	const gestureFeedback = feedback.gestures ?? {};
 
-  const toText = (value: unknown): string => {
-    if (Array.isArray(value)) {
-      return value.join("\n");
-    }
-    if (typeof value === "string") {
-      return value;
-    }
-    return "";
-  };
+	const toText = (value: unknown): string => {
+		if (Array.isArray(value)) {
+			return value.join("\n");
+		}
+		if (typeof value === "string") {
+			return value;
+		}
+		return "";
+	};
 
-  return {
-    goodPoints: toText(conversationFeedback.goodPoints ?? feedback.goodPoints),
-    improvementPoints: toText(
-      conversationFeedback.improvementPoints ?? feedback.improvementPoints
-    ),
-    overallScore:
-      (typeof feedback.overallScore === "number"
-        ? feedback.overallScore
-        : null) ??
-      (typeof conversationFeedback.score === "number"
-        ? conversationFeedback.score
-        : null),
-    gestureGoodPoints: toText(
-      gestureFeedback.goodPoints ?? feedback.gestureGoodPoints
-    ),
-    gestureImprovementPoints: toText(
-      gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints
-    ),
-  };
+	return {
+		goodPoints: toText(conversationFeedback.goodPoints ?? feedback.goodPoints),
+		improvementPoints: toText(
+			conversationFeedback.improvementPoints ?? feedback.improvementPoints,
+		),
+		overallScore:
+			(typeof feedback.overallScore === "number"
+				? feedback.overallScore
+				: null) ??
+			(typeof conversationFeedback.score === "number"
+				? conversationFeedback.score
+				: null),
+		gestureGoodPoints: toText(
+			gestureFeedback.goodPoints ?? feedback.gestureGoodPoints,
+		),
+		gestureImprovementPoints: toText(
+			gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints,
+		),
+	};
 }
