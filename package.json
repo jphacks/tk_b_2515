@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"description": "恋AI - AI-powered conversation practice application",
-	"packageManager": "pnpm@10.14.0",
+	"packageManager": "pnpm@9.12.3",
 	"scripts": {
 		"dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
 		"dev:frontend": "pnpm --filter frontend dev",
