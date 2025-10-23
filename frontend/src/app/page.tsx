@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -16,17 +18,22 @@ export default function HomePage() {
       {/* Content with higher z-index */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="h-[6vh] px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+        <header className="h-[12vh] px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
           {/* Left: icon */}
           <div className="w-24 flex items-center justify-center h-full">
-            <Link href="/" className="relative h-[100%] w-[100%] block">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="relative h-[200%] w-[200%] cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label="ページを更新"
+            >
               <Image
                 src="/a.png"
                 alt="恋AIのアイコン"
                 fill
-                className="object-cover rounded-full"
+                className="object-contain"
               />
-            </Link>
+            </button>
           </div>
 
           {/* Center: title */}

@@ -171,10 +171,14 @@ api.post("/sessions", async (c) => {
 	}
 });
 
-// すべてのセッションを取得
+// すべてのセッションを取得（オプション: userIdでフィルタ）
 api.get("/sessions", async (c) => {
 	try {
+		// クエリパラメータからuserIdを取得
+		const userId = c.req.query("userId");
+
 		const sessions = await prisma.conversation.findMany({
+			where: userId ? { userId } : undefined,
 			orderBy: { createdAt: "desc" },
 			include: {
 				messages: true,
