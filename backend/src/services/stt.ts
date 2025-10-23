@@ -16,6 +16,17 @@ export async function getVoiceById(
 	return voices.find((v) => v.voiceId === voiceId) || null;
 }
 
+/**
+ * 日本語と英語以外の文字が含まれているかチェック
+ */
+function containsUnsupportedLanguage(text: string): boolean {
+	// 日本語（ひらがな、カタカナ、漢字）、英語（ASCII）、数字、一般的な記号を除外
+	const allowedPattern = /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uFF00-\uFFEFa-zA-Z0-9\s.,!?、。！？\-_()（）「」『』【】\n\r]*$/;
+
+	// パターンにマッチしない = 許可されていない文字が含まれている
+	return !allowedPattern.test(text);
+}
+
 export async function speechToText(
 	apiKey: string,
 	audioFile: Blob | File,
@@ -45,15 +56,24 @@ export async function speechToText(
 		console.log("ElevenLabs API response:", { result });
 
 		// Handle different response types
+		let transcribedText = "";
 		if ("text" in result) {
-			return result.text || "";
-		}
-		if ("transcription" in result && typeof result.transcription === "string") {
-			return result.transcription;
+			transcribedText = result.text || "";
+		} else if ("transcription" in result && typeof result.transcription === "string") {
+			transcribedText = result.transcription;
+		} else {
+			console.warn("Unexpected STT result format:", result);
+			return "";
 		}
 
-		console.warn("Unexpected STT result format:", result);
-		return "";
+		// 日本語と英語以外の言語チェック
+		if (containsUnsupportedLanguage(transcribedText)) {
+			console.warn("Detected unsupported language in transcription:", transcribedText);
+			// エラーではなく、ユーザーに日本語か英語で話すよう促すプレースホルダーテキストを返す
+			return "[UNSUPPORTED_LANGUAGE]";
+		}
+
+		return transcribedText;
 	} catch (error) {
 		console.error("Error in speechToText service:", {
 			error: error instanceof Error ? error.message : String(error),

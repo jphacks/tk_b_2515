@@ -398,38 +398,43 @@ export default function SimulationPage() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
       <header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
-                {/* Left: icon */}
-                <div className="w-24 flex items-center justify-center h-full">
-                  <div className="relative h-[80%] w-[80%]">
-                    <Image
-                      src="/a.png"
-                      alt="恋AIのアイコン"
-                      fill
-                      className="object-cover rounded-full"
-                    />
-                  </div>
-                </div>
-      
-                {/* Center: title */}
-                <div className="flex items-center gap-2">
-                  <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-                  <span className="font-bold text-foreground text-lg">恋AI</span>
-                </div>
-      
-                {/* Right: Home button */}
-                <div className="w-24 flex items-center justify-center">
-                  <Link href="/">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-full hover:bg-primary/10"
-                    >
-                      {/* Keep ArrowLeft for a recognizable 'back/home' affordance */}
-                      ホーム
-                    </Button>
-                  </Link>
-                </div>
-              </header>
+        {/* Left: icon */}
+        <div className="w-24 flex items-center justify-center h-full">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="relative h-[200%] w-[200%] cursor-pointer hover:opacity-80 transition-opacity"
+            aria-label="ページを更新"
+          >
+            <Image
+              src="/a.png"
+              alt="恋AIのアイコン"
+              fill
+              className="object-contain"
+            />
+          </button>
+        </div>
+
+        {/* Center: title */}
+        <div className="flex items-center gap-2">
+          <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
+          <span className="font-bold text-foreground text-lg">恋AI</span>
+        </div>
+
+        {/* Right: Home button */}
+        <div className="w-24 flex items-center justify-center">
+          <Link href="/">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full hover:bg-primary/10"
+            >
+              {/* Keep ArrowLeft for a recognizable 'back/home' affordance */}
+              ホーム
+            </Button>
+          </Link>
+        </div>
+      </header>
 
       {!conversationStarted ? (
         /* Initial State - Full Screen Welcome */

@@ -44,6 +44,13 @@ export function useConversation(options: UseConversationOptions) {
 		try {
 			setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 			const session = await sessionApi.createSession();
+
+			// userIdをlocalStorageに保存して永続化
+			if (session.userId) {
+				localStorage.setItem('conversationUserId', session.userId);
+				console.log('User ID saved to localStorage:', session.userId);
+			}
+
 			setState((prev) => ({
 				...prev,
 				session,
