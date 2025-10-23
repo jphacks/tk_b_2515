@@ -36,9 +36,10 @@ export default function HomePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="rounded-full hover:bg-primary/10"
+                className="rounded-full hover:bg-primary/10 flex items-center"
               >
-                ホーム
+                <Earth className="w-4 h-4 mr-2" />
+                言語選択
               </Button>
             </Link>
           </div>
