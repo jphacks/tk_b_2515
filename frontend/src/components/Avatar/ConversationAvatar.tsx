@@ -49,7 +49,7 @@ export default function ConversationAvatar({
 	return (
 		<div className={`relative ${className}`}>
 			<Canvas
-				camera={{ position: [0, 1.6, 0.82], fov: 30 }}
+				camera={{ position: [0, 1.6, 1.82], fov: 30 }}	// z軸正の方向はアバターから離れる向き
 				gl={{ alpha: true, antialias: true }}
 				style={{ width: "100%", height: "100%" }}
 			>
