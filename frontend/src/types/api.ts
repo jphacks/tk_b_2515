@@ -64,6 +64,7 @@ export interface Message {
 
 export interface ConversationSession {
 	id: string;
+	userId?: string | null;
 	status: "active" | "completed";
 	createdAt: string;
 	updatedAt: string;
