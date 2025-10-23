@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Sparkles, MessageCircle, TrendingUp, Earth } from "lucide-react";
+import {
+  Heart,
+  Sparkles,
+  MessageCircle,
+  TrendingUp,
+  Earth,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -9,7 +15,6 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col relative">
       {/* Content with higher z-index */}
       <div className="relative z-10 flex flex-col min-h-screen">
-
         {/* Header */}
         <header className="h-[6vh] px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
           {/* Left: icon */}
@@ -97,7 +102,9 @@ export default function HomePage() {
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <MessageCircle className="w-6 h-6 text-primary" />
                     </div>
-                    <h3 className="text-lg font-semibold mt-1">リアルタイム会話</h3>
+                    <h3 className="text-lg font-semibold mt-1">
+                      リアルタイム会話
+                    </h3>
                   </div>
                   <p className="text-muted-foreground text-sm mt-2">
                     "まき"と自然な会話を楽しみながら、コミュニケーションスキルを磨けます
@@ -109,7 +116,9 @@ export default function HomePage() {
                     <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                       <TrendingUp className="w-6 h-6 text-accent" />
                     </div>
-                    <h3 className="text-lg font-semibold mt-1">的確なフィードバック</h3>
+                    <h3 className="text-lg font-semibold mt-1">
+                      的確なフィードバック
+                    </h3>
                   </div>
                   <p className="text-muted-foreground text-sm mt-2">
                     会話終了後、AIが良かった点と改善点をフィードバックします
@@ -137,10 +146,11 @@ export default function HomePage() {
           <p>
             © 2025
             <Heart className="inline w-4 h-4 text-primary align-middle mx-2" />
-            恋AI - JPHACKS 2025 Project
+            恋AI - JPHACKS 2025 Projected by 調布恋AI連合
           </p>
         </footer>
       </div>
     </div>
   );
 }
+S;
