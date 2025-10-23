@@ -2,39 +2,40 @@
 
 import {
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
   Heart,
-  Loader2,
-  MessageSquare,
   Mic,
   MicOff,
   Phone,
   Video,
   VideoOff,
+  Loader2,
+  MessageSquare,
   X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  memo,
+  useState,
   Suspense,
-  useCallback,
   useEffect,
   useRef,
-  useState,
+  useCallback,
+  memo,
 } from "react";
-import { ConversationHistory } from "@/components/ConversationHistory";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
-import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { useConversation } from "@/hooks/useConversation";
-import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
-import { gestureApi } from "@/lib/api";
-import { config } from "@/lib/config";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
+import { useConversation } from "@/hooks/useConversation";
+import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
+import { ConversationHistory } from "@/components/ConversationHistory";
+import dynamic from "next/dynamic";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
+import { config } from "@/lib/config";
+import { gestureApi } from "@/lib/api";
 import type { SaveGestureMetricsRequest } from "@/types/api";
 
 // VRMアバターを動的インポート（SSR回避）
@@ -393,22 +394,39 @@ export default function SimulationPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
-      <header className="p-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="rounded-full bg-[#f7c6d5] text-foreground hover:bg-[#ef5784ff] shadow-sm"
-          >
-            ホーム
-          </Button>
-        </Link>
-        <div className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-          <span className="font-bold text-foreground text-lg">恋AI</span>
-        </div>
-        <div className="w-24" /> {/* Spacer for alignment */}
-      </header>
+      <header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+                {/* Left: icon */}
+                <div className="w-24 flex items-center justify-center h-full">
+                  <div className="relative h-[80%] w-[80%]">
+                    <Image
+                      src="/a.png"
+                      alt="恋AIのアイコン"
+                      fill
+                      className="object-cover rounded-full"
+                    />
+                  </div>
+                </div>
+      
+                {/* Center: title */}
+                <div className="flex items-center gap-2">
+                  <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
+                  <span className="font-bold text-foreground text-lg">恋AI</span>
+                </div>
+      
+                {/* Right: Home button */}
+                <div className="w-24 flex items-center justify-center">
+                  <Link href="/">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full hover:bg-primary/10"
+                    >
+                      {/* Keep ArrowLeft for a recognizable 'back/home' affordance */}
+                      ホーム
+                    </Button>
+                  </Link>
+                </div>
+              </header>
 
       {!conversationStarted ? (
         /* Initial State - Full Screen Welcome */
