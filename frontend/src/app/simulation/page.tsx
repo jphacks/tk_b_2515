@@ -175,7 +175,6 @@ export default function SimulationPage() {
     }
   }, [facialMetrics]);
 
-  const sessionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   useEffect(() => {
@@ -211,10 +210,6 @@ export default function SimulationPage() {
   );
 
   const handleEndConversation = useCallback(async () => {
-    if (sessionTimerRef.current) {
-      clearTimeout(sessionTimerRef.current);
-      sessionTimerRef.current = null;
-    }
     setTimeRemaining(null);
     // 録音を停止
     if (isRecording) {
@@ -263,6 +258,15 @@ export default function SimulationPage() {
     session?.id,
   ]);
 
+  // 3分経過時に自動的にフィードバックページに遷移
+  useEffect(() => {
+    if (timeRemaining === 0 && conversationStarted) {
+      console.log("Time reached 0, redirecting to feedback page");
+      // タイムアウト時は直接フィードバックページへ遷移
+      handleEndConversation();
+    }
+  }, [timeRemaining, conversationStarted, handleEndConversation]);
+
   const handleStartConversation = useCallback(async () => {
     try {
       gestureStatsRef.current = {
@@ -293,18 +297,12 @@ export default function SimulationPage() {
       await startSession();
       setConversationStarted(true);
 
-      if (sessionTimerRef.current) {
-        clearTimeout(sessionTimerRef.current);
-      }
-      sessionTimerRef.current = setTimeout(() => {
-        console.log("Conversation timer reached 3 minutes, ending session");
-        handleEndConversation();
-      }, 3 * 60 * 1000);
+      // 3分のタイマーを設定（カウントダウンはuseEffectで管理）
       setTimeRemaining(3 * 60);
     } catch (error) {
       console.error("Failed to start conversation:", error);
     }
-  }, [startStream, startSession, handleEndConversation]);
+  }, [startStream, startSession]);
 
   const toggleRecording = useCallback(() => {
     if (!stream) return;
