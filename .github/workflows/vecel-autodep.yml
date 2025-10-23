@@ -11,25 +11,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Debug: show workspace info
+        run: |
+          echo "===== ENV INFO ====="
+          echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
+          echo "PWD = $(pwd)"
+          echo "Listing current directory (pwd):"
+          ls -la
+          echo "Listing GITHUB_WORKSPACE:"
+          ls -la "${GITHUB_WORKSPACE}" || true
+          echo "Listing parent of GITHUB_WORKSPACE (expected /home/runner/work/<repo>):"
+          ls -la "${GITHUB_WORKSPACE}/.." || true
+          echo "Check frontend path (expected ${GITHUB_WORKSPACE}/../frontend):"
+          ls -la "${GITHUB_WORKSPACE}/../frontend" || true
+        shell: bash
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10.14.0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      - name: Install dependencies
+
+      - name: Install dependencies (frontend)
         run: pnpm install
+        working-directory: ${{ github.workspace }}/../frontend
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/../frontend
+
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/../frontend
+
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./frontend
+        working-directory: ${{ github.workspace }}/../frontend
