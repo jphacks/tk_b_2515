@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   Heart,
   Mic,
   MicOff,
@@ -65,7 +64,6 @@ type GestureType =
   | "idle"
   | "thinking"
   | "talking"
-  | "armsCrossed"
   | "explaining"
   | "nodding";
 
@@ -375,7 +373,6 @@ export default function SimulationPage() {
         "idle",
         "idle",
         "idle",
-        "armsCrossed",
         "explaining",
       ];
       const randomGesture =

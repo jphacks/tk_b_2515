@@ -10,7 +10,6 @@ type GestureType =
 	| "idle"
 	| "thinking"
 	| "talking"
-	| "armsCrossed"
 	| "explaining"
 	| "nodding";
 

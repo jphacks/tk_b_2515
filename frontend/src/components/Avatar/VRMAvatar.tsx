@@ -1,15 +1,20 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useVRM } from "@/hooks/useVRM";
+// import { Loader } from "lucide-react";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import {
+	VRMAnimationLoaderPlugin,
+	createVRMAnimationClip,
+} from "@pixiv/three-vrm-animation";
 
 type GestureType =
 	| "idle"
 	| "thinking"
 	| "talking"
-	| "armsCrossed"
 	| "explaining"
 	| "nodding";
 
@@ -34,11 +39,102 @@ export default function VRMAvatar({
 	const gestureTimeRef = useRef(0);
 	const initialBonesRef = useRef<Map<string, THREE.Euler>>(new Map());
 	const baseScaleRef = useRef(1); // 基本スケールを保存
+	const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+	const currentActionRef = useRef<THREE.AnimationAction | null>(null);
+	const clipCacheRef = useRef<Map<string, THREE.AnimationClip>>(new Map());
 
-	// Update VRM every frame
+	const gestureToVrmaPath = useMemo<Record<GestureType, string>>(
+		() => ({
+			idle: "/animations/idle.vrma",
+			thinking: "/animations/thinking.vrma",
+			talking: "/animations/talking.vrma",
+			explaining: "/animations/explaining.vrma",
+			nodding: "/animations/nodding.vrma",
+		}),
+		[],
+	);
+
+	// VRMA を読み込んで AnimationClip を生成（キャッシュ付き）
+		const loadVrmaClip = useCallback(async (
+			url: string,
+		): Promise<THREE.AnimationClip | null> => {
+		if (!vrm) return null;
+		const cached = clipCacheRef.current.get(url);
+		if (cached) return cached;
+
+		return new Promise((resolve) => {
+			const loader = new GLTFLoader();
+			loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+			loader.load(
+				url,
+				(gltf) => {
+					try {
+						const userData: any = gltf.userData ?? {};
+						const vrma =
+							userData.vrmAnimation ||
+							(Array.isArray(userData.vrmAnimations)
+								? userData.vrmAnimations[0]
+								: null) ||
+							userData.VRMAnimation ||
+							userData.VRMA ||
+							null;
+
+						if (!vrma) {
+							console.warn("VRMAnimation not found in gltf.userData for", url);
+							resolve(null);
+							return;
+						}
+
+						const clip = createVRMAnimationClip(vrma, vrm);
+						if (clip) {
+							clipCacheRef.current.set(url, clip);
+						}
+						resolve(clip ?? null);
+					} catch (e) {
+						console.warn("Failed to create VRMAnimationClip for", url, e);
+						resolve(null);
+					}
+				},
+				undefined,
+				(err) => {
+					console.warn("Failed to load VRMA:", url, err);
+					resolve(null);
+				},
+			);
+			});
+		}, [vrm]);
+
+	// 指定クリップをクロスフェードで再生
+			const playClip = useCallback((
+				clip: THREE.AnimationClip,
+				{ fadeSec = 0.3 }: { fadeSec?: number } = {},
+			) => {
+		if (!mixerRef.current) return;
+		const mixer = mixerRef.current;
+		const nextAction = mixer.clipAction(clip);
+		nextAction.reset();
+		nextAction.enabled = true;
+				nextAction.clampWhenFinished = false;
+				nextAction.setLoop(THREE.LoopRepeat, Infinity);
+
+		const prev = currentActionRef.current;
+		if (prev && prev !== nextAction) {
+			prev.crossFadeTo(nextAction, fadeSec, false);
+			nextAction.play();
+			currentActionRef.current = nextAction;
+		} else if (!prev) {
+			nextAction.play();
+			currentActionRef.current = nextAction;
+			}
+		}, []);
+
+		// Update VRM every frame
 	useFrame((_state, delta) => {
 		if (vrm) {
 			vrm.update(delta);
+				if (mixerRef.current) {
+					mixerRef.current.update(delta);
+				}
 
 			// 微妙な呼吸のような動き（基本スケールに対して）
 			gestureTimeRef.current += delta;
@@ -46,165 +142,6 @@ export default function VRMAvatar({
 				baseScaleRef.current *
 				(1 + Math.sin(gestureTimeRef.current * 1.5) * 0.01);
 			vrm.scene.scale.setScalar(breathingScale);
-
-			const humanoid = vrm.humanoid;
-			if (humanoid && initialBonesRef.current.size > 0) {
-				// ボーンとベース回転を取得
-				const leftUpperArm = humanoid.getNormalizedBoneNode("leftUpperArm");
-				const rightUpperArm = humanoid.getNormalizedBoneNode("rightUpperArm");
-				const leftLowerArm = humanoid.getNormalizedBoneNode("leftLowerArm");
-				const rightLowerArm = humanoid.getNormalizedBoneNode("rightLowerArm");
-				const neck = humanoid.getNormalizedBoneNode("neck");
-				const spine = humanoid.getNormalizedBoneNode("spine");
-
-				const leftUpperArmBase = initialBonesRef.current.get("leftUpperArm");
-				const rightUpperArmBase = initialBonesRef.current.get("rightUpperArm");
-				const leftLowerArmBase = initialBonesRef.current.get("leftLowerArm");
-				const rightLowerArmBase = initialBonesRef.current.get("rightLowerArm");
-				const neckBase = initialBonesRef.current.get("neck");
-				const spineBase = initialBonesRef.current.get("spine");
-
-				// ジェスチャーに応じた動き
-				switch (gesture) {
-					case "armsCrossed": // 腕組み
-						if (leftUpperArm && leftUpperArmBase) {
-							leftUpperArm.rotation.x = leftUpperArmBase.x + 0.8;
-							leftUpperArm.rotation.y = leftUpperArmBase.y + 0.3;
-							leftUpperArm.rotation.z = leftUpperArmBase.z - 0.5;
-						}
-						if (rightUpperArm && rightUpperArmBase) {
-							rightUpperArm.rotation.x = rightUpperArmBase.x + 0.8;
-							rightUpperArm.rotation.y = rightUpperArmBase.y - 0.3;
-							rightUpperArm.rotation.z = rightUpperArmBase.z + 0.5;
-						}
-						if (leftLowerArm && leftLowerArmBase) {
-							leftLowerArm.rotation.y = leftLowerArmBase.y - 1.2;
-						}
-						if (rightLowerArm && rightLowerArmBase) {
-							rightLowerArm.rotation.y = rightLowerArmBase.y + 1.2;
-						}
-						break;
-
-					case "thinking": // 考え中（片手を顎に）
-						if (rightUpperArm && rightUpperArmBase) {
-							rightUpperArm.rotation.x = rightUpperArmBase.x + 1.2;
-							rightUpperArm.rotation.z = rightUpperArmBase.z + 0.3;
-						}
-						if (rightLowerArm && rightLowerArmBase) {
-							rightLowerArm.rotation.y = rightLowerArmBase.y + 1.5;
-						}
-						if (leftUpperArm && leftUpperArmBase) {
-							leftUpperArm.rotation.x =
-								leftUpperArmBase.x +
-								Math.sin(gestureTimeRef.current * 0.3) * 0.02;
-							leftUpperArm.rotation.z =
-								leftUpperArmBase.z +
-								Math.sin(gestureTimeRef.current * 0.4) * 0.015;
-						}
-						break;
-
-					case "talking": // 話している（手を動かす）
-						if (leftUpperArm && leftUpperArmBase) {
-							leftUpperArm.rotation.x =
-								leftUpperArmBase.x +
-								Math.sin(gestureTimeRef.current * 2) * 0.15;
-							leftUpperArm.rotation.z =
-								leftUpperArmBase.z +
-								Math.sin(gestureTimeRef.current * 1.5) * 0.1;
-						}
-						if (rightUpperArm && rightUpperArmBase) {
-							rightUpperArm.rotation.x =
-								rightUpperArmBase.x +
-								0.4 +
-								Math.sin(gestureTimeRef.current * 2.2 + 0.5) * 0.12;
-							rightUpperArm.rotation.z =
-								rightUpperArmBase.z +
-								Math.sin(gestureTimeRef.current * 1.8) * 0.08;
-						}
-						if (leftLowerArm && leftLowerArmBase) {
-							leftLowerArm.rotation.y =
-								leftLowerArmBase.y +
-								Math.sin(gestureTimeRef.current * 2.5) * 0.2;
-						}
-						if (rightLowerArm && rightLowerArmBase) {
-							rightLowerArm.rotation.y =
-								rightLowerArmBase.y +
-								Math.sin(gestureTimeRef.current * 2.3) * 0.15;
-						}
-						break;
-
-					case "explaining": // 説明している（両手を広げる）
-						if (leftUpperArm && leftUpperArmBase) {
-							leftUpperArm.rotation.x = leftUpperArmBase.x + 0.5;
-							leftUpperArm.rotation.z =
-								leftUpperArmBase.z -
-								0.3 +
-								Math.sin(gestureTimeRef.current * 1.5) * 0.1;
-						}
-						if (rightUpperArm && rightUpperArmBase) {
-							rightUpperArm.rotation.x = rightUpperArmBase.x + 0.5;
-							rightUpperArm.rotation.z =
-								rightUpperArmBase.z +
-								0.3 +
-								Math.sin(gestureTimeRef.current * 1.5 + Math.PI) * 0.1;
-						}
-						if (leftLowerArm && leftLowerArmBase) {
-							leftLowerArm.rotation.y = leftLowerArmBase.y - 0.5;
-						}
-						if (rightLowerArm && rightLowerArmBase) {
-							rightLowerArm.rotation.y = rightLowerArmBase.y + 0.5;
-						}
-						break;
-
-					case "idle": // アイドル（微妙な動きのみ）
-					default:
-						if (leftUpperArm && leftUpperArmBase) {
-							leftUpperArm.rotation.x =
-								leftUpperArmBase.x +
-								Math.sin(gestureTimeRef.current * 0.3) * 0.02;
-							leftUpperArm.rotation.y = leftUpperArmBase.y;
-							leftUpperArm.rotation.z =
-								leftUpperArmBase.z +
-								Math.sin(gestureTimeRef.current * 0.4) * 0.015;
-						}
-						if (rightUpperArm && rightUpperArmBase) {
-							rightUpperArm.rotation.x =
-								rightUpperArmBase.x +
-								Math.sin(gestureTimeRef.current * 0.3 + Math.PI) * 0.02;
-							rightUpperArm.rotation.y = rightUpperArmBase.y;
-							rightUpperArm.rotation.z =
-								rightUpperArmBase.z +
-								Math.sin(gestureTimeRef.current * 0.4 + Math.PI) * 0.015;
-						}
-						break;
-				}
-
-				// 首の動き
-				if (neck && neckBase) {
-					if (gesture === "nodding") {
-						// うなずく動き
-						neck.rotation.x =
-							neckBase.x + Math.sin(gestureTimeRef.current * 3) * 0.15;
-						neck.rotation.y = neckBase.y;
-					} else {
-						// 通常の微妙な動き
-						neck.rotation.x =
-							neckBase.x + Math.sin(gestureTimeRef.current * 0.8) * 0.05;
-						neck.rotation.y =
-							neckBase.y + Math.sin(gestureTimeRef.current * 0.5) * 0.03;
-					}
-					neck.rotation.z = neckBase.z;
-				}
-
-				// 上半身の微妙な傾き
-				if (spine && spineBase) {
-					spine.rotation.x = spineBase.x;
-					spine.rotation.y =
-						spineBase.y + Math.sin(gestureTimeRef.current * 0.4) * 0.02;
-					spine.rotation.z =
-						spineBase.z + Math.sin(gestureTimeRef.current * 0.35) * 0.015;
-				}
-			}
 		}
 
 		// まばたきアニメーション
@@ -270,6 +207,10 @@ export default function VRMAvatar({
 			setIsReady(false);
 			return;
 		}
+
+			// AnimationMixer を初期化
+			mixerRef.current = new THREE.AnimationMixer(vrm.scene);
+			currentActionRef.current = null;
 
 		setIsReady(false);
 		initialBonesRef.current = new Map();
@@ -347,6 +288,32 @@ export default function VRMAvatar({
 
 		setIsReady(true);
 	}, [vrm]);
+
+	// ジェスチャー変更時に対応する VRMA を再生
+	useEffect(() => {
+		if (!vrm || !isReady) return;
+
+			const url = gestureToVrmaPath[gesture] ?? gestureToVrmaPath.idle;
+		let cancelled = false;
+
+			loadVrmaClip(url).then(async (clip) => {
+				if (cancelled) return;
+
+				let finalClip = clip;
+				if (!finalClip && url !== gestureToVrmaPath.idle) {
+					// フォールバック: idle を試す
+					finalClip = await loadVrmaClip(gestureToVrmaPath.idle);
+				}
+				if (!finalClip) return;
+
+				// すべてループ再生（継続的な動作のため）
+				playClip(finalClip, { loopOnce: false, fadeSec: 0.25 });
+			});
+
+		return () => {
+			cancelled = true;
+		};
+		}, [gesture, isReady, vrm, gestureToVrmaPath, loadVrmaClip, playClip]);
 
 	if (error) {
 		console.error("VRM load error:", error);
