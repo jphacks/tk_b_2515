@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useVRM } from "@/hooks/useVRM";
 // import { Loader } from "lucide-react";
@@ -55,9 +55,9 @@ export default function VRMAvatar({
 	);
 
 	// VRMA を読み込んで AnimationClip を生成（キャッシュ付き）
-	const loadVrmaClip = async (
-		url: string,
-	): Promise<THREE.AnimationClip | null> => {
+		const loadVrmaClip = useCallback(async (
+			url: string,
+		): Promise<THREE.AnimationClip | null> => {
 		if (!vrm) return null;
 		const cached = clipCacheRef.current.get(url);
 		if (cached) return cached;
@@ -101,21 +101,21 @@ export default function VRMAvatar({
 					resolve(null);
 				},
 			);
-		});
-	};
+			});
+		}, [vrm]);
 
 	// 指定クリップをクロスフェードで再生
-		const playClip = (
-			clip: THREE.AnimationClip,
-			{ loopOnce = false, fadeSec = 0.3 }: { loopOnce?: boolean; fadeSec?: number } = {},
-		) => {
+			const playClip = useCallback((
+				clip: THREE.AnimationClip,
+				{ fadeSec = 0.3 }: { fadeSec?: number } = {},
+			) => {
 		if (!mixerRef.current) return;
 		const mixer = mixerRef.current;
 		const nextAction = mixer.clipAction(clip);
 		nextAction.reset();
 		nextAction.enabled = true;
-			nextAction.clampWhenFinished = false;
-			nextAction.setLoop(THREE.LoopRepeat, Infinity);
+				nextAction.clampWhenFinished = false;
+				nextAction.setLoop(THREE.LoopRepeat, Infinity);
 
 		const prev = currentActionRef.current;
 		if (prev && prev !== nextAction) {
@@ -125,8 +125,8 @@ export default function VRMAvatar({
 		} else if (!prev) {
 			nextAction.play();
 			currentActionRef.current = nextAction;
-		}
-	};
+			}
+		}, []);
 
 		// Update VRM every frame
 	useFrame((_state, delta) => {
@@ -313,7 +313,7 @@ export default function VRMAvatar({
 		return () => {
 			cancelled = true;
 		};
-	}, [gesture, isReady, vrm, gestureToVrmaPath]);
+		}, [gesture, isReady, vrm, gestureToVrmaPath, loadVrmaClip, playClip]);
 
 	if (error) {
 		console.error("VRM load error:", error);

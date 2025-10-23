@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   Heart,
   Mic,
   MicOff,
