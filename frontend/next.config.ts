@@ -1,23 +1,27 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-	output: "standalone",
-	webpack: (config) => {
-		// MediaPipeのWASMファイル対応
-		config.resolve.alias = {
-			...config.resolve.alias,
-		};
+  output: "standalone",
+  webpack: (config) => {
+    // MediaPipeのWASMファイル対応
+    config.resolve.alias = {
+      ...config.resolve.alias,
+    };
 
-		// .wasm ファイルの処理
-		config.experiments = {
-			...config.experiments,
-			asyncWebAssembly: true,
-		};
+    // .wasm ファイルの処理
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+    };
 
-		return config;
-	},
-	// 外部パッケージの最適化を無効化（three.js, MediaPipe対応）
-	transpilePackages: ["three", "@mediapipe/tasks-vision"],
+    return config;
+  },
+  // 外部パッケージの最適化を無効化（three.js, MediaPipe対応）
+  transpilePackages: ["three", "@mediapipe/tasks-vision"],
+  turbopack: {
+    root: path.join(__dirname, ".."),
+  },
 };
 
 export default nextConfig;
