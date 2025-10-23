@@ -45,7 +45,7 @@ export default function HomePage() {
         </header>
 
         {/* Hero Section */}
-        <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 h-[80vh]">
+        <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <div className="max-w-6xl w-full text-center space-y-8">
             {/* Title */}
             <div className="space-y-4">
