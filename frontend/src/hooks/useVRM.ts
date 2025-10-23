@@ -5,6 +5,52 @@ import { useEffect, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+// Simple in-memory cache to reuse loaded VRMs across components
+const vrmCache = new Map<string, VRM>();
+const vrmPromiseCache = new Map<string, Promise<VRM>>();
+
+async function loadVRM(url: string): Promise<VRM> {
+	// Reuse ongoing load if present
+	const existing = vrmPromiseCache.get(url);
+	if (existing) return existing;
+
+	const p = new Promise<VRM>((resolve, reject) => {
+		const loader = new GLTFLoader();
+		loader.register((parser) => new VRMLoaderPlugin(parser));
+		loader.load(
+			url,
+			(gltf) => {
+				const vrm = gltf.userData.vrm as VRM;
+				if (!vrm) {
+					reject(new Error("VRMデータが見つかりません"));
+					return;
+				}
+				// Standard setup
+				VRMUtils.rotateVRM0(vrm);
+				vrm.scene.traverse((obj) => {
+					obj.frustumCulled = false;
+				});
+				vrmCache.set(url, vrm);
+				resolve(vrm);
+			},
+			undefined,
+			(err) => reject(err),
+		);
+	}).finally(() => {
+		// Keep the promise for dedupe until it resolves; remove afterwards to allow reload if needed
+		vrmPromiseCache.delete(url);
+	});
+
+	vrmPromiseCache.set(url, p);
+	return p;
+}
+
+export function preloadVRM(url: string): Promise<VRM> {
+	if (vrmCache.has(url)) return Promise.resolve(vrmCache.get(url)!);
+	if (vrmPromiseCache.has(url)) return vrmPromiseCache.get(url)!;
+	return loadVRM(url);
+}
+
 export function useVRM(url: string | null) {
 	const [vrm, setVrm] = useState<VRM | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -13,78 +59,29 @@ export function useVRM(url: string | null) {
 	useEffect(() => {
 		if (!url) return;
 
-		console.log("Starting VRM load from:", url);
-		setLoading(true);
 		setError(null);
+		if (vrmCache.has(url)) {
+			setVrm(vrmCache.get(url)!);
+			setLoading(false);
+			return;
+		}
 
-		const loader = new GLTFLoader();
-		loader.register((parser) => new VRMLoaderPlugin(parser));
-
-		let currentVrm: VRM | null = null;
-
-		loader.load(
-			url,
-			(gltf) => {
-				console.log("VRM loaded successfully:", gltf);
-				const vrm = gltf.userData.vrm as VRM;
-
-				if (!vrm) {
-					const error = new Error("VRMデータが見つかりません");
-					console.error(error);
-					setError(error);
-					setLoading(false);
-					return;
-				}
-
-				console.log("VRM data found, setting up...");
-				// VRMUtils.rotateVRM0 is used to rotate VRM0.0 models
-				VRMUtils.rotateVRM0(vrm);
-
-				// Disable frustum culling to prevent disappearing
-				vrm.scene.traverse((obj) => {
-					obj.frustumCulled = false;
-				});
-
-				currentVrm = vrm;
-				setVrm(vrm);
+		setLoading(true);
+		preloadVRM(url)
+			.then((v) => {
+				setVrm(v);
 				setLoading(false);
-				console.log("VRM setup complete");
-			},
-			(progress) => {
-				console.log(
-					"Loading VRM:",
-					100.0 * (progress.loaded / progress.total),
-					"%",
-				);
-			},
-			(error) => {
-				console.error("Error loading VRM:", error);
+			})
+			.catch((e) => {
+				console.error("Error loading VRM:", e);
 				const errorMessage =
-					error instanceof Error
-						? error.message
-						: "VRMファイルの読み込みに失敗しました";
+					e instanceof Error ? e.message : "VRMファイルの読み込みに失敗しました";
 				setError(new Error(`${errorMessage}\nURL: ${url}`));
 				setLoading(false);
-			},
-		);
+			});
 
-		return () => {
-			// Cleanup VRM on unmount
-			if (currentVrm) {
-				currentVrm.scene.traverse((obj) => {
-					if (obj instanceof THREE.Mesh) {
-						obj.geometry.dispose();
-						if (Array.isArray(obj.material)) {
-							obj.material.forEach((mat) => {
-								mat.dispose();
-							});
-						} else {
-							obj.material.dispose();
-						}
-					}
-				});
-			}
-		};
+		// We keep VRM cached for session; do not dispose on unmount
+		return () => {};
 	}, [url]);
 
 	return { vrm, loading, error };
