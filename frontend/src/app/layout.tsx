@@ -28,6 +28,15 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="ja" suppressHydrationWarning>
+			<head>
+				{/* Preload VRM asset to shorten first render time */}
+				<link
+					rel="preload"
+					href="/models/innocent_girl.vrm"
+					as="fetch"
+					crossOrigin="anonymous"
+				/>
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>

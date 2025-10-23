@@ -29,6 +29,7 @@ import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
+import { preloadVRM } from "@/hooks/useVRM";
 import { useConversation } from "@/hooks/useConversation";
 import { VideoStream, type VideoStreamRef } from "@/components/VideoStream";
 import { ConversationHistory } from "@/components/ConversationHistory";
@@ -146,6 +147,10 @@ export default function SimulationPage() {
   // MediaRecorderサポート情報をログ出力（開発時のデバッグ用）
   useEffect(() => {
     logMediaRecorderSupport();
+    // VRMモデルを事前プリロードして初回表示を高速化
+    preloadVRM(avatarModelUrl).catch(() => {
+      // 失敗しても致命的ではないので無視
+    });
   }, []);
 
   useEffect(() => {
