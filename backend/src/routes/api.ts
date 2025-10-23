@@ -141,22 +141,37 @@ api.post("/auth/signout", async (c) => {
 // 新しいセッションを作成
 api.post("/sessions", async (c) => {
 	try {
-		// Supabaseで匿名認証
-		const { data, error } = await supabase.auth.signInAnonymously();
+		// リクエストボディからuserIdを取得（既存ユーザーの場合）
+		const body = await c.req.json().catch(() => ({}));
+		const existingUserId = body.userId;
 
-		if (error) {
-			console.error("Error signing in anonymously:", error);
-			return c.json({ error: "Failed to authenticate" }, 500);
+		let userId: string;
+
+		if (existingUserId) {
+			// 既存のuserIdを使用
+			console.log("Using existing userId:", existingUserId);
+			userId = existingUserId;
+		} else {
+			// 新規ユーザー: Supabaseで匿名認証
+			const { data, error } = await supabase.auth.signInAnonymously();
+
+			if (error) {
+				console.error("Error signing in anonymously:", error);
+				return c.json({ error: "Failed to authenticate" }, 500);
+			}
+
+			userId = data.user?.id || "";
+			console.log("Created new anonymous user:", userId);
 		}
 
-		// セッションを作成し、匿名ユーザーIDを保存
+		// セッションを作成し、ユーザーIDを保存
 		const session = await prisma.conversation.create({
 			data: {
-				userId: data.user?.id,
+				userId,
 			},
 		});
 
-		return c.json({ session, user: data.user }, 201);
+		return c.json({ session }, 201);
 	} catch (error) {
 		console.error("Error creating session:", error);
 		const errorMessage = error instanceof Error ? error.message : String(error);

@@ -17,10 +17,10 @@ export const sessionApi = {
 	/**
 	 * 新しい会話セッションを作成
 	 */
-	async createSession(): Promise<ConversationSession> {
+	async createSession(userId?: string): Promise<ConversationSession> {
 		const response = await apiClient.post<CreateSessionResponse>(
 			"/sessions",
-			{},
+			userId ? { userId } : {},
 		);
 		return response.session;
 	},
