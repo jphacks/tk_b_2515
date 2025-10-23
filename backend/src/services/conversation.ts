@@ -39,7 +39,7 @@ export async function generateConversationResponse(
     lastUserMessage.content === "[UNSUPPORTED_LANGUAGE]"
   ) {
     const naturalResponses = [
-      "ごめん、ちょっと聞き取れなかった。日？",
+      "ごめん、ちょっと聞き取れなかった。何語？",
       "あれ、何語？ ",
       "ごめんね、わたし日本語と英語しかわからないんだ",
       "ん？何の話？",

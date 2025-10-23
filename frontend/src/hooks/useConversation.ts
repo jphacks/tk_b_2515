@@ -1,213 +1,221 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-	conversationApi,
-	sessionApi,
-	speechToText,
-	textToSpeechUrl,
+  conversationApi,
+  sessionApi,
+  speechToText,
+  textToSpeechUrl,
 } from "@/lib/api";
 import type { ConversationSession, Message } from "@/types/api";
 import { useLipSync } from "./useLipSync";
 
 interface UseConversationOptions {
-	systemPrompt?: string;
-	onAudioReady?: (audioUrl: string) => void;
-	onLipSyncUpdate?: (value: number) => void;
-	ttsVoiceId?: string;
+  systemPrompt?: string;
+  onAudioReady?: (audioUrl: string) => void;
+  onLipSyncUpdate?: (value: number) => void;
+  ttsVoiceId?: string;
 }
 
 interface ConversationState {
-	session: ConversationSession | null;
-	messages: Message[];
-	isProcessing: boolean;
-	error: Error | null;
-	currentAudioUrl: string | null;
+  session: ConversationSession | null;
+  messages: Message[];
+  isProcessing: boolean;
+  error: Error | null;
+  currentAudioUrl: string | null;
 }
 
 export function useConversation(options: UseConversationOptions) {
-	const { systemPrompt, onAudioReady, onLipSyncUpdate, ttsVoiceId } = options;
+  const { systemPrompt, onAudioReady, onLipSyncUpdate, ttsVoiceId } = options;
 
-	const [state, setState] = useState<ConversationState>({
-		session: null,
-		messages: [],
-		isProcessing: false,
-		error: null,
-		currentAudioUrl: null,
-	});
+  const [state, setState] = useState<ConversationState>({
+    session: null,
+    messages: [],
+    isProcessing: false,
+    error: null,
+    currentAudioUrl: null,
+  });
 
-	const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-	// リップシンクを統合
-	const lipSyncValue = useLipSync(audioRef.current);
+  // リップシンクを統合
+  const lipSyncValue = useLipSync(audioRef.current);
 
-	// セッションを開始
-	const startSession = useCallback(async () => {
-		try {
-			setState((prev) => ({ ...prev, isProcessing: true, error: null }));
-			const session = await sessionApi.createSession();
+  // セッションを開始
+  const startSession = useCallback(async () => {
+    try {
+      setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 
-			// userIdをlocalStorageに保存して永続化
-			if (session.userId) {
-				localStorage.setItem('conversationUserId', session.userId);
-				console.log('User ID saved to localStorage:', session.userId);
-			}
+      // localStorageから既存のuserIdを取得
+      const existingUserId = localStorage.getItem("conversationUserId");
+      console.log("Existing user ID from localStorage:", existingUserId);
 
-			setState((prev) => ({
-				...prev,
-				session,
-				isProcessing: false,
-			}));
-			return session;
-		} catch (error) {
-			const err = error instanceof Error ? error : new Error("Unknown error");
-			setState((prev) => ({
-				...prev,
-				error: err,
-				isProcessing: false,
-			}));
-			throw err;
-		}
-	}, []);
+      // 既存のuserIdがあればそれを使用、なければバックエンドで新規作成
+      const session = await sessionApi.createSession(
+        existingUserId || undefined
+      );
 
-	// セッションを終了
-	const endSession = useCallback(async () => {
-		if (!state.session) return;
+      // userIdをlocalStorageに保存して永続化
+      if (session.userId) {
+        localStorage.setItem("conversationUserId", session.userId);
+        console.log("User ID saved to localStorage:", session.userId);
+      }
 
-		try {
-			setState((prev) => ({ ...prev, isProcessing: true }));
-			await sessionApi.finishSession(state.session.id);
-			setState((prev) => ({
-				...prev,
-				isProcessing: false,
-			}));
-		} catch (error) {
-			const err = error instanceof Error ? error : new Error("Unknown error");
-			setState((prev) => ({
-				...prev,
-				error: err,
-				isProcessing: false,
-			}));
-		}
-	}, [state.session]);
+      setState((prev) => ({
+        ...prev,
+        session,
+        isProcessing: false,
+      }));
+      return session;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error("Unknown error");
+      setState((prev) => ({
+        ...prev,
+        error: err,
+        isProcessing: false,
+      }));
+      throw err;
+    }
+  }, []);
 
-	// リップシンク値を親コンポーネントに通知
-	useEffect(() => {
-		if (onLipSyncUpdate) {
-			onLipSyncUpdate(lipSyncValue);
-		}
-	}, [lipSyncValue, onLipSyncUpdate]);
+  // セッションを終了
+  const endSession = useCallback(async () => {
+    if (!state.session) return;
 
-	// 音声を送信して応答を取得（STT → AI → TTS）
-	const sendAudio = useCallback(
-		async (audioBlob: Blob): Promise<Message | null> => {
-			if (!state.session) {
-				throw new Error("No active session");
-			}
+    try {
+      setState((prev) => ({ ...prev, isProcessing: true }));
+      await sessionApi.finishSession(state.session.id);
+      setState((prev) => ({
+        ...prev,
+        isProcessing: false,
+      }));
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error("Unknown error");
+      setState((prev) => ({
+        ...prev,
+        error: err,
+        isProcessing: false,
+      }));
+    }
+  }, [state.session]);
 
-			try {
-				setState((prev) => ({ ...prev, isProcessing: true, error: null }));
+  // リップシンク値を親コンポーネントに通知
+  useEffect(() => {
+    if (onLipSyncUpdate) {
+      onLipSyncUpdate(lipSyncValue);
+    }
+  }, [lipSyncValue, onLipSyncUpdate]);
 
-				// 1. STT: 音声をテキストに変換
-				const audioFile = new File([audioBlob], "recording.webm", {
-					type: audioBlob.type,
-				});
-				const sttResult = await speechToText({
-					audio: audioFile,
-				});
+  // 音声を送信して応答を取得（STT → AI → TTS）
+  const sendAudio = useCallback(
+    async (audioBlob: Blob): Promise<Message | null> => {
+      if (!state.session) {
+        throw new Error("No active session");
+      }
 
-				console.log("STT Result:", sttResult.text);
+      try {
+        setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 
-				// 2. AI: テキストから応答を生成
-				const aiResponse = await conversationApi.generateResponse({
-					sessionId: state.session.id,
-					userMessage: sttResult.text,
-					systemPrompt,
-				});
+        // 1. STT: 音声をテキストに変換
+        const audioFile = new File([audioBlob], "recording.webm", {
+          type: audioBlob.type,
+        });
+        const sttResult = await speechToText({
+          audio: audioFile,
+        });
 
-				console.log("AI Response:", aiResponse.response);
+        console.log("STT Result:", sttResult.text);
 
-				// メッセージを状態に追加
-				setState((prev) => ({
-					...prev,
-					messages: [
-						...prev.messages,
-						aiResponse.userMessage,
-						aiResponse.assistantMessage,
-					],
-				}));
+        // 2. AI: テキストから応答を生成
+        const aiResponse = await conversationApi.generateResponse({
+          sessionId: state.session.id,
+          userMessage: sttResult.text,
+          systemPrompt,
+        });
 
-				// 3. TTS: AIの応答を音声に変換
-				console.log("Starting TTS for text:", aiResponse.response);
-				const audioUrl = await textToSpeechUrl({
-					text: aiResponse.response,
-					voiceId: ttsVoiceId,
-				});
+        console.log("AI Response:", aiResponse.response);
 
-				console.log("TTS Audio URL created:", audioUrl);
+        // メッセージを状態に追加
+        setState((prev) => ({
+          ...prev,
+          messages: [
+            ...prev.messages,
+            aiResponse.userMessage,
+            aiResponse.assistantMessage,
+          ],
+        }));
 
-				// 音声を再生
-				const audio = new Audio(audioUrl);
-				audioRef.current = audio;
+        // 3. TTS: AIの応答を音声に変換
+        console.log("Starting TTS for text:", aiResponse.response);
+        const audioUrl = await textToSpeechUrl({
+          text: aiResponse.response,
+          voiceId: ttsVoiceId,
+        });
 
-				// 音量を確認（デフォルトは1.0）
-				audio.volume = 1.0;
-				console.log("Audio volume set to:", audio.volume);
+        console.log("TTS Audio URL created:", audioUrl);
 
-				console.log("Audio element created, waiting for playback...");
+        // 音声を再生
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
 
-				try {
-					await audio.play();
-					console.log("Audio playback started successfully");
-				} catch (err) {
-					console.error("Audio playback failed (autoplay?)", err);
-					setState((prev) => ({
-						...prev,
-						error: new Error(
-							"Audio playback failed. Please interact with the page (e.g., click somewhere) and try again.",
-						),
-					}));
-				}
+        // 音量を確認（デフォルトは1.0）
+        audio.volume = 1.0;
+        console.log("Audio volume set to:", audio.volume);
 
-				setState((prev) => ({
-					...prev,
-					currentAudioUrl: audioUrl,
-					isProcessing: false,
-				}));
+        console.log("Audio element created, waiting for playback...");
 
-				onAudioReady?.(audioUrl);
+        try {
+          await audio.play();
+          console.log("Audio playback started successfully");
+        } catch (err) {
+          console.error("Audio playback failed (autoplay?)", err);
+          setState((prev) => ({
+            ...prev,
+            error: new Error(
+              "Audio playback failed. Please interact with the page (e.g., click somewhere) and try again."
+            ),
+          }));
+        }
 
-				return aiResponse.assistantMessage;
-			} catch (error) {
-				const err = error instanceof Error ? error : new Error("Unknown error");
-				console.error("Conversation error:", err);
-				setState((prev) => ({
-					...prev,
-					error: err,
-					isProcessing: false,
-				}));
-				return null;
-			}
-		},
-		[state.session, systemPrompt, ttsVoiceId, onAudioReady],
-	);
+        setState((prev) => ({
+          ...prev,
+          currentAudioUrl: audioUrl,
+          isProcessing: false,
+        }));
 
-	// クリーンアップ
-	useEffect(() => {
-		return () => {
-			if (audioRef.current) {
-				audioRef.current.pause();
-				audioRef.current = null;
-			}
-		};
-	}, []);
+        onAudioReady?.(audioUrl);
 
-	return {
-		session: state.session,
-		messages: state.messages,
-		isProcessing: state.isProcessing,
-		error: state.error,
-		currentAudioUrl: state.currentAudioUrl,
-		startSession,
-		endSession,
-		sendAudio,
-	};
+        return aiResponse.assistantMessage;
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error("Unknown error");
+        console.error("Conversation error:", err);
+        setState((prev) => ({
+          ...prev,
+          error: err,
+          isProcessing: false,
+        }));
+        return null;
+      }
+    },
+    [state.session, systemPrompt, ttsVoiceId, onAudioReady]
+  );
+
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  return {
+    session: state.session,
+    messages: state.messages,
+    isProcessing: state.isProcessing,
+    error: state.error,
+    currentAudioUrl: state.currentAudioUrl,
+    startSession,
+    endSession,
+    sendAudio,
+  };
 }
