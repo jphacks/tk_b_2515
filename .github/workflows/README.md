@@ -73,24 +73,24 @@
 ### フロントエンド
 ```bash
 cd frontend
-npm ci
-npm run lint
-npm test
-npm run build
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm test
+pnpm build
 ```
 
 ### バックエンド
 ```bash
 cd backend
-pnpm install
+pnpm install --frozen-lockfile
 pnpm prisma:generate
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 ```
 
 ### Prisma
 ```bash
-npx prisma validate --schema=./prisma/schema.prisma
-npx prisma format --check --schema=./prisma/schema.prisma
+pnpm exec prisma validate --schema=./prisma/schema.prisma
+pnpm exec prisma format --check --schema=./prisma/schema.prisma
 ```
 
 ---
@@ -98,12 +98,12 @@ npx prisma format --check --schema=./prisma/schema.prisma
 ## トラブルシューティング
 
 ### ビルドエラー
-- ローカルで `npm run build` を実行して問題を再現
+- ローカルで `pnpm build` を実行して問題を再現
 - `NODE_OPTIONS="--max-old-space-size=4096"` でメモリ制限を増やす
 
 ### テストエラー
-- `npm test -- --verbose` で詳細なログを確認
-- `npm test -- --coverage` でカバレッジレポートを生成
+- `pnpm test -- --verbose` で詳細なログを確認
+- `pnpm test -- --coverage` でカバレッジレポートを生成
 
 ### デプロイエラー
 - Cloudflare API トークンとアカウントIDを確認
