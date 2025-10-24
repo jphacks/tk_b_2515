@@ -74,6 +74,7 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
+          cache-dependency-path: backend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -92,6 +93,9 @@ jobs:
   # Prismaスキーマの検証
   prisma:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
 
     steps:
       - uses: actions/checkout@v4
@@ -106,9 +110,13 @@ jobs:
         with:
           node-version: "20"
           cache: "pnpm"
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Validate Prisma schema
-        run: pnpm exec prisma validate --schema=./prisma/schema.prisma
+        run: pnpm exec prisma validate --schema=../prisma/schema.prisma
 
       - name: Check Prisma format
-        run: pnpm exec prisma format --check --schema=./prisma/schema.prisma
+        run: pnpm exec prisma format --check --schema=../prisma/schema.prisma
