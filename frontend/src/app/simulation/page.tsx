@@ -397,19 +397,20 @@ export default function SimulationPage() {
       <header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
         {/* Left: icon */}
         <div className="w-24 flex items-center justify-center h-full">
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="relative h-[200%] w-[200%] cursor-pointer hover:opacity-80 transition-opacity"
-            aria-label="ページを更新"
-          >
-            <Image
-              src="/a.png"
-              alt="恋AIのアイコン"
-              fill
-              className="object-contain"
-            />
-          </button>
+          <Link href="/">
+            <button
+              type="button"
+              className="relative h-[200%] w-[200%] cursor-pointer hover:opacity-80 transition-opacity"
+              aria-label="ホームに戻る"
+            >
+              <Image
+                src="/a.png"
+                alt="恋AIのアイコン"
+                fill
+                className="object-contain"
+              />
+            </button>
+          </Link>
         </div>
 
         {/* Center: title */}

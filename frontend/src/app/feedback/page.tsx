@@ -153,7 +153,8 @@ function FeedbackContent() {
     return feedback.goodPoints
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .slice(0, 3); // 優先度の高い順に最大3個まで
   }, [feedback]);
 
   const conversationImprovementPointsList = useMemo(() => {
@@ -161,7 +162,8 @@ function FeedbackContent() {
     return feedback.improvementPoints
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .slice(0, 3); // 改善すべき優先度が高い順に最大3個まで
   }, [feedback]);
 
   const gestureGoodPointsList = useMemo(() => {
@@ -169,7 +171,8 @@ function FeedbackContent() {
     return feedback.gestureGoodPoints
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .slice(0, 3); // 優先度の高い順に最大3個まで
   }, [feedback]);
 
   const gestureImprovementPointsList = useMemo(() => {
@@ -177,7 +180,8 @@ function FeedbackContent() {
     return feedback.gestureImprovementPoints
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .slice(0, 3); // 改善すべき優先度が高い順に最大3個まで
   }, [feedback]);
 
   const activeGoodPoints =
@@ -203,6 +207,8 @@ function FeedbackContent() {
           y: number;
         }[],
         polyline: "",
+        smoothPath: "",
+        areaPath: "",
         ticks: [100, 75, 50, 25, 0],
         minBound: 0,
         maxBound: 100,
@@ -235,6 +241,38 @@ function FeedbackContent() {
 
     const polyline = points.map(({ x, y }) => `${x},${y}`).join(" ");
 
+    // スムーズな曲線を作成（Catmull-Rom スプライン）
+    const createSmoothPath = () => {
+      if (points.length === 0) return "";
+      if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
+      if (points.length === 2) {
+        return `M ${points[0].x},${points[0].y} L ${points[1].x},${points[1].y}`;
+      }
+
+      let path = `M ${points[0].x},${points[0].y}`;
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const current = points[i];
+        const next = points[i + 1];
+        const prev = i > 0 ? points[i - 1] : current;
+        const afterNext = i < points.length - 2 ? points[i + 2] : next;
+
+        // コントロールポイントを計算（tension = 0.3で滑らかさを調整）
+        const tension = 0.3;
+        const cp1x = current.x + (next.x - prev.x) * tension;
+        const cp1y = current.y + (next.y - prev.y) * tension;
+        const cp2x = next.x - (afterNext.x - current.x) * tension;
+        const cp2y = next.y - (afterNext.y - current.y) * tension;
+
+        path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
+      }
+
+      return path;
+    };
+
+    const smoothPath = createSmoothPath();
+    const areaPath = smoothPath ? `${smoothPath} L 100,100 L 0,100 Z` : "";
+
     const defaultTicks = [100, 75, 50, 25, 0];
     const tickSet = new Set<number>();
     for (const tick of defaultTicks) {
@@ -249,27 +287,13 @@ function FeedbackContent() {
     return {
       points,
       polyline,
+      smoothPath,
+      areaPath,
       ticks,
       minBound,
       maxBound,
       range,
     };
-  }, [scoreHistory]);
-
-  const formattedScoreHistory = useMemo(() => {
-    // リストは新しい順で表示（既にソート済み）
-    return scoreHistory.map((item, index) => {
-      const date = new Date(item.createdAt);
-      const label = new Intl.DateTimeFormat("ja-JP", {
-        month: "numeric",
-        day: "numeric",
-      }).format(date);
-
-      return {
-        ...item,
-        label: `${label} (${scoreHistory.length - index})`,
-      };
-    });
   }, [scoreHistory]);
 
   return (
@@ -484,28 +508,51 @@ function FeedbackContent() {
             </Card>
 
             {/* Score History */}
-            <Card className="p-6 border-2 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground">
-                      これまでのスコア推移
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      過去のセッションで獲得した総合スコアの変化を確認できます
-                    </p>
-                  </div>
+            <Card className="p-4 md:p-6 border-2 space-y-4">
+              {/* Header Section */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-3xl font-bold text-foreground pb-2">
+                    {scoreHistory.length > 0
+                      ? `${scoreHistory[0].score}点`
+                      : "0点"}
+                  </h2>
+                  <p className="text-base font-normal text-muted-foreground">
+                    最新のスコア
+                  </p>
                 </div>
+                {scoreHistory.length >= 2 && (
+                  <div className="flex items-center px-2.5 py-0.5 text-base font-semibold text-green-500">
+                    {Math.round(
+                      ((scoreHistory[0].score - scoreHistory[1].score) /
+                        scoreHistory[1].score) *
+                        100
+                    )}
+                    %
+                    <svg
+                      className="w-3 h-3 ms-1"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 10 14"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13V1m0 0L1 5m4-4 4 4"
+                      />
+                    </svg>
+                  </div>
+                )}
                 {isHistoryLoading && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    読み込み中
                   </div>
                 )}
               </div>
+              {/* Chart Area */}
               {historyError ? (
                 <p className="text-sm text-destructive">{historyError}</p>
               ) : scoreHistory.length === 0 ? (
@@ -514,13 +561,14 @@ function FeedbackContent() {
                 </p>
               ) : (
                 <>
-                  <div className="relative h-56 w-full">
+                  <div className="relative h-64 w-full">
                     <svg
                       className="absolute inset-0 w-full h-full"
                       viewBox="0 0 100 100"
                       preserveAspectRatio="none"
                     >
                       <title>スコア推移グラフ</title>
+                      {/* Grid lines */}
                       {scoreChartMetrics.ticks.map((tick) => {
                         const y =
                           100 -
@@ -540,30 +588,41 @@ function FeedbackContent() {
                           />
                         );
                       })}
+                      {/* Area fill */}
+                      {scoreChartMetrics.points.length > 0 && (
+                        <polygon
+                          points={`0,100 ${scoreChartMetrics.polyline} 100,100`}
+                          fill="currentColor"
+                          fillOpacity="0.1"
+                          className="text-primary"
+                        />
+                      )}
+                      {/* Line */}
                       {scoreChartMetrics.points.length > 1 && (
                         <polyline
                           points={scoreChartMetrics.polyline}
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="0.8"
+                          strokeWidth="0.67"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           className="text-primary"
                         />
                       )}
-                      {scoreChartMetrics.points.map((point) => (
-                        <g key={point.sessionId}>
-                          <circle
-                            cx={point.x}
-                            cy={point.y}
-                            r="0.4"
-                            fill="var(--color-chart-1)"
-                            stroke="var(--color-chart-1)"
-                            strokeWidth="0.3"
-                          />
-                        </g>
-                      ))}
                     </svg>
+                    {/* Points - rendered as HTML to maintain circular shape */}
+                    {scoreChartMetrics.points.map((point) => (
+                      <div
+                        key={`point-${point.sessionId}`}
+                        className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                        style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                      >
+                        <div className="relative w-3 h-3">
+                          <div className="absolute inset-0 rounded-full bg-primary" />
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white" />
+                        </div>
+                      </div>
+                    ))}
                     <div className="absolute inset-0 pointer-events-none text-xs text-muted-foreground">
                       {scoreChartMetrics.ticks.map((tick) => {
                         const y =
@@ -600,20 +659,36 @@ function FeedbackContent() {
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {formattedScoreHistory.map((item) => (
-                      <div
-                        key={`${item.sessionId}-${item.createdAt}`}
-                        className="rounded-lg border border-border/60 bg-card/60 px-4 py-3"
-                      >
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {item.label}
-                        </p>
-                        <p className="text-lg font-semibold text-foreground">
-                          {item.score} 点
-                        </p>
+
+                  {/* Footer Section */}
+                  <div className="grid grid-cols-1 items-center border-t border-border pt-5">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm font-medium text-muted-foreground inline-flex items-center">
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        過去 {scoreHistory.length} 回の練習
                       </div>
-                    ))}
+                      <Link
+                        href="/simulation"
+                        className="uppercase text-sm font-semibold inline-flex items-center rounded-lg text-primary hover:text-primary/80 hover:bg-primary/10 px-3 py-2 transition-colors"
+                      >
+                        練習を続ける
+                        <svg
+                          className="w-2.5 h-2.5 ms-1.5"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 6 10"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="m1 9 4-4-4-4"
+                          />
+                        </svg>
+                      </Link>
+                    </div>
                   </div>
                 </>
               )}

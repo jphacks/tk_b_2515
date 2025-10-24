@@ -880,6 +880,7 @@ api.openapi(generateFeedbackRoute, async (c) => {
 					orderBy: { createdAt: "asc" },
 				},
 				gestures: true,
+				feedback: true,
 			},
 		});
 
@@ -891,13 +892,25 @@ api.openapi(generateFeedbackRoute, async (c) => {
 			return c.json({ error: "No messages found in this session" }, 400);
 		}
 
+		// 既存のフィードバックがある場合はそれを返す（再生成しない）
+		// feedbackは1対1のリレーションなのでオブジェクトまたはnull
+		const existingFeedback = session.feedback;
+		if (existingFeedback) {
+			return c.json(
+				{
+					feedback: existingFeedback,
+				},
+				200,
+			);
+		}
+
 		// 会話履歴を構築
 		const conversationHistory = session.messages.map((msg) => ({
 			role: msg.role as "user" | "assistant",
 			content: msg.content,
 		}));
 
-		// フィードバックを生成
+		// フィードバックを生成（初回のみ）
 		const feedbackData = await generateConversationFeedback(
 			apiKey,
 			conversationHistory,
@@ -921,19 +934,9 @@ api.openapi(generateFeedbackRoute, async (c) => {
 		const gestureImprovementPointsStr =
 			feedbackData.gestureImprovementPoints ?? "";
 
-		// フィードバックを保存（既存のフィードバックがあればupsert）
-		const savedFeedback = await prisma.feedback.upsert({
-			where: {
-				conversationId: sessionId,
-			},
-			update: {
-				goodPoints: goodPointsStr,
-				improvementPoints: improvementPointsStr,
-				overallScore: feedbackData.overallScore,
-				gestureGoodPoints: gestureGoodPointsStr,
-				gestureImprovementPoints: gestureImprovementPointsStr,
-			},
-			create: {
+		// フィードバックを保存（新規作成のみ）
+		const savedFeedback = await prisma.feedback.create({
+			data: {
 				goodPoints: goodPointsStr,
 				improvementPoints: improvementPointsStr,
 				overallScore: feedbackData.overallScore,

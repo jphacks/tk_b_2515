@@ -307,7 +307,7 @@ export default function VRMAvatar({
 				if (!finalClip) return;
 
 				// すべてループ再生（継続的な動作のため）
-				playClip(finalClip, { loopOnce: false, fadeSec: 0.25 });
+				playClip(finalClip, { fadeSec: 0.25 });
 			});
 
 		return () => {

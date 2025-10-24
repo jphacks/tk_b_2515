@@ -68,7 +68,7 @@ export function ConversationHistory({
 										isUser ? "text-primary" : "text-accent"
 									}`}
 								>
-									{isUser ? "あなた" : "AI女子"}
+									{isUser ? "あなた" : "まき"}
 								</span>
 								<span className="text-xs text-muted-foreground">
 									{new Date(message.createdAt).toLocaleTimeString("ja-JP", {

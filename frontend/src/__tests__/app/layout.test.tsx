@@ -1,4 +1,4 @@
-import { metadata } from "./layout";
+import { metadata } from "../../app/layout";
 
 describe("Layout metadata", () => {
 	it("has correct title", () => {
