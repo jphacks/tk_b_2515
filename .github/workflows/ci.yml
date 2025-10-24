@@ -117,6 +117,8 @@ jobs:
 
       - name: Validate Prisma schema
         run: pnpm exec prisma validate --schema=../prisma/schema.prisma
+        env:
+          DATABASE_URL: "postgresql://user:password@localhost:5432/dummy"
 
       - name: Check Prisma format
         run: pnpm exec prisma format --check --schema=../prisma/schema.prisma
