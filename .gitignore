@@ -7,6 +7,10 @@ package-lock.json
 yarn.lock
 .pnpm-store/
 
+# pnpmワークスペース使用時、ルート以外のlockファイルは不要
+backend/pnpm-lock.yaml
+frontend/pnpm-lock.yaml
+
 # ビルド・出力ディレクトリ
 .next/
 dist/
