@@ -3,42 +3,42 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-	title: "恋AI - AIコミュニケーション・コーチング",
-	description:
-		"バーチャル女子大生「まき」とのリアルタイム会話で、きみのコミュ力爆上げしちゃおう!",
+  title: "恋AI",
+  description:
+    "バーチャル女子大生「まき」とのリアルタイム会話で、きみのコミュ力爆上げしちゃおう!",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<html lang="ja" suppressHydrationWarning>
-			<head>
-				{/* Preload VRM asset to shorten first render time */}
-				<link
-					rel="preload"
-					href="/models/innocent_girl.vrm"
-					as="fetch"
-					crossOrigin="anonymous"
-				/>
-			</head>
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
-				{children}
-			</body>
-		</html>
-	);
+  return (
+    <html lang="ja" suppressHydrationWarning>
+      <head>
+        {/* Preload VRM asset to shorten first render time */}
+        <link
+          rel="preload"
+          href="/models/innocent_girl.vrm"
+          as="fetch"
+          crossOrigin="anonymous"
+        />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
+      </body>
+    </html>
+  );
 }
