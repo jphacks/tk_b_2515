@@ -394,13 +394,13 @@ export default function SimulationPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
-      <header className="h-16 px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+      <header className="h-14 sm:h-16 px-3 sm:px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
         {/* Left: icon */}
-        <div className="w-24 flex items-center justify-center h-full">
+        <div className="w-10 sm:w-12 md:w-16 flex items-center justify-center">
           <Link href="/">
             <button
               type="button"
-              className="relative h-[200%] w-[200%] cursor-pointer hover:opacity-80 transition-opacity"
+              className="relative h-8 w-8 sm:h-10 sm:w-10 cursor-pointer hover:opacity-80 transition-opacity"
               aria-label="ホームに戻る"
             >
               <Image
@@ -414,20 +414,19 @@ export default function SimulationPage() {
         </div>
 
         {/* Center: title */}
-        <div className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-primary fill-primary animate-pulse" />
-          <span className="font-bold text-foreground text-lg">恋AI</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse" />
+          <span className="font-bold text-foreground text-base sm:text-lg">恋AI</span>
         </div>
 
         {/* Right: Home button */}
-        <div className="w-24 flex items-center justify-center">
+        <div className="w-10 sm:w-12 md:w-16 flex items-center justify-center">
           <Link href="/">
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full hover:bg-primary/10"
+              className="rounded-full hover:bg-primary/10 text-xs sm:text-sm px-2 sm:px-3"
             >
-              {/* Keep ArrowLeft for a recognizable 'back/home' affordance */}
               ホーム
             </Button>
           </Link>
@@ -436,16 +435,16 @@ export default function SimulationPage() {
 
       {!conversationStarted ? (
         /* Initial State - Full Screen Welcome */
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-xl w-full space-y-8 animate-fade-in">
-            <div className="text-center space-y-4">
-              <div className="inline-block p-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-4">
-                <Heart className="w-20 h-20 text-primary animate-pulse" />
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+          <div className="max-w-xl w-full space-y-6 sm:space-y-8 animate-fade-in">
+            <div className="text-center space-y-3 sm:space-y-4">
+              <div className="inline-block p-3 sm:p-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-3 sm:mb-4">
+                <Heart className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-primary animate-pulse" />
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent px-2">
                 会話シミュレーション
               </h1>
-              <p className="text-muted-foreground text-xl">
+              <p className="text-muted-foreground text-base sm:text-lg md:text-xl">
                 まきと会話の練習をしましょう
               </p>
             </div>
@@ -471,12 +470,12 @@ export default function SimulationPage() {
               </Card>
             )}
 
-            <Card className="p-10 text-center border-2 border-primary/20 shadow-xl space-y-8 bg-card/50 backdrop-blur-sm">
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">
+            <Card className="p-6 sm:p-8 md:p-10 text-center border-2 border-primary/20 shadow-xl space-y-6 sm:space-y-8 bg-card/50 backdrop-blur-sm">
+              <div className="space-y-3 sm:space-y-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
                   Are you ready?
                 </h2>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
                   カメラとマイクへのアクセスを許可して
                   <br />
                   会話を始めよう!
@@ -484,10 +483,10 @@ export default function SimulationPage() {
               </div>
               <Button
                 size="lg"
-                className="rounded-full px-12 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="rounded-full px-8 sm:px-10 md:px-12 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                 onClick={handleStartConversation}
               >
-                <Video className="w-6 h-6 mr-2" />
+                <Video className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                 "まき"にはなしかける
               </Button>
             </Card>
@@ -568,9 +567,9 @@ export default function SimulationPage() {
             </div>
 
             {/* Recording Status Indicator - Floating Top Right */}
-            <div className="absolute top-6 right-6 flex items-center gap-3 bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-white/10">
+            <div className="absolute top-3 sm:top-4 md:top-6 right-2 sm:right-4 md:right-6 flex items-center gap-2 sm:gap-3 bg-black/60 backdrop-blur-md px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-full border border-white/10">
               <div
-                className={`w-4 h-4 rounded-full ${
+                className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full ${
                   isRecording
                     ? "bg-red-500 animate-pulse shadow-lg shadow-red-500/50"
                     : isProcessing
@@ -578,7 +577,7 @@ export default function SimulationPage() {
                     : "bg-gray-500"
                 }`}
               />
-              <span className="text-white font-semibold text-sm">
+              <span className="text-white font-semibold text-xs sm:text-sm">
                 {isProcessing ? "処理中" : isRecording ? "録音中" : "待機中"}
               </span>
             </div>
@@ -645,11 +644,12 @@ export default function SimulationPage() {
               <Button
                 variant="default"
                 size="lg"
-                className="absolute bottom-4 right-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 text-xs sm:text-sm md:text-base px-4 sm:px-6 py-2 sm:py-3"
                 onClick={() => setShowHistory(true)}
               >
-                <MessageSquare className="w-5 h-5 mr-2" />
-                話した内容 ({messages.length})
+                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
+                <span className="hidden sm:inline">話した内容 ({messages.length})</span>
+                <span className="sm:hidden">履歴 ({messages.length})</span>
               </Button>
             )}
           </div>
@@ -670,9 +670,9 @@ export default function SimulationPage() {
             </button>
 
             <div
-              className={`max-w-4xl mx-auto px-6 space-y-4 transition-all duration-300 overflow-hidden ${
+              className={`max-w-4xl mx-auto px-3 sm:px-4 md:px-6 space-y-3 sm:space-y-4 transition-all duration-300 overflow-hidden ${
                 showControls
-                  ? "py-6 max-h-96 opacity-100"
+                  ? "py-4 sm:py-5 md:py-6 max-h-96 opacity-100"
                   : "py-0 max-h-0 opacity-0"
               }`}
             >
@@ -710,28 +710,28 @@ export default function SimulationPage() {
               )}
 
               {/* Main Controls */}
-              <div className="flex gap-4 justify-center items-center flex-wrap">
+              <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center items-center flex-wrap">
                 {/* Recording Button - Primary */}
                 <Button
                   size="lg"
                   variant={isRecording ? "secondary" : "default"}
-                  className="rounded-full h-16 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  className="rounded-full h-12 sm:h-14 md:h-16 px-6 sm:px-7 md:px-8 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                   onClick={toggleRecording}
                   disabled={!stream || isProcessing}
                 >
                   {isProcessing ? (
                     <>
-                      <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                      <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 mr-1.5 sm:mr-2 animate-spin" />
                       処理中
                     </>
                   ) : isRecording ? (
                     <>
-                      <MicOff className="w-6 h-6 mr-2" />
+                      <MicOff className="w-5 h-5 sm:w-6 sm:h-6 mr-1.5 sm:mr-2" />
                       はなしおわる
                     </>
                   ) : (
                     <>
-                      <Mic className="w-6 h-6 mr-2" />
+                      <Mic className="w-5 h-5 sm:w-6 sm:h-6 mr-1.5 sm:mr-2" />
                       はなしかける
                     </>
                   )}
@@ -741,14 +741,14 @@ export default function SimulationPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="rounded-full h-16 px-6 hover:scale-105 transition-all"
+                  className="rounded-full h-12 sm:h-14 md:h-16 px-4 sm:px-5 md:px-6 hover:scale-105 transition-all"
                   onClick={toggleVideo}
                   disabled={!stream}
                 >
                   {videoEnabled ? (
-                    <VideoOff className="w-5 h-5" />
+                    <VideoOff className="w-4 h-4 sm:w-5 sm:h-5" />
                   ) : (
-                    <Video className="w-5 h-5" />
+                    <Video className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </Button>
 
@@ -756,10 +756,10 @@ export default function SimulationPage() {
                 <Button
                   size="lg"
                   variant="destructive"
-                  className="rounded-full h-16 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  className="rounded-full h-12 sm:h-14 md:h-16 px-6 sm:px-7 md:px-8 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                   onClick={handleEndConversation}
                 >
-                  <Phone className="w-6 h-6 mr-2 rotate-[135deg]" />
+                  <Phone className="w-5 h-5 sm:w-6 sm:h-6 mr-1.5 sm:mr-2 rotate-[135deg]" />
                   会話終了
                 </Button>
               </div>
