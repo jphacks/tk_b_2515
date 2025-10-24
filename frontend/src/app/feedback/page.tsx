@@ -299,47 +299,47 @@ function FeedbackContent() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm border-b border-border">
+      <header className="p-3 sm:p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm border-b border-border">
         <Link href="/">
-          <Button variant="ghost" size="sm" className="rounded-full">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            ホームへ
+          <Button variant="ghost" size="sm" className="rounded-full text-xs sm:text-sm px-2 sm:px-3">
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden sm:inline">ホームへ</span>
           </Button>
         </Link>
-        <div className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-primary fill-primary" />
-          <span className="font-semibold text-foreground">恋ai</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary" />
+          <span className="font-semibold text-foreground text-sm sm:text-base">恋ai</span>
         </div>
-        <div className="w-20" /> {/* Spacer for alignment */}
+        <div className="w-12 sm:w-20" /> {/* Spacer for alignment */}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
         {isLoading ? (
-          <div className="text-center space-y-4">
-            <Loader2 className="w-16 h-16 text-primary animate-spin mx-auto" />
-            <p className="text-muted-foreground text-lg">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary animate-spin mx-auto" />
+            <p className="text-muted-foreground text-base sm:text-lg">
               フィードバックを生成中...
             </p>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-xs sm:text-sm">
               AIがまきとの会話を分析しています
             </p>
           </div>
         ) : error ? (
-          <div className="max-w-md w-full space-y-6">
-            <Card className="p-8 border-2 border-destructive/20">
-              <div className="text-center space-y-4">
-                <AlertCircle className="w-16 h-16 text-destructive mx-auto" />
-                <h2 className="text-2xl font-bold text-foreground">
+          <div className="max-w-md w-full space-y-4 sm:space-y-6 px-2">
+            <Card className="p-6 sm:p-8 border-2 border-destructive/20">
+              <div className="text-center space-y-3 sm:space-y-4">
+                <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-destructive mx-auto" />
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                   {error.includes("会話が記録されていません")
                     ? "会話がまだありません"
                     : "エラーが発生しました"}
                 </h2>
-                <p className="text-muted-foreground">{error}</p>
-                <div className="flex flex-col gap-3">
+                <p className="text-muted-foreground text-sm sm:text-base">{error}</p>
+                <div className="flex flex-col gap-2 sm:gap-3">
                   <Link href="/simulation">
-                    <Button size="lg" className="rounded-full w-full">
-                      <RotateCcw className="w-5 h-5 mr-2" />
+                    <Button size="lg" className="rounded-full w-full text-sm sm:text-base">
+                      <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       会話を始める
                     </Button>
                   </Link>
@@ -347,9 +347,9 @@ function FeedbackContent() {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="rounded-full w-full"
+                      className="rounded-full w-full text-sm sm:text-base"
                     >
-                      <ArrowLeft className="w-5 h-5 mr-2" />
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       ホームに戻る
                     </Button>
                   </Link>
@@ -377,10 +377,10 @@ function FeedbackContent() {
             </Card>
           </div>
         ) : (
-          <div className="max-w-3xl w-full space-y-6">
+          <div className="max-w-3xl w-full space-y-4 sm:space-y-6 px-2">
             {/* Avatar */}
             <div className="flex justify-center">
-              <div className="relative w-32 h-32">
+              <div className="relative w-24 h-24 sm:w-32 sm:h-32">
                 <Image
                   src="/IMG_8059.webp"
                   alt="恋AI アバター"
@@ -391,36 +391,36 @@ function FeedbackContent() {
             </div>
 
             {/* Title */}
-            <div className="text-center space-y-2">
-              <h1 className="text-4xl font-bold text-foreground">
+            <div className="text-center space-y-1 sm:space-y-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                 会話フィードバック
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm sm:text-base">
                 AIがあなたの会話を分析しました
               </p>
             </div>
 
             {/* Overall Score */}
-            <Card className="p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground font-medium">
+            <Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                   総合スコア
                 </p>
-                <div className="text-6xl font-bold text-primary">
+                <div className="text-5xl sm:text-6xl font-bold text-primary">
                   {feedback.overallScore}
                 </div>
-                <p className="text-sm text-muted-foreground">/ 100点</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">/ 100点</p>
               </div>
             </Card>
 
             {/* Category Toggle */}
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-2 sm:gap-4">
               <Button
                 type="button"
                 variant={
                   selectedCategory === "conversation" ? "default" : "outline"
                 }
-                className="rounded-full px-6"
+                className="rounded-full px-4 sm:px-6 text-xs sm:text-sm"
                 onClick={() => setSelectedCategory("conversation")}
               >
                 会話
