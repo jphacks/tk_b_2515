@@ -427,7 +427,8 @@ api.openapi(getVoicesRoute, async (c) => {
     }
 
     const voices = await getVoices(apiKey);
-    return c.json({ voices }, 200);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return c.json({ voices: voices as any[] }, 200);
   } catch (error) {
     console.error("Error fetching voices:", error);
     return c.json({ error: "Failed to fetch voices" }, 500);
