@@ -87,19 +87,19 @@ Pass     Pass         Production
 cd frontend
 
 # 依存関係インストール
-npm ci
+pnpm install --frozen-lockfile
 
 # Lint
-npm run lint
+pnpm lint
 
 # 型チェック
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 
 # テスト
-npm test
+pnpm test
 
 # ビルド
-npm run build
+pnpm build
 ```
 
 ### バックエンド
@@ -107,13 +107,13 @@ npm run build
 cd backend
 
 # 依存関係インストール
-pnpm install
+pnpm install --frozen-lockfile
 
 # Prisma生成
 pnpm prisma:generate
 
 # 型チェック
-npx tsc --noEmit
+pnpm exec tsc --noEmit
 ```
 
 ---
@@ -147,8 +147,8 @@ GitHubリポジトリの Settings → Secrets に以下を設定：
 
 1. **ローカルで再現**
    ```bash
-   npm test
-   npm run build
+   pnpm test
+   pnpm build
    ```
 
 2. **ログを確認**
@@ -156,9 +156,9 @@ GitHubリポジトリの Settings → Secrets に以下を設定：
    - エラーメッセージから原因を特定
 
 3. **よくある問題**
-   - 依存関係の不整合 → `package-lock.json` を更新
-   - 型エラー → `npx tsc --noEmit` で確認
-   - テスト失敗 → `npm test -- --verbose` で詳細確認
+   - 依存関係の不整合 → `pnpm-lock.yaml` を更新
+   - 型エラー → `pnpm exec tsc --noEmit` で確認
+   - テスト失敗 → `pnpm test -- --verbose` で詳細確認
 
 ### デプロイが失敗する場合
 
