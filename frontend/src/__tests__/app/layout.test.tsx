@@ -2,7 +2,7 @@ import { metadata } from "../../app/layout";
 
 describe("Layout metadata", () => {
 	it("has correct title", () => {
-		expect(metadata.title).toEqual("恋AI - AIコミュニケーション・コーチング");
+		expect(metadata.title).toEqual("恋AI");
 	});
 
 	it("has correct description", () => {
