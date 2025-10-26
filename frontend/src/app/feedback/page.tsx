@@ -253,7 +253,9 @@ function FeedbackContent() {
     if (feedback?.overallScore !== null && feedback?.overallScore !== undefined) {
       // 少し遅延させてから再生（UIが表示されてから）
       const timer = setTimeout(() => {
-        playVoiceComment(feedback.overallScore);
+        if (feedback.overallScore !== null) {
+          playVoiceComment(feedback.overallScore);
+        }
       }, 1000);
 
       return () => clearTimeout(timer);
@@ -539,8 +541,12 @@ function FeedbackContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => playVoiceComment(feedback.overallScore)}
-                  disabled={isPlayingVoice}
+                  onClick={() => {
+                    if (feedback.overallScore !== null) {
+                      playVoiceComment(feedback.overallScore);
+                    }
+                  }}
+                  disabled={isPlayingVoice || feedback.overallScore === null}
                   className="rounded-full mx-auto"
                 >
                   <Volume2 className={`w-4 h-4 mr-2 ${isPlayingVoice ? "animate-pulse" : ""}`} />
