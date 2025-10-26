@@ -2,11 +2,11 @@ import { metadata } from "../../app/layout";
 
 describe("Layout metadata", () => {
 	it("has correct title", () => {
-		expect(metadata.title).toBe("恋AI - AIコミュニケーション・コーチング");
+		expect(metadata.title).toEqual("恋AI - AIコミュニケーション・コーチング");
 	});
 
 	it("has correct description", () => {
-		expect(metadata.description).toBe(
+		expect(metadata.description).toEqual(
 			"バーチャル女子大生「まき」とのリアルタイム会話で、きみのコミュ力爆上げしちゃおう!",
 		);
 	});
