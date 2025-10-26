@@ -46,10 +46,19 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-200"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-background rounded-2xl border-2 border-border shadow-2xl transition-all duration-200 transform scale-100"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="document"
       >
         {/* Header */}
         {title && (

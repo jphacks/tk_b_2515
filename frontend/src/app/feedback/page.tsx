@@ -9,12 +9,15 @@ import {
   RotateCcw,
   ThumbsUp,
   TrendingUp,
+  Volume2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { feedbackApi, sessionApi } from "@/lib/api";
+import { textToSpeechUrl } from "@/lib/api/tts";
+import { getFeedbackComment } from "@/lib/feedbackComments";
 import type { Feedback } from "@/types/api";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -49,6 +52,8 @@ function FeedbackContent() {
     x: number;
     y: number;
   } | null>(null);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchFeedback = async () => {
@@ -209,6 +214,51 @@ function FeedbackContent() {
       : gestureImprovementPointsList;
 
   const categoryLabel = selectedCategory === "conversation" ? "会話" : "仕草";
+
+  // まきの音声コメントを再生
+  const playVoiceComment = useCallback(async (score: number) => {
+    try {
+      setIsPlayingVoice(true);
+      const comment = getFeedbackComment(score);
+
+      // 既存の音声を停止
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // 音声を生成して再生
+      const audioUrl = await textToSpeechUrl({ text: comment });
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsPlayingVoice(false);
+      };
+
+      audio.onerror = () => {
+        setIsPlayingVoice(false);
+        console.error("音声の再生に失敗しました");
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error("音声コメントの生成に失敗しました:", error);
+      setIsPlayingVoice(false);
+    }
+  }, []);
+
+  // フィードバック取得後に自動で音声コメントを再生
+  useEffect(() => {
+    if (feedback?.overallScore !== null && feedback?.overallScore !== undefined) {
+      // 少し遅延させてから再生（UIが表示されてから）
+      const timer = setTimeout(() => {
+        playVoiceComment(feedback.overallScore);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [feedback?.overallScore, playVoiceComment]);
 
   // 選択されたセッションのフィードバックを取得
   const handlePointClick = async (sessionId: string) => {
@@ -476,14 +526,26 @@ function FeedbackContent() {
 
             {/* Overall Score */}
             <Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-                  総合スコア
-                </p>
-                <div className="text-5xl sm:text-6xl font-bold text-primary">
-                  {feedback.overallScore}
+              <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+                    総合スコア
+                  </p>
+                  <div className="text-5xl sm:text-6xl font-bold text-primary">
+                    {feedback.overallScore}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">/ 100点</p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">/ 100点</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => playVoiceComment(feedback.overallScore)}
+                  disabled={isPlayingVoice}
+                  className="rounded-full mx-auto"
+                >
+                  <Volume2 className={`w-4 h-4 mr-2 ${isPlayingVoice ? "animate-pulse" : ""}`} />
+                  {isPlayingVoice ? "再生中..." : "まきのコメントを聞く"}
+                </Button>
               </div>
             </Card>
 
