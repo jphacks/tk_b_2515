@@ -2,7 +2,6 @@
 
 import { type VRM, VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
 import { useEffect, useState } from "react";
-import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 // Simple in-memory cache to reuse loaded VRMs across components
@@ -46,8 +45,10 @@ async function loadVRM(url: string): Promise<VRM> {
 }
 
 export function preloadVRM(url: string): Promise<VRM> {
-	if (vrmCache.has(url)) return Promise.resolve(vrmCache.get(url)!);
-	if (vrmPromiseCache.has(url)) return vrmPromiseCache.get(url)!;
+	const cached = vrmCache.get(url);
+	if (cached) return Promise.resolve(cached);
+	const cachedPromise = vrmPromiseCache.get(url);
+	if (cachedPromise) return cachedPromise;
 	return loadVRM(url);
 }
 
@@ -60,8 +61,9 @@ export function useVRM(url: string | null) {
 		if (!url) return;
 
 		setError(null);
-		if (vrmCache.has(url)) {
-			setVrm(vrmCache.get(url)!);
+		const cached = vrmCache.get(url);
+		if (cached) {
+			setVrm(cached);
 			setLoading(false);
 			return;
 		}

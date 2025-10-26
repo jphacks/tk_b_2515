@@ -9,15 +9,19 @@ import {
   RotateCcw,
   ThumbsUp,
   TrendingUp,
+  Volume2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { feedbackApi, sessionApi } from "@/lib/api";
+import { textToSpeechUrl } from "@/lib/api/tts";
+import { getFeedbackComment } from "@/lib/feedbackComments";
 import type { Feedback } from "@/types/api";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
+import { Modal } from "../../components/ui/modal";
 
 function FeedbackContent() {
   const searchParams = useSearchParams();
@@ -35,6 +39,21 @@ function FeedbackContent() {
   >([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
+    null
+  );
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
+  const [hoveredPoint, setHoveredPoint] = useState<{
+    sessionId: string;
+    score: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchFeedback = async () => {
@@ -195,6 +214,113 @@ function FeedbackContent() {
       : gestureImprovementPointsList;
 
   const categoryLabel = selectedCategory === "conversation" ? "会話" : "仕草";
+
+  // まきの音声コメントを再生
+  const playVoiceComment = useCallback(async (score: number) => {
+    try {
+      setIsPlayingVoice(true);
+      const comment = getFeedbackComment(score);
+
+      // 既存の音声を停止
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // 音声を生成して再生
+      const audioUrl = await textToSpeechUrl({ text: comment });
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsPlayingVoice(false);
+      };
+
+      audio.onerror = () => {
+        setIsPlayingVoice(false);
+        console.error("音声の再生に失敗しました");
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error("音声コメントの生成に失敗しました:", error);
+      setIsPlayingVoice(false);
+    }
+  }, []);
+
+  // フィードバック取得後に自動で音声コメントを再生
+  useEffect(() => {
+    if (feedback?.overallScore !== null && feedback?.overallScore !== undefined) {
+      // 少し遅延させてから再生（UIが表示されてから）
+      const timer = setTimeout(() => {
+        if (feedback.overallScore !== null) {
+          playVoiceComment(feedback.overallScore);
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [feedback?.overallScore, playVoiceComment]);
+
+  // 選択されたセッションのフィードバックを取得
+  const handlePointClick = async (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setIsFeedbackLoading(true);
+    setSelectedFeedback(null);
+
+    try {
+      const session = await sessionApi.getSession(sessionId);
+      if (session.feedback) {
+        setSelectedFeedback(session.feedback);
+      }
+    } catch (err) {
+      console.error("Failed to fetch feedback:", err);
+    } finally {
+      setIsFeedbackLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedSessionId(null);
+    setSelectedFeedback(null);
+  };
+
+  // 選択されたフィードバックの良かった点・改善点をパース
+  const selectedConversationGoodPoints = useMemo(() => {
+    if (!selectedFeedback) return [];
+    return selectedFeedback.goodPoints
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [selectedFeedback]);
+
+  const selectedConversationImprovementPoints = useMemo(() => {
+    if (!selectedFeedback) return [];
+    return selectedFeedback.improvementPoints
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [selectedFeedback]);
+
+  const selectedGestureGoodPoints = useMemo(() => {
+    if (!selectedFeedback?.gestureGoodPoints) return [];
+    return selectedFeedback.gestureGoodPoints
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [selectedFeedback]);
+
+  const selectedGestureImprovementPoints = useMemo(() => {
+    if (!selectedFeedback?.gestureImprovementPoints) return [];
+    return selectedFeedback.gestureImprovementPoints
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+  }, [selectedFeedback]);
 
   const scoreChartMetrics = useMemo(() => {
     if (scoreHistory.length === 0) {
@@ -402,14 +528,30 @@ function FeedbackContent() {
 
             {/* Overall Score */}
             <Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-                  総合スコア
-                </p>
-                <div className="text-5xl sm:text-6xl font-bold text-primary">
-                  {feedback.overallScore}
+              <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+                    総合スコア
+                  </p>
+                  <div className="text-5xl sm:text-6xl font-bold text-primary">
+                    {feedback.overallScore}
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">/ 100点</p>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">/ 100点</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (feedback.overallScore !== null) {
+                      playVoiceComment(feedback.overallScore);
+                    }
+                  }}
+                  disabled={isPlayingVoice || feedback.overallScore === null}
+                  className="rounded-full mx-auto"
+                >
+                  <Volume2 className={`w-4 h-4 mr-2 ${isPlayingVoice ? "animate-pulse" : ""}`} />
+                  {isPlayingVoice ? "再生中..." : "まきのコメントを聞く"}
+                </Button>
               </div>
             </Card>
 
@@ -617,7 +759,13 @@ function FeedbackContent() {
                         className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                         style={{ left: `${point.x}%`, top: `${point.y}%` }}
                       >
-                        <div className="relative w-3 h-3">
+                        <div
+                          className={`relative transition-all duration-200 ${
+                            hoveredPoint?.sessionId === point.sessionId
+                              ? "w-5 h-5"
+                              : "w-3 h-3"
+                          }`}
+                        >
                           <div className="absolute inset-0 rounded-full bg-primary" />
                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white" />
                         </div>
@@ -649,15 +797,38 @@ function FeedbackContent() {
                         <button
                           key={`btn-${point.sessionId}`}
                           type="button"
-                          className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+                          className="absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2 rounded-full hover:bg-primary/20 hover:scale-125 transition-all duration-200 cursor-pointer group"
                           style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                          onClick={() => {
-                            window.location.href = `/feedback?sessionId=${point.sessionId}`;
-                          }}
-                          aria-label={`セッション ${point.sessionId} のフィードバックを表示`}
+                          onClick={() => handlePointClick(point.sessionId)}
+                          onMouseEnter={() =>
+                            setHoveredPoint({
+                              sessionId: point.sessionId,
+                              score: point.score,
+                              x: point.x,
+                              y: point.y,
+                            })
+                          }
+                          onMouseLeave={() => setHoveredPoint(null)}
+                          aria-label={`${point.score}点のフィードバックを表示`}
                         />
                       ))}
                     </div>
+                    {/* ツールチップ */}
+                    {hoveredPoint && (
+                      <div
+                        className="absolute pointer-events-none z-10"
+                        style={{
+                          left: `${hoveredPoint.x}%`,
+                          top: `${hoveredPoint.y}%`,
+                          transform: "translate(-50%, -120%)",
+                        }}
+                      >
+                        <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-sm font-bold whitespace-nowrap transition-all duration-150 opacity-100 scale-100">
+                          {hoveredPoint.score}点
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-primary" />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Footer Section */}
@@ -715,6 +886,166 @@ function FeedbackContent() {
           </div>
         )}
       </main>
+
+      {/* フィードバック詳細モーダル */}
+      <Modal
+        isOpen={selectedSessionId !== null}
+        onClose={handleCloseModal}
+        title={
+          selectedFeedback
+            ? `フィードバック詳細 (${selectedFeedback.overallScore}点)`
+            : "フィードバック詳細"
+        }
+      >
+        {isFeedbackLoading ? (
+          <div className="text-center py-12">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">読み込み中...</p>
+          </div>
+        ) : selectedFeedback ? (
+          <div className="space-y-6">
+            {/* スコア表示 */}
+            <Card className="p-6 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground font-medium">
+                  総合スコア
+                </p>
+                <div className="text-5xl font-bold text-primary">
+                  {selectedFeedback.overallScore}
+                </div>
+                <p className="text-sm text-muted-foreground">/ 100点</p>
+              </div>
+            </Card>
+
+            {/* カテゴリ切り替え */}
+            <div className="flex justify-center gap-4">
+              <Button
+                type="button"
+                variant={
+                  selectedCategory === "conversation" ? "default" : "outline"
+                }
+                className="rounded-full px-6 text-sm"
+                onClick={() => setSelectedCategory("conversation")}
+              >
+                会話
+              </Button>
+              <Button
+                type="button"
+                variant={selectedCategory === "gesture" ? "default" : "outline"}
+                className="rounded-full px-6 text-sm"
+                onClick={() => setSelectedCategory("gesture")}
+              >
+                仕草
+              </Button>
+            </div>
+
+            {/* 良かった点 */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ThumbsUp className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  良かった点（{categoryLabel}）
+                </h3>
+              </div>
+              {(selectedCategory === "conversation"
+                ? selectedConversationGoodPoints
+                : selectedGestureGoodPoints
+              ).length > 0 ? (
+                <ul className="space-y-2">
+                  {(selectedCategory === "conversation"
+                    ? selectedConversationGoodPoints
+                    : selectedGestureGoodPoints
+                  ).map((point, index) => (
+                    <li
+                      key={`modal-${selectedCategory}-good-${point.substring(0, 30)}-${index}`}
+                      className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                        {index + 1}
+                      </div>
+                      <p className="font-semibold text-foreground text-sm">
+                        {point}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {selectedCategory === "gesture"
+                    ? "カメラ分析データがまだありません。"
+                    : "良かった点が記録されていません。"}
+                </p>
+              )}
+            </div>
+
+            {/* 改善点 */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  改善点（{categoryLabel}）
+                </h3>
+              </div>
+              {(selectedCategory === "conversation"
+                ? selectedConversationImprovementPoints
+                : selectedGestureImprovementPoints
+              ).length > 0 ? (
+                <ul className="space-y-2">
+                  {(selectedCategory === "conversation"
+                    ? selectedConversationImprovementPoints
+                    : selectedGestureImprovementPoints
+                  ).map((point, index) => (
+                    <li
+                      key={`modal-${selectedCategory}-improve-${point.substring(0, 30)}-${index}`}
+                      className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
+                        {index + 1}
+                      </div>
+                      <p className="font-semibold text-foreground text-sm">
+                        {point}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {selectedCategory === "gesture"
+                    ? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
+                    : "改善点が記録されていません。"}
+                </p>
+              )}
+            </div>
+
+            {/* 詳細ページへのリンク */}
+            <div className="pt-4 border-t border-border">
+              <Link
+                href={`/feedback?sessionId=${selectedSessionId}`}
+                className="w-full"
+              >
+                <Button
+                  variant="outline"
+                  className="w-full rounded-full"
+                  onClick={handleCloseModal}
+                >
+                  詳細ページを開く
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              フィードバックを読み込めませんでした
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
