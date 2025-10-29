@@ -24,6 +24,9 @@ importers:
       husky:
         specifier: ^8.0.0
         version: 8.0.3
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
 
   backend:
     dependencies:

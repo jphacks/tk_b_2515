@@ -39,6 +39,27 @@ export interface SpeechToTextRequest {
 }
 
 // フィードバック型定義
+export interface VoiceMetrics {
+	volumeScore: number;
+	volumeLevel: "quiet" | "balanced" | "energetic";
+	volumeComment: string;
+	articulationScore: number;
+	articulationComment: string;
+	speedScore: number;
+	speedLevel: "slow" | "ideal" | "fast";
+	speedComment: string;
+	fillerWords: {
+		totalCount: number;
+		breakdown: {
+			word: string;
+			count: number;
+		}[];
+	};
+	tremblingDetected: boolean;
+	tremblingComment: string;
+	summary: string;
+}
+
 export interface Feedback {
 	id: string;
 	goodPoints: string;
@@ -49,6 +70,7 @@ export interface Feedback {
 	updatedAt: string;
 	gestureGoodPoints?: string | null;
 	gestureImprovementPoints?: string | null;
+	voiceMetrics?: VoiceMetrics | null;
 }
 
 // 会話履歴型定義

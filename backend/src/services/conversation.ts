@@ -4,6 +4,8 @@ import { getGeminiClient } from "./ai-client";
 export interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
+  createdAt?: string | Date;
+  audioUrl?: string | null;
 }
 
 export interface ConversationContext {
@@ -157,6 +159,262 @@ export interface GestureSummary {
   gazeDownSamples: number;
 }
 
+export interface VoiceMetrics {
+  volumeScore: number;
+  volumeLevel: "quiet" | "balanced" | "energetic";
+  volumeComment: string;
+  articulationScore: number;
+  articulationComment: string;
+  speedScore: number;
+  speedLevel: "slow" | "ideal" | "fast";
+  speedComment: string;
+  fillerWords: {
+    totalCount: number;
+    breakdown: { word: string; count: number }[];
+  };
+  tremblingDetected: boolean;
+  tremblingComment: string;
+  summary: string;
+}
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
+const FILLER_PATTERNS: { word: string; pattern: RegExp }[] = [
+  { word: "えー", pattern: /えー/gi },
+  { word: "えぇ", pattern: /えぇ/gi },
+  { word: "えっと", pattern: /えっと/gi },
+  { word: "あの", pattern: /あの/gi },
+  { word: "その", pattern: /そのさ|そのね/gi },
+  { word: "うーん", pattern: /うーん/gi },
+  { word: "なんか", pattern: /なんか/gi },
+  { word: "まあ", pattern: /まあ/gi },
+  { word: "um", pattern: /\bum\b/gi },
+  { word: "uh", pattern: /\buh\b/gi },
+];
+
+function calculateVoiceMetrics(messages: ConversationMessage[]): VoiceMetrics {
+  const userMessages = messages.filter((msg) => msg.role === "user");
+
+  if (userMessages.length === 0) {
+    return {
+      volumeScore: 0,
+      volumeLevel: "quiet",
+      volumeComment: "ユーザーの音声データが不足しているため評価できませんでした。",
+      articulationScore: 0,
+      articulationComment: "ユーザーの音声データが不足しているため評価できませんでした。",
+      speedScore: 0,
+      speedLevel: "slow",
+      speedComment: "ユーザーの音声データが不足しているため評価できませんでした。",
+      fillerWords: { totalCount: 0, breakdown: [] },
+      tremblingDetected: false,
+      tremblingComment: "音声データが不足しているため判断できませんでした。",
+      summary: "音声データが不足しているため詳細なフィードバックを生成できませんでした。",
+    };
+  }
+
+  const trimmedMessages = userMessages.map((msg) => msg.content.trim());
+  const charCounts = trimmedMessages.map((content) =>
+    content.replace(/\s+/g, "").length
+  );
+  const avgCharCount =
+    charCounts.reduce((sum, value) => sum + value, 0) / charCounts.length || 0;
+  const exclamationCount = trimmedMessages.reduce(
+    (sum, content) => sum + (content.match(/[！!]/g)?.length ?? 0),
+    0
+  );
+
+  const fillerBreakdown = FILLER_PATTERNS.map(({ word, pattern }) => {
+    const count = trimmedMessages.reduce(
+      (sum, content) => sum + (content.match(pattern)?.length ?? 0),
+      0
+    );
+    return { word, count };
+  }).filter(({ count }) => count > 0);
+
+  const totalFillerCount = fillerBreakdown.reduce(
+    (sum, item) => sum + item.count,
+    0
+  );
+
+  const ellipsisCount = trimmedMessages.reduce(
+    (sum, content) => sum + (content.match(/…|\.{3,}/g)?.length ?? 0),
+    0
+  );
+
+  const repeatedKanaCount = trimmedMessages.reduce(
+    (sum, content) => sum + (content.match(/([ぁ-んァ-ン])\1{2,}/g)?.length ?? 0),
+    0
+  );
+
+  let volumeScore = 60;
+  if (avgCharCount > 35) {
+    volumeScore += 12;
+  } else if (avgCharCount < 18) {
+    volumeScore -= 12;
+  }
+  volumeScore += Math.min(10, exclamationCount * 2);
+  volumeScore -= Math.min(15, totalFillerCount * 1.5);
+  volumeScore = clamp(Math.round(volumeScore), 0, 100);
+
+  let volumeLevel: VoiceMetrics["volumeLevel"] = "balanced";
+  let volumeComment = "声量は適度で聞き取りやすい印象です。";
+  if (volumeScore >= 75) {
+    volumeLevel = "energetic";
+    volumeComment = "しっかり声が出ていて、明るい印象を与えています。";
+  } else if (volumeScore <= 50) {
+    volumeLevel = "quiet";
+    volumeComment =
+      "やや声が小さく聞こえる可能性があります。もう少しハッキリ発声しましょう。";
+  }
+
+  const articulationBase = 84;
+  const fillerPenalty = clamp(totalFillerCount * 5.5, 0, 33);
+  const repeatPenalty = clamp(repeatedKanaCount * 6, 0, 24);
+  const articulationScore = clamp(
+    Math.round(articulationBase - fillerPenalty - repeatPenalty),
+    0,
+    100
+  );
+  let articulationComment =
+    "滑舌は良好で、明瞭に話せています。";
+  if (articulationScore >= 88) {
+    articulationComment =
+      "滑舌は非常にクリアで、言葉がはっきり伝わっています。";
+  } else if (articulationScore <= 62) {
+    articulationComment =
+      "フィラーや言い直しが目立ちました。語尾まで意識して発音すると改善します。";
+  }
+
+  const messagesWithTimestamp = userMessages
+    .map((msg) => {
+      if (!msg.createdAt) return null;
+      const ts =
+        typeof msg.createdAt === "string"
+          ? new Date(msg.createdAt).getTime()
+          : msg.createdAt.getTime();
+      if (Number.isNaN(ts)) return null;
+      return { timestamp: ts, content: msg.content };
+    })
+    .filter(
+      (item): item is { timestamp: number; content: string } =>
+        item !== null
+    );
+
+  const paceSamples: number[] = [];
+  for (let i = 1; i < messagesWithTimestamp.length; i += 1) {
+    const prev = messagesWithTimestamp[i - 1];
+    const cur = messagesWithTimestamp[i];
+    const deltaSeconds = (cur.timestamp - prev.timestamp) / 1000;
+    if (deltaSeconds <= 1) continue;
+    const characters = cur.content.replace(/\s+/g, "").length;
+    const pace = characters / deltaSeconds;
+    if (Number.isFinite(pace) && pace > 0) {
+      paceSamples.push(pace);
+    }
+  }
+
+  const averagePace =
+    paceSamples.reduce((sum, value) => sum + value, 0) /
+      (paceSamples.length || 1) || 0;
+
+  let speedScore = 72;
+  if (averagePace === 0) {
+    speedScore = 65;
+  } else if (averagePace > 5.5) {
+    speedScore -= Math.min(22, (averagePace - 5.5) * 11);
+  } else if (averagePace < 2.5) {
+    speedScore -= Math.min(22, (2.5 - averagePace) * 11);
+  } else {
+    speedScore += 8;
+  }
+  speedScore = clamp(Math.round(speedScore), 0, 100);
+
+  let speedLevel: VoiceMetrics["speedLevel"] = "ideal";
+  let speedComment = "話すスピードはちょうど良く、聞き取りやすいテンポです。";
+  if (averagePace === 0) {
+    speedLevel = "slow";
+    speedComment =
+      "話速の推定に十分なデータが無かったため、普段通りのテンポを意識してみましょう。";
+  } else if (speedScore <= 55) {
+    if (averagePace < 2.5) {
+      speedLevel = "slow";
+      speedComment =
+        "落ち着いた話し方ですが、もう少しテンポを上げると会話が弾みやすくなります。";
+    } else {
+      speedLevel = "fast";
+      speedComment =
+        "やや早口ぎみでした。語尾まで丁寧に言い切る意識を持つと伝わりやすさが上がります。";
+    }
+  } else if (speedScore >= 80) {
+    speedLevel = "ideal";
+    speedComment =
+      "テンポが安定していて、勢いと聞き取りやすさのバランスが取れています。";
+  }
+
+  const tremblingKeywordDetected = trimmedMessages.some((content) =>
+    /震え|ふるえ|緊張|ガチガチ|ブルブル/.test(content)
+  );
+  const highFillerDensity =
+    totalFillerCount > 0 &&
+    totalFillerCount / userMessages.length >= 2 &&
+    ellipsisCount >= userMessages.length;
+  const tremblingDetected = tremblingKeywordDetected || highFillerDensity;
+
+  let tremblingComment =
+    "声の震えは特に検知されませんでした。落ち着いた発声ができています。";
+  if (tremblingDetected) {
+    tremblingComment =
+      "緊張に由来する言い直しやフィラーが目立ちました。深呼吸をしてから話すと安定します。";
+  }
+
+  const summaryParts: string[] = [];
+  if (volumeLevel === "energetic") {
+    summaryParts.push("声量は十分で、自信のある印象です。");
+  } else if (volumeLevel === "quiet") {
+    summaryParts.push("もう少し声量を上げると伝わりやすくなります。");
+  } else {
+    summaryParts.push("声量はちょうど良く、落ち着いて話せています。");
+  }
+
+  if (articulationScore >= 80) {
+    summaryParts.push("滑舌は明瞭で言葉がクリアに届いています。");
+  } else {
+    summaryParts.push("滑舌にやや課題があるため、フィラーを減らす練習をしてみましょう。");
+  }
+
+  if (speedLevel === "ideal") {
+    summaryParts.push("話速も適度で、聞き取りやすいテンポです。");
+  } else if (speedLevel === "slow") {
+    summaryParts.push("テンポを少し上げると会話がよりスムーズになります。");
+  } else {
+    summaryParts.push("やや早口なので、要点ごとに区切る意識を持つと安心感が出ます。");
+  }
+
+  if (totalFillerCount > 0) {
+    summaryParts.push(`フィラーは合計${totalFillerCount}回でした。減らせるとさらに自然になります。`);
+  }
+
+  return {
+    volumeScore,
+    volumeLevel,
+    volumeComment,
+    articulationScore,
+    articulationComment,
+    speedScore,
+    speedLevel,
+    speedComment,
+    fillerWords: {
+      totalCount: totalFillerCount,
+      breakdown: fillerBreakdown.sort((a, b) => b.count - a.count),
+    },
+    tremblingDetected,
+    tremblingComment,
+    summary: summaryParts.join(" "),
+  };
+}
+
+
 export async function generateConversationFeedback(
   apiKey: string,
   messages: ConversationMessage[],
@@ -167,6 +425,7 @@ export async function generateConversationFeedback(
   overallScore: number | null;
   gestureGoodPoints?: string;
   gestureImprovementPoints?: string;
+  voiceMetrics: VoiceMetrics;
 }> {
   const client = getGeminiClient(apiKey) as GoogleGenAI;
 
@@ -276,6 +535,7 @@ ${gestureInfo}
 
   const conversationFeedback = feedback.conversation ?? {};
   const gestureFeedback = feedback.gestures ?? {};
+  const voiceMetrics = calculateVoiceMetrics(messages);
 
   const toText = (value: unknown): string => {
     if (Array.isArray(value)) {
@@ -305,5 +565,6 @@ ${gestureInfo}
     gestureImprovementPoints: toText(
       gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints
     ),
+    voiceMetrics,
   };
 }

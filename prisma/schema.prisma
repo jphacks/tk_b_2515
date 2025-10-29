@@ -43,6 +43,7 @@ model Feedback {
   overallScore             Int?         @map("overall_score")
   gestureGoodPoints        String?      @map("gesture_good_points")
   gestureImprovementPoints String?      @map("gesture_improvement_points")
+  voiceMetrics             Json?        @map("voice_metrics")
   conversation             Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@map("feedback")

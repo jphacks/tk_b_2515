@@ -848,6 +848,31 @@ const generateFeedbackRoute = createRoute({
               overallScore: z.number().nullable(),
               gestureGoodPoints: z.string().nullable().optional(),
               gestureImprovementPoints: z.string().nullable().optional(),
+              voiceMetrics: z
+                .object({
+                  volumeScore: z.number(),
+                  volumeLevel: z.enum(["quiet", "balanced", "energetic"]),
+                  volumeComment: z.string(),
+                  articulationScore: z.number(),
+                  articulationComment: z.string(),
+                  speedScore: z.number(),
+                  speedLevel: z.enum(["slow", "ideal", "fast"]),
+                  speedComment: z.string(),
+                  fillerWords: z.object({
+                    totalCount: z.number(),
+                    breakdown: z.array(
+                      z.object({
+                        word: z.string(),
+                        count: z.number(),
+                      })
+                    ),
+                  }),
+                  tremblingDetected: z.boolean(),
+                  tremblingComment: z.string(),
+                  summary: z.string(),
+                })
+                .nullable()
+                .optional(),
               createdAt: z.string(),
             }),
           }),
@@ -932,6 +957,8 @@ api.openapi(generateFeedbackRoute, async (c) => {
     const conversationHistory = session.messages.map((msg) => ({
       role: msg.role as "user" | "assistant",
       content: msg.content,
+      createdAt: msg.createdAt,
+      audioUrl: msg.audioUrl,
     }));
 
     // フィードバックを生成（初回のみ）
@@ -966,6 +993,7 @@ api.openapi(generateFeedbackRoute, async (c) => {
         overallScore: feedbackData.overallScore,
         gestureGoodPoints: gestureGoodPointsStr,
         gestureImprovementPoints: gestureImprovementPointsStr,
+        voiceMetrics: feedbackData.voiceMetrics,
         conversationId: sessionId,
       },
     });
