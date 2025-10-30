@@ -126,9 +126,9 @@ conversation.openapi(generateResponseRoute, async (c) => {
 
     // Build conversation history
     const conversationHistory = [
-      ...session.messages.map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
+      ...session.messages.map(({ role, content }) => ({
+        role: role as "user" | "assistant",
+        content,
       })),
       {
         role: "user" as const,
@@ -277,9 +277,9 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
     }
 
     // Build conversation history
-    const conversationHistory = session.messages.map((msg) => ({
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
+    const conversationHistory = session.messages.map(({ role, content }) => ({
+      role: role as "user" | "assistant",
+      content,
     }));
 
     // Generate feedback (first time only)

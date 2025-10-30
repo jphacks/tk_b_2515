@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import type { FacialMetrics } from "@/types/facial";
+import type { FacialMetrics } from "@/hooks/useFacialAnalysis";
 import type { SaveGestureMetricsRequest } from "@/types/api";
 
 interface GestureStats {

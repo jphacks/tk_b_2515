@@ -34,6 +34,8 @@ const voiceSchema = z.object({
   createdAtUnix: z.number().optional(),
 });
 
+type VoiceResponse = z.infer<typeof voiceSchema>;
+
 // Get available voices
 const getVoicesRoute = createRoute({
   method: "get",
@@ -71,7 +73,10 @@ speech.openapi(getVoicesRoute, async (c) => {
     }
 
     const voices = await getVoices(apiKey);
-    return c.json({ voices }, 200);
+    const responseBody = {
+      voices: voices as VoiceResponse[],
+    };
+    return c.json(responseBody, 200);
   } catch (error) {
     console.error("Failed to fetch voices:", error);
     return c.json({ error: "Failed to fetch voices" }, 500);
@@ -133,7 +138,7 @@ speech.openapi(getVoiceByIdRoute, async (c) => {
     }
 
     const { voiceId } = c.req.valid("param");
-    const voice = await getVoiceById(apiKey, voiceId);
+    const voice = (await getVoiceById(apiKey, voiceId)) as VoiceResponse | null;
 
     if (!voice) {
       return c.json({ error: "Voice not found" }, 404);

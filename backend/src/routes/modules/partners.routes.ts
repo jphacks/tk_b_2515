@@ -5,6 +5,33 @@ const partners = new OpenAPIHono<{
   Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
 }>();
 
+const errorResponseSchema = z.object({
+  error: z.string(),
+});
+
+const partnerSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  rating: z.number().nullable(),
+  isAvailable: z.boolean(),
+});
+
+const partnerSessionResponseSchema = z.object({
+  sessionId: z.string(),
+  roomId: z.string(),
+});
+
+const sessionDetailsSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  partnerId: z.string(),
+  status: z.string(),
+  roomId: z.string().nullable(),
+  startedAt: z.string().nullable(),
+  endedAt: z.string().nullable(),
+  duration: z.number().nullable(),
+});
+
 // Get available partners
 const getPartnersRoute = createRoute({
   method: "get",
@@ -16,17 +43,16 @@ const getPartnersRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            partners: z.array(
-              z.object({
-                id: z.string(),
-                name: z.string(),
-                age: z.number().optional(),
-                university: z.string().optional(),
-                rating: z.number().optional(),
-                isAvailable: z.boolean(),
-              })
-            ),
+            partners: z.array(partnerSummarySchema),
           }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to fetch partners",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
         },
       },
     },
@@ -48,7 +74,17 @@ partners.openapi(getPartnersRoute, async (c) => {
       },
     });
 
-    return c.json({ partners: partnersList }, 200);
+    const normalizedPartners = partnersList.map((partner) => ({
+      ...partner,
+      rating: partner.rating ?? null,
+    }));
+
+    return c.json(
+      {
+        partners: normalizedPartners as z.infer<typeof partnerSummarySchema>[],
+      },
+      200
+    );
   } catch (error) {
     console.error("Failed to fetch partners:", error);
     return c.json({ error: "Failed to fetch partners" }, 500);
@@ -77,10 +113,15 @@ const createPartnerSessionRoute = createRoute({
       description: "Partner session created",
       content: {
         "application/json": {
-          schema: z.object({
-            sessionId: z.string(),
-            roomId: z.string(),
-          }),
+          schema: partnerSessionResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Failed to create session",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
         },
       },
     },
@@ -89,7 +130,7 @@ const createPartnerSessionRoute = createRoute({
 
 partners.openapi(createPartnerSessionRoute, async (c) => {
   try {
-    const { userId, partnerId } = await c.req.json();
+    const { userId, partnerId } = c.req.valid("json");
 
     // Create session with unique room ID
     const roomId = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -137,12 +178,36 @@ const startPartnerSessionRoute = createRoute({
         },
       },
     },
+    404: {
+      description: "Session not found",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Failed to start session",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
   },
 });
 
 partners.openapi(startPartnerSessionRoute, async (c) => {
   try {
-    const { sessionId } = c.req.param();
+    const { sessionId } = c.req.valid("param");
+
+    const existingSession = await prisma.humanPartnerSession.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!existingSession) {
+      return c.json({ error: "Session not found" }, 404);
+    }
 
     await prisma.humanPartnerSession.update({
       where: { id: sessionId },
@@ -181,12 +246,28 @@ const endPartnerSessionRoute = createRoute({
         },
       },
     },
+    404: {
+      description: "Session not found",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Failed to end session",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
   },
 });
 
 partners.openapi(endPartnerSessionRoute, async (c) => {
   try {
-    const { sessionId } = c.req.param();
+    const { sessionId } = c.req.valid("param");
 
     const session = await prisma.humanPartnerSession.findUnique({
       where: { id: sessionId },
@@ -233,17 +314,24 @@ const getPartnerSessionRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            session: z.object({
-              id: z.string(),
-              userId: z.string(),
-              partnerId: z.string(),
-              status: z.string(),
-              roomId: z.string().nullable(),
-              startedAt: z.string().nullable(),
-              endedAt: z.string().nullable(),
-              duration: z.number().nullable(),
-            }),
+            session: sessionDetailsSchema,
           }),
+        },
+      },
+    },
+    404: {
+      description: "Session not found",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Failed to fetch session",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
         },
       },
     },
@@ -252,7 +340,7 @@ const getPartnerSessionRoute = createRoute({
 
 partners.openapi(getPartnerSessionRoute, async (c) => {
   try {
-    const { sessionId } = c.req.param();
+    const { sessionId } = c.req.valid("param");
 
     const session = await prisma.humanPartnerSession.findUnique({
       where: { id: sessionId },
@@ -262,7 +350,18 @@ partners.openapi(getPartnerSessionRoute, async (c) => {
       return c.json({ error: "Session not found" }, 404);
     }
 
-    return c.json({ session }, 200);
+    const sessionResponse: z.infer<typeof sessionDetailsSchema> = {
+      id: session.id,
+      userId: session.userId,
+      partnerId: session.partnerId,
+      status: session.status,
+      roomId: session.roomId ?? null,
+      startedAt: session.startedAt ? session.startedAt.toISOString() : null,
+      endedAt: session.endedAt ? session.endedAt.toISOString() : null,
+      duration: session.duration ?? null,
+    };
+
+    return c.json({ session: sessionResponse }, 200);
   } catch (error) {
     console.error("Failed to fetch session:", error);
     return c.json({ error: "Failed to fetch session" }, 500);
