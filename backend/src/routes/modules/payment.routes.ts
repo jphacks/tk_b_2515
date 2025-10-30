@@ -46,6 +46,16 @@ const createCheckoutSessionRoute = createRoute({
         },
       },
     },
+    500: {
+      description: "Failed to create checkout session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -115,6 +125,26 @@ const verifyPaymentSessionRoute = createRoute({
         },
       },
     },
+    400: {
+      description: "Invalid request or payment not completed",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to verify payment",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -175,6 +205,26 @@ const stripeWebhookRoute = createRoute({
         "application/json": {
           schema: z.object({
             received: z.boolean(),
+          }),
+        },
+      },
+    },
+    400: {
+      description: "Invalid webhook payload",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Webhook processing failed",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },
