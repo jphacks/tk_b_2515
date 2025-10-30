@@ -66,3 +66,72 @@ model GestureMetrics {
 
   @@map("gesture_metrics")
 }
+
+// 人間パートナー（実際の女の子）とのビデオ通話セッション
+model HumanPartnerSession {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id") // 練習者のID
+  partnerId   String   @map("partner_id") // パートナー（女の子）のID
+  status      String   @default("waiting") // waiting, active, completed, cancelled
+  roomId      String?  @unique @map("room_id") // ビデオ通話のルームID
+  startedAt   DateTime? @map("started_at") // セッション開始時刻
+  endedAt     DateTime? @map("ended_at") // セッション終了時刻
+  duration    Int?     // セッション時間（秒）
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // リレーション
+  user        Partner  @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  partner     Partner  @relation("PartnerSessions", fields: [partnerId], references: [id], onDelete: Cascade)
+  feedback    HumanPartnerFeedback?
+
+  @@index([userId])
+  @@index([partnerId])
+  @@index([status])
+  @@map("human_partner_sessions")
+}
+
+// パートナー（練習者と女の子の両方）の情報
+model Partner {
+  id               String   @id @default(uuid())
+  name             String   // 表示名
+  bio              String?  // 自己紹介
+  avatarUrl        String?  @map("avatar_url") // プロフィール画像
+  role             String   @default("user") // user（練習者）, partner（女の子）
+  isAvailable      Boolean  @default(false) @map("is_available") // パートナーとして対応可能か
+  rating           Float?   // 評価（1-5）
+  totalSessions    Int      @default(0) @map("total_sessions") // 総セッション数
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // リレーション
+  userSessions     HumanPartnerSession[] @relation("UserSessions")
+  partnerSessions  HumanPartnerSession[] @relation("PartnerSessions")
+
+  @@index([role])
+  @@index([isAvailable])
+  @@map("partners")
+}
+
+// 人間パートナーセッションのフィードバック
+model HumanPartnerFeedback {
+  id                       String              @id @default(uuid())
+  sessionId                String              @unique @map("session_id")
+  createdAt                DateTime            @default(now()) @map("created_at")
+
+  // AIによる自動フィードバック
+  aiGoodPoints             String?             @map("ai_good_points")
+  aiImprovementPoints      String?             @map("ai_improvement_points")
+  aiOverallScore           Int?                @map("ai_overall_score")
+
+  // パートナーからの手動フィードバック
+  partnerGoodPoints        String?             @map("partner_good_points")
+  partnerImprovementPoints String?             @map("partner_improvement_points")
+  partnerRating            Int?                @map("partner_rating") // 1-5
+  partnerComment           String?             @map("partner_comment")
+
+  // リレーション
+  session                  HumanPartnerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("human_partner_feedback")
+}

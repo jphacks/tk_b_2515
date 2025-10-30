@@ -90,14 +90,23 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="flex justify-center mb-8 sm:mb-12">
-                <Link href="/simulation">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12">
+                <Link href="/simulation" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all font-bold animate-wiggle heart-effect"
+                    className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all font-bold animate-wiggle heart-effect"
                   >
                     <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
                     今すぐはなしかける
+                  </Button>
+                </Link>
+                <Link href="/login" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto rounded-full text-base sm:text-lg px-8 sm:px-12 py-6 sm:py-7 hover:bg-primary/10"
+                  >
+                    ログインして続ける
                   </Button>
                 </Link>
               </div>

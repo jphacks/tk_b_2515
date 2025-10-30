@@ -12,12 +12,20 @@ import {
   RotateCcw,
   ThumbsUp,
   TrendingUp,
+  Users,
   Volume2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { feedbackApi, sessionApi } from "@/lib/api";
 import { textToSpeechUrl } from "@/lib/api/tts";
 import { getFeedbackComment } from "@/lib/feedbackComments";
@@ -391,7 +399,10 @@ function FeedbackContent() {
 
   // フィードバック取得後に自動で音声コメントを再生
   useEffect(() => {
-    if (feedback?.overallScore !== null && feedback?.overallScore !== undefined) {
+    if (
+      feedback?.overallScore !== null &&
+      feedback?.overallScore !== undefined
+    ) {
       // 少し遅延させてから再生（UIが表示されてから）
       const timer = setTimeout(() => {
         if (feedback.overallScore !== null) {
@@ -570,14 +581,20 @@ function FeedbackContent() {
       {/* Header */}
       <header className="p-3 sm:p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm border-b border-border">
         <Link href="/">
-          <Button variant="ghost" size="sm" className="rounded-full text-xs sm:text-sm px-2 sm:px-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full text-xs sm:text-sm px-2 sm:px-3"
+          >
             <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
             <span className="hidden sm:inline">ホームへ</span>
           </Button>
         </Link>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary" />
-          <span className="font-semibold text-foreground text-sm sm:text-base">恋ai</span>
+          <span className="font-semibold text-foreground text-sm sm:text-base">
+            恋ai
+          </span>
         </div>
         <div className="w-12 sm:w-20" /> {/* Spacer for alignment */}
       </header>
@@ -604,10 +621,15 @@ function FeedbackContent() {
                     ? "会話がまだありません"
                     : "エラーが発生しました"}
                 </h2>
-                <p className="text-muted-foreground text-sm sm:text-base">{error}</p>
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  {error}
+                </p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   <Link href="/simulation">
-                    <Button size="lg" className="rounded-full w-full text-sm sm:text-base">
+                    <Button
+                      size="lg"
+                      className="rounded-full w-full text-sm sm:text-base"
+                    >
                       <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       会話を始める
                     </Button>
@@ -679,7 +701,9 @@ function FeedbackContent() {
                   <div className="text-5xl sm:text-6xl font-bold text-primary">
                     {feedback.overallScore}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">/ 100点</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    / 100点
+                  </p>
                 </div>
                 <Button
                   variant="outline"
@@ -692,7 +716,11 @@ function FeedbackContent() {
                   disabled={isPlayingVoice || feedback.overallScore === null}
                   className="rounded-full mx-auto"
                 >
-                  <Volume2 className={`w-4 h-4 mr-2 ${isPlayingVoice ? "animate-pulse" : ""}`} />
+                  <Volume2
+                    className={`w-4 h-4 mr-2 ${
+                      isPlayingVoice ? "animate-pulse" : ""
+                    }`}
+                  />
                   {isPlayingVoice ? "再生中..." : "まきのコメントを聞く"}
                 </Button>
               </div>
@@ -1013,22 +1041,51 @@ function FeedbackContent() {
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Link href="/simulation" className="flex-1 sm:flex-initial">
-                <Button size="lg" className="w-full rounded-full">
-                  <RotateCcw className="w-5 h-5 mr-2" />
-                  もう一度練習する
-                </Button>
-              </Link>
-              <Link href="/" className="flex-1 sm:flex-initial">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full rounded-full bg-transparent"
-                >
-                  ホームに戻る
-                </Button>
-              </Link>
+            <div className="flex flex-col gap-4 justify-center pt-4">
+              {/* 実践練習へ進むボタン（高スコアの場合に表示） */}
+              {feedback &&
+                feedback.overallScore !== null &&
+                feedback.overallScore >= 70 && (
+                  <Card className="p-6 border-2 border-green-500/20 bg-green-500/5">
+                    <div className="text-center space-y-4">
+                      <h3 className="text-xl font-bold text-foreground">
+                        実践に挑戦してみませんか？
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        AIとの練習で十分なスコアを獲得しました！
+                        <br />
+                        実際の女性とのビデオ通話で、本物の会話練習に挑戦しましょう。
+                      </p>
+                      <Link href="/partner-matching" className="block">
+                        <Button
+                          size="lg"
+                          className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Users className="w-5 h-5 mr-2" />
+                          実践練習へ進む
+                        </Button>
+                      </Link>
+                    </div>
+                  </Card>
+                )}
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/simulation" className="flex-1 sm:flex-initial">
+                  <Button size="lg" className="w-full rounded-full">
+                    <RotateCcw className="w-5 h-5 mr-2" />
+                    もう一度練習する
+                  </Button>
+                </Link>
+                <Link href="/" className="flex-1 sm:flex-initial">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full rounded-full bg-transparent"
+                  >
+                    ホームに戻る
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -1110,7 +1167,10 @@ function FeedbackContent() {
                     : selectedGestureGoodPoints
                   ).map((point, index) => (
                     <li
-                      key={`modal-${selectedCategory}-good-${point.substring(0, 30)}-${index}`}
+                      key={`modal-${selectedCategory}-good-${point.substring(
+                        0,
+                        30
+                      )}-${index}`}
                       className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
                     >
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
@@ -1151,7 +1211,10 @@ function FeedbackContent() {
                     : selectedGestureImprovementPoints
                   ).map((point, index) => (
                     <li
-                      key={`modal-${selectedCategory}-improve-${point.substring(0, 30)}-${index}`}
+                      key={`modal-${selectedCategory}-improve-${point.substring(
+                        0,
+                        30
+                      )}-${index}`}
                       className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
                     >
                       <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
