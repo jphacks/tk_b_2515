@@ -1,28 +1,14 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { prisma } from "../lib/prisma";
-import { supabase } from "../lib/supabase";
-import {
-  generateConversationFeedback,
-  generateConversationResponse,
-} from "../services/conversation";
-import {
-  getVoiceById,
-  getVoices,
-  speechToText,
-  speechToTextWithVoice,
-  textToSpeech,
-} from "../services/stt";
 
-const gestureMetricsSchema = z.object({
-  totalSamples: z.number().int().min(0),
-  smilingSamples: z.number().int().min(0),
-  smileIntensityAvg: z.number().min(0),
-  smileIntensityMax: z.number().min(0),
-  gazeScoreAvg: z.number().min(0),
-  lookingSamples: z.number().int().min(0),
-  gazeUpSamples: z.number().int().min(0),
-  gazeDownSamples: z.number().int().min(0),
-});
+// Import route modules
+import authRoutes from "./modules/auth.routes";
+import conversationRoutes from "./modules/conversation.routes";
+import feedbackRoutes from "./modules/feedback.routes";
+import messagesRoutes from "./modules/messages.routes";
+import partnersRoutes from "./modules/partners.routes";
+import paymentRoutes from "./modules/payment.routes";
+import sessionsRoutes from "./modules/sessions.routes";
+import speechRoutes from "./modules/speech.routes";
 
 const api = new OpenAPIHono<{
   Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };

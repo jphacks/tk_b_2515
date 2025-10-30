@@ -10,6 +10,31 @@ import {
 	VRMAnimationLoaderPlugin,
 	createVRMAnimationClip,
 } from "@pixiv/three-vrm-animation";
+import type { VRMAnimation } from "@pixiv/three-vrm-animation";
+
+type VRMUserData = {
+	vrmAnimation?: unknown;
+	vrmAnimations?: unknown[];
+	VRMAnimation?: unknown;
+	VRMA?: unknown;
+};
+
+const isVRMAnimation = (value: unknown): value is VRMAnimation =>
+	typeof value === "object" &&
+	value !== null &&
+	"duration" in value &&
+	"humanoidTracks" in value;
+
+const extractVRMAnimation = (userData: VRMUserData): VRMAnimation | null => {
+	const vrmaCandidate =
+		userData.vrmAnimation ||
+		(Array.isArray(userData.vrmAnimations) ? userData.vrmAnimations[0] : null) ||
+		userData.VRMAnimation ||
+		userData.VRMA ||
+		null;
+
+	return isVRMAnimation(vrmaCandidate) ? vrmaCandidate : null;
+};
 
 type GestureType =
 	| "idle"
@@ -69,15 +94,8 @@ export default function VRMAvatar({
 				url,
 				(gltf) => {
 					try {
-						const userData: any = gltf.userData ?? {};
-						const vrma =
-							userData.vrmAnimation ||
-							(Array.isArray(userData.vrmAnimations)
-								? userData.vrmAnimations[0]
-								: null) ||
-							userData.VRMAnimation ||
-							userData.VRMA ||
-							null;
+						const userData: VRMUserData = (gltf.userData ?? {}) as VRMUserData;
+						const vrma = extractVRMAnimation(userData);
 
 						if (!vrma) {
 							console.warn("VRMAnimation not found in gltf.userData for", url);
