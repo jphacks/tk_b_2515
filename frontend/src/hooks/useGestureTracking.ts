@@ -1,5 +1,5 @@
-import { useRef, useEffect } from "react";
-import type { FacialMetrics } from "@/types/facial";
+import { useEffect, useRef } from "react";
+import type { FacialMetrics } from "@/hooks/useFacialAnalysis";
 import type { SaveGestureMetricsRequest } from "@/types/api";
 
 interface GestureStats {
@@ -25,7 +25,6 @@ export function useGestureTracking(facialMetrics: FacialMetrics | null) {
     gazeDownSamples: 0,
   });
 
-  // Track facial metrics
   useEffect(() => {
     if (!facialMetrics) return;
 

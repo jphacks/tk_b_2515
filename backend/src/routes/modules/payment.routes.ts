@@ -6,7 +6,6 @@ const payment = new OpenAPIHono<{
   Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
 }>();
 
-// Initialize Stripe
 const getStripeInstance = () => {
   const apiKey = process.env.STRIPE_SECRET_KEY;
   if (!apiKey) {
@@ -17,7 +16,6 @@ const getStripeInstance = () => {
   });
 };
 
-// Create Stripe checkout session
 const createCheckoutSessionRoute = createRoute({
   method: "post",
   path: "/create-checkout-session",
@@ -46,12 +44,22 @@ const createCheckoutSessionRoute = createRoute({
         },
       },
     },
+    500: {
+      description: "Failed to create checkout session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
 payment.openapi(createCheckoutSessionRoute, async (c) => {
   try {
-    const { partnerId, partnerName, amount } = await c.req.json();
+    const { partnerId, partnerName, amount } = c.req.valid("json");
     const stripe = getStripeInstance();
 
     const baseUrl = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -87,7 +95,6 @@ payment.openapi(createCheckoutSessionRoute, async (c) => {
   }
 });
 
-// Verify payment and create partner session
 const verifyPaymentSessionRoute = createRoute({
   method: "post",
   path: "/verify-session",
@@ -115,31 +122,48 @@ const verifyPaymentSessionRoute = createRoute({
         },
       },
     },
+    400: {
+      description: "Invalid request or payment not completed",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to verify payment",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
 payment.openapi(verifyPaymentSessionRoute, async (c) => {
   try {
-    const { sessionId } = await c.req.json();
+    const { sessionId } = c.req.valid("json");
     const stripe = getStripeInstance();
 
-    // Retrieve the checkout session
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status !== "paid") {
       return c.json({ error: "Payment not completed" }, 400);
     }
 
-    // Create partner session
     const partnerId = session.metadata?.partnerId;
     if (!partnerId) {
       return c.json({ error: "Partner ID not found" }, 400);
     }
 
-    // TODO: Get userId from authenticated user
-    const userId = "user-placeholder"; // Replace with actual user ID from auth
+    const userId = "user-placeholder";
 
-    const roomId = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const roomId = `room-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const partnerSession = await prisma.humanPartnerSession.create({
       data: {
@@ -163,7 +187,6 @@ payment.openapi(verifyPaymentSessionRoute, async (c) => {
   }
 });
 
-// Stripe webhook endpoint
 const stripeWebhookRoute = createRoute({
   method: "post",
   path: "/webhook",
@@ -175,6 +198,26 @@ const stripeWebhookRoute = createRoute({
         "application/json": {
           schema: z.object({
             received: z.boolean(),
+          }),
+        },
+      },
+    },
+    400: {
+      description: "Invalid webhook payload",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Webhook processing failed",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },
@@ -202,12 +245,10 @@ payment.openapi(stripeWebhookRoute, async (c) => {
       return c.json({ error: "Invalid signature" }, 400);
     }
 
-    // Handle different event types
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object;
+        const session = event.data.object as Stripe.Checkout.Session;
         console.log("Payment successful:", session.id);
-        // TODO: Additional processing (send email, update database, etc.)
         break;
       }
       case "payment_intent.succeeded": {
