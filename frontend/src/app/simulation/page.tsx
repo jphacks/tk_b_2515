@@ -45,7 +45,7 @@ export default function SimulationPage() {
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
 
   const videoStreamRef = useRef<VideoStreamRef>(null);
-  const avatarModelUrl = "/models/my_honey_A.vrm";
+  const avatarModelUrl = "/models/tyarao.vrm";  //アバター変更はここを編集
 
   // Media devices (camera/mic)
   const {

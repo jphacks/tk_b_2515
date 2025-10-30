@@ -29,7 +29,7 @@ export default function RootLayout({
         {/* Preload VRM asset to shorten first render time */}
         <link
           rel="preload"
-          href="/models/innocent_girl.vrm"
+          href="/models/maki.vrm"
           as="fetch"
           crossOrigin="anonymous"
         />
