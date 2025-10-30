@@ -11,7 +11,12 @@ const speech = new OpenAPIHono<{
   Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
 }>();
 
-// Voice schema for OpenAPI documentation
+const isFile = (value: unknown): value is File =>
+  typeof File !== "undefined" && value instanceof File;
+
+const extractSingleValue = (value: unknown): unknown =>
+  Array.isArray(value) ? value[0] : value ?? undefined;
+
 const voiceSchema = z.object({
   voiceId: z.string(),
   name: z.string().optional(),
@@ -34,7 +39,8 @@ const voiceSchema = z.object({
   createdAtUnix: z.number().optional(),
 });
 
-// Get available voices
+type VoiceResponse = z.infer<typeof voiceSchema>;
+
 const getVoicesRoute = createRoute({
   method: "get",
   path: "/voices",
@@ -71,14 +77,13 @@ speech.openapi(getVoicesRoute, async (c) => {
     }
 
     const voices = await getVoices(apiKey);
-    return c.json({ voices }, 200);
+    return c.json({ voices: voices as VoiceResponse[] }, 200);
   } catch (error) {
     console.error("Failed to fetch voices:", error);
     return c.json({ error: "Failed to fetch voices" }, 500);
   }
 });
 
-// Get specific voice by ID
 const getVoiceByIdRoute = createRoute({
   method: "get",
   path: "/voices/{voiceId}",
@@ -133,7 +138,7 @@ speech.openapi(getVoiceByIdRoute, async (c) => {
     }
 
     const { voiceId } = c.req.valid("param");
-    const voice = await getVoiceById(apiKey, voiceId);
+    const voice = (await getVoiceById(apiKey, voiceId)) as VoiceResponse | null;
 
     if (!voice) {
       return c.json({ error: "Voice not found" }, 404);
@@ -146,7 +151,6 @@ speech.openapi(getVoiceByIdRoute, async (c) => {
   }
 });
 
-// Speech-to-text endpoint
 speech.post("/stt", async (c) => {
   try {
     const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -156,40 +160,41 @@ speech.post("/stt", async (c) => {
     }
 
     const body = await c.req.parseBody();
-    const audioFile = body.audio;
-    const voiceId = body.voiceId as string | undefined;
+    const audioField = extractSingleValue(
+      "audio" in body ? (body as Record<string, unknown>).audio : undefined
+    );
+    const voiceField = extractSingleValue(
+      "voiceId" in body ? (body as Record<string, unknown>).voiceId : undefined
+    );
+    const voiceId = typeof voiceField === "string" ? voiceField : undefined;
 
     console.log("STT Request received:", {
-      hasAudio: !!audioFile,
-      audioType: audioFile instanceof File ? audioFile.type : typeof audioFile,
-      audioSize: audioFile instanceof File ? audioFile.size : 0,
-      voiceId: voiceId || "none",
+      hasAudio: !!audioField,
+      audioType: isFile(audioField) ? audioField.type : typeof audioField,
+      audioSize: isFile(audioField) ? audioField.size : 0,
+      voiceId: voiceId ?? "none",
     });
 
-    if (!audioFile || !(audioFile instanceof File)) {
+    if (!audioField || !isFile(audioField)) {
       console.error("STT Error: Invalid audio file", {
-        audioFile: typeof audioFile,
+        audioFile: typeof audioField,
       });
       return c.json({ error: "Audio file is required" }, 400);
     }
 
     if (voiceId) {
-      // Get voice info along with transcription
-      console.log("Calling speechToTextWithVoice with voiceId:", voiceId);
-      const result = await speechToTextWithVoice(apiKey, audioFile, voiceId);
+      const result = await speechToTextWithVoice(apiKey, audioField, voiceId);
       console.log("STT Success:", {
         textLength: result.text.length,
         hasVoice: !!result.voice,
       });
       return c.json(result);
     }
-    // Simple STT without voiceId
-    console.log("Calling speechToText without voiceId");
-    const text = await speechToText(apiKey, audioFile);
+
+    const text = await speechToText(apiKey, audioField);
     console.log("STT Success:", { textLength: text.length });
     return c.json({ text });
   } catch (error) {
-    // Detailed error logging
     console.error("Error in STT - Full details:", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -209,7 +214,6 @@ speech.post("/stt", async (c) => {
   }
 });
 
-// Text-to-speech endpoint
 const ttsRoute = createRoute({
   method: "post",
   path: "/tts",
@@ -279,7 +283,6 @@ speech.openapi(ttsRoute, async (c) => {
 
     const { text, voiceId, modelId } = c.req.valid("json");
 
-    // Use default voiceId if not provided (Rachel - a natural sounding voice)
     const selectedVoiceId = voiceId || "lhTvHflPVOqgSWyuWQry";
 
     const audioStream = await textToSpeech(
@@ -289,7 +292,6 @@ speech.openapi(ttsRoute, async (c) => {
       modelId
     );
 
-    // Set appropriate headers for audio streaming
     c.header("Content-Type", "audio/mpeg");
     c.header("Transfer-Encoding", "chunked");
 
