@@ -12,6 +12,18 @@ export const config = {
 			process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID ||
 			process.env.ELEVENLABS_VOICE_ID ||
 			"",
+		voices: {
+			female:
+				process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID_FEMALE ||
+				process.env.ELEVENLABS_VOICE_ID_FEMALE ||
+				process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID ||
+				process.env.ELEVENLABS_VOICE_ID ||
+				"",
+			male:
+				process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID_MALE ||
+				process.env.ELEVENLABS_VOICE_ID_MALE ||
+				"",
+		},
 	},
 
 	// Supabase設定
