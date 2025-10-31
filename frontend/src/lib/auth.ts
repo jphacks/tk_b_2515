@@ -3,8 +3,14 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
+
+if (!betterAuthSecret) {
+  throw new Error("BETTER_AUTH_SECRET is not configured.");
+}
 
 export const auth = betterAuth({
+  secret: betterAuthSecret,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
