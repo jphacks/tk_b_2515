@@ -1,13 +1,12 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
 import {
   generateConversationFeedback,
   generateConversationResponse,
 } from "../../services/conversation";
+import { createApiRoute } from "../utils";
 
-const conversation = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const conversation = createApiRoute();
 
 // Generate AI conversation response
 const generateResponseRoute = createRoute({

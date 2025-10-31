@@ -1,10 +1,9 @@
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
 import { supabase } from "../../lib/supabase";
+import { createApiRoute } from "../utils";
 
-const sessions = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const sessions = createApiRoute();
 
 const gestureMetricsSchema = z.object({
   totalSamples: z.number().int().min(0),

@@ -1,9 +1,8 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { supabase } from "../../lib/supabase";
+import { createApiRoute } from "../utils";
 
-const auth = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const auth = createApiRoute();
 
 // Sign up route
 const signUpRoute = createRoute({

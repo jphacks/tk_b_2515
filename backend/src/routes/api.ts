@@ -1,4 +1,5 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
+import { createApiRoute } from "./utils";
 
 // Import route modules
 import authRoutes from "./modules/auth.routes";
@@ -10,9 +11,7 @@ import paymentRoutes from "./modules/payment.routes";
 import sessionsRoutes from "./modules/sessions.routes";
 import speechRoutes from "./modules/speech.routes";
 
-const api = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const api = createApiRoute();
 
 // Health check endpoint with OpenAPI
 const healthRoute = createRoute({
@@ -38,13 +37,17 @@ api.openapi(healthRoute, (c) => {
 });
 
 // Mount route modules
-api.route("/auth", authRoutes);
-api.route("/sessions", sessionsRoutes);
-api.route("/sessions", messagesRoutes);
-api.route("/sessions", feedbackRoutes);
-api.route("/conversation", conversationRoutes);
-api.route("/", speechRoutes);
-api.route("/partners", partnersRoutes);
-api.route("/payment", paymentRoutes);
+[
+  { basePath: "/auth", router: authRoutes },
+  { basePath: "/sessions", router: sessionsRoutes },
+  { basePath: "/sessions", router: messagesRoutes },
+  { basePath: "/sessions", router: feedbackRoutes },
+  { basePath: "/conversation", router: conversationRoutes },
+  { basePath: "/", router: speechRoutes },
+  { basePath: "/partners", router: partnersRoutes },
+  { basePath: "/payment", router: paymentRoutes },
+].forEach(({ basePath, router }) => {
+  api.route(basePath, router);
+});
 
 export default api;

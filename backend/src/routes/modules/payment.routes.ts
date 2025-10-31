@@ -1,10 +1,9 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import Stripe from "stripe";
 import { prisma } from "../../lib/prisma";
+import { createApiRoute } from "../utils";
 
-const payment = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const payment = createApiRoute();
 
 // Initialize Stripe
 const getStripeInstance = () => {
@@ -42,6 +41,16 @@ const createCheckoutSessionRoute = createRoute({
         "application/json": {
           schema: z.object({
             sessionId: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to create checkout session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },
@@ -115,6 +124,26 @@ const verifyPaymentSessionRoute = createRoute({
         },
       },
     },
+    400: {
+      description: "Invalid payment session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to verify payment session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -175,6 +204,26 @@ const stripeWebhookRoute = createRoute({
         "application/json": {
           schema: z.object({
             received: z.boolean(),
+          }),
+        },
+      },
+    },
+    400: {
+      description: "Invalid webhook request",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to process webhook",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },
