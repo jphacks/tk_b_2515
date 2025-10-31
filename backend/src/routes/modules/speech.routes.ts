@@ -1,4 +1,5 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
+import type { Voice } from "@elevenlabs/elevenlabs-js/api";
 import {
   getVoiceById,
   getVoices,
@@ -6,10 +7,9 @@ import {
   speechToTextWithVoice,
   textToSpeech,
 } from "../../services/stt";
+import { createApiRoute } from "../utils";
 
-const speech = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const speech = createApiRoute();
 
 // Voice schema for OpenAPI documentation
 const voiceSchema = z.object({
@@ -25,14 +25,51 @@ const voiceSchema = z.object({
   highQualityBaseModelIds: z.array(z.string()).optional(),
   safetyControl: z.string().optional(),
   voiceVerification: z.any().optional(),
-  ownerUserId: z.string().optional(),
-  permission: z.string().optional(),
   isLegacy: z.boolean().optional(),
   isOwner: z.boolean().optional(),
-  samples: z.array(z.any()).optional(),
   fineTuning: z.any().optional(),
   createdAtUnix: z.number().optional(),
 });
+
+const serializeVoice = (voice: Voice) => {
+  const {
+    voiceId,
+    name,
+    category,
+    description,
+    labels,
+    previewUrl,
+    availableForTiers,
+    settings,
+    sharing,
+    highQualityBaseModelIds,
+    safetyControl,
+    voiceVerification,
+    isLegacy,
+    isOwner,
+    fineTuning,
+    createdAtUnix,
+  } = voice;
+
+  return {
+    voiceId,
+    name,
+    category,
+    description,
+    labels,
+    previewUrl,
+    availableForTiers,
+    settings,
+    sharing,
+    highQualityBaseModelIds,
+    safetyControl,
+    voiceVerification,
+    isLegacy,
+    isOwner,
+    fineTuning,
+    createdAtUnix,
+  };
+};
 
 // Get available voices
 const getVoicesRoute = createRoute({
@@ -71,7 +108,7 @@ speech.openapi(getVoicesRoute, async (c) => {
     }
 
     const voices = await getVoices(apiKey);
-    return c.json({ voices }, 200);
+    return c.json({ voices: voices.map(serializeVoice) }, 200);
   } catch (error) {
     console.error("Failed to fetch voices:", error);
     return c.json({ error: "Failed to fetch voices" }, 500);
@@ -139,7 +176,7 @@ speech.openapi(getVoiceByIdRoute, async (c) => {
       return c.json({ error: "Voice not found" }, 404);
     }
 
-    return c.json({ voice }, 200);
+    return c.json({ voice: serializeVoice(voice) }, 200);
   } catch (error) {
     console.error("Failed to fetch voice:", error);
     return c.json({ error: "Failed to fetch voice" }, 500);

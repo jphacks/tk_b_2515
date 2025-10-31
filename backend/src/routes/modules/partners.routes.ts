@@ -1,9 +1,8 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
+import { createApiRoute } from "../utils";
 
-const partners = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const partners = createApiRoute();
 
 // Get available partners
 const getPartnersRoute = createRoute({
@@ -22,10 +21,20 @@ const getPartnersRoute = createRoute({
                 name: z.string(),
                 age: z.number().optional(),
                 university: z.string().optional(),
-                rating: z.number().optional(),
+                rating: z.number().nullable().optional(),
                 isAvailable: z.boolean(),
               })
             ),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to fetch partners",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },
@@ -84,6 +93,16 @@ const createPartnerSessionRoute = createRoute({
         },
       },
     },
+    500: {
+      description: "Failed to create partner session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -137,6 +156,16 @@ const startPartnerSessionRoute = createRoute({
         },
       },
     },
+    500: {
+      description: "Failed to start partner session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
   },
 });
 
@@ -177,6 +206,26 @@ const endPartnerSessionRoute = createRoute({
           schema: z.object({
             success: z.boolean(),
             duration: z.number(),
+          }),
+        },
+      },
+    },
+    404: {
+      description: "Session not found",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to end partner session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },
@@ -243,6 +292,26 @@ const getPartnerSessionRoute = createRoute({
               endedAt: z.string().nullable(),
               duration: z.number().nullable(),
             }),
+          }),
+        },
+      },
+    },
+    404: {
+      description: "Session not found",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to fetch session",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
           }),
         },
       },

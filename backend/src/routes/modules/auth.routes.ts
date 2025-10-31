@@ -1,9 +1,8 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { supabase } from "../../lib/supabase";
+import { createApiRoute } from "../utils";
 
-const auth = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const auth = createApiRoute();
 
 // Sign up route
 const signUpRoute = createRoute({
@@ -90,6 +89,45 @@ auth.post("/signout", async (c) => {
     return c.json({ error: error.message }, 500);
   }
   return c.json({ message: "Signed out successfully" });
+});
+
+// Internal route to expose Better Auth config to frontend server
+const authConfigRoute = createRoute({
+  method: "get",
+  path: "/config",
+  tags: ["Auth"],
+  responses: {
+    200: {
+      description: "Better Auth configuration",
+      content: {
+        "application/json": {
+          schema: z.object({
+            secret: z.string(),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to load configuration",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+  },
+});
+
+auth.openapi(authConfigRoute, async (c) => {
+  const secret = process.env.BETTER_AUTH_SECRET;
+
+  if (!secret) {
+    return c.json({ error: "BETTER_AUTH_SECRET is not configured" }, 500);
+  }
+
+  return c.json({ secret }, 200);
 });
 
 export default auth;

@@ -1,9 +1,7 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "../../lib/prisma";
+import { createApiRoute } from "../utils";
 
-const feedback = new OpenAPIHono<{
-  Bindings: { ELEVENLABS_API_KEY: string; GEMINI_API_KEY: string };
-}>();
+const feedback = createApiRoute();
 
 // Add feedback to session
 feedback.post("/:sessionId/feedback", async (c) => {
