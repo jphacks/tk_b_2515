@@ -3,11 +3,41 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
 
-if (!betterAuthSecret) {
-  throw new Error("BETTER_AUTH_SECRET is not configured.");
+async function resolveBetterAuthSecret(): Promise<string> {
+  if (process.env.BETTER_AUTH_SECRET) {
+    return process.env.BETTER_AUTH_SECRET;
+  }
+
+  const backendUrl =
+    process.env.INTERNAL_API_URL ||
+    process.env.BACKEND_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8787";
+
+  const configUrl = new URL("/auth/config", backendUrl).toString();
+
+  const response = await fetch(configUrl, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch Better Auth secret from backend (status ${response.status})`
+    );
+  }
+
+  const data = (await response.json()) as { secret?: string };
+  if (!data.secret) {
+    throw new Error("Backend did not return BETTER_AUTH_SECRET");
+  }
+
+  return data.secret;
 }
+
+const betterAuthSecret = await resolveBetterAuthSecret();
 
 export const auth = betterAuth({
   secret: betterAuthSecret,
