@@ -11,8 +11,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useSession, signOut } from "@/lib/auth-client";
 
 export default function HomePage() {
+  const session = useSession();
+  const user = session.data?.user;
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* Content with higher z-index */}
@@ -39,21 +47,39 @@ export default function HomePage() {
           {/* Center: title */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse" />
-            <span className="font-bold text-foreground text-base sm:text-lg">恋AI</span>
+            <span className="font-bold text-foreground text-base sm:text-lg">
+              恋AI
+            </span>
           </div>
 
-          {/* Right: Home button */}
-          <div className="w-12 sm:w-16 md:w-20 flex items-center justify-center">
-            <Link href="/">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-full hover:bg-primary/10 flex items-center px-2 sm:px-3 text-xs sm:text-sm"
-              >
-                <Earth className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                <span className="hidden sm:inline">言語選択</span>
-              </Button>
-            </Link>
+          {/* Right: Auth button */}
+          <div className="w-36 sm:w-44 flex items-center justify-end">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden md:inline text-sm text-muted-foreground">
+                  ようこそ、{user.name ?? "ユーザー"} さん
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full hover:bg-primary/10 px-3 text-xs sm:text-sm"
+                  onClick={handleSignOut}
+                >
+                  ログアウト
+                </Button>
+              </div>
+            ) : (
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full hover:bg-primary/10 flex items-center px-3 text-xs sm:text-sm"
+                >
+                  <Earth className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span>ログイン</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </header>
 
@@ -100,15 +126,6 @@ export default function HomePage() {
                     今すぐはなしかける
                   </Button>
                 </Link>
-                <Link href="/login" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto rounded-full text-base sm:text-lg px-8 sm:px-12 py-6 sm:py-7 hover:bg-primary/10"
-                  >
-                    ログインして続ける
-                  </Button>
-                </Link>
               </div>
 
               {/* Features */}
@@ -146,7 +163,9 @@ export default function HomePage() {
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                     </div>
-                    <h3 className="text-base sm:text-lg font-semibold mt-1">安心して練習</h3>
+                    <h3 className="text-base sm:text-lg font-semibold mt-1">
+                      安心して練習
+                    </h3>
                   </div>
                   <p className="text-muted-foreground text-xs sm:text-sm mt-2">
                     匿名で利用可能。失敗を恐れず、何度でも練習できる安全な環境です
@@ -162,7 +181,9 @@ export default function HomePage() {
           <p className="text-center">
             © 2025
             <Heart className="inline w-3 h-3 sm:w-4 sm:h-4 text-primary align-middle mx-1 sm:mx-2" />
-            <span className="hidden sm:inline">恋AI - JPHACKS 2025 Projected by 調布恋AI連合</span>
+            <span className="hidden sm:inline">
+              恋AI - JPHACKS 2025 Projected by 調布恋AI連合
+            </span>
             <span className="sm:hidden">恋AI</span>
           </p>
         </footer>

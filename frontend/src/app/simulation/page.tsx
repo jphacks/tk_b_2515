@@ -27,13 +27,9 @@ import { romajiToHiragana } from "@/lib/romajiToHiragana";
 import { config } from "@/lib/config";
 import { gestureApi } from "@/lib/api";
 import { appendVoiceAnalysis } from "@/lib/audio/voiceAnalysisStorage";
+import { useSession } from "@/lib/auth-client";
 
-type GestureType =
-  | "idle"
-  | "thinking"
-  | "talking"
-  | "explaining"
-  | "nodding";
+type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
 
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
@@ -45,11 +41,14 @@ export default function SimulationPage() {
     "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
   >("happy");
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
-  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">("female");
+  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">(
+    "female"
+  );
 
   const videoStreamRef = useRef<VideoStreamRef>(null);
   const avatarModelUrl = useMemo(
-    () => (selectedAvatar === "male" ? "/models/rento.vrm" : "/models/maki.vrm"),
+    () =>
+      selectedAvatar === "male" ? "/models/rento.vrm" : "/models/maki.vrm",
     [selectedAvatar]
   );
   const avatarName = useMemo(() => {
@@ -61,8 +60,19 @@ export default function SimulationPage() {
   const selectedVoiceId = useMemo(() => {
     const femaleId = config.tts.voices?.female || config.tts.voiceId || "";
     const maleId = config.tts.voices?.male || "";
-    return selectedAvatar === "male" ? (maleId || config.tts.voiceId || "") : femaleId;
+    return selectedAvatar === "male"
+      ? maleId || config.tts.voiceId || ""
+      : femaleId;
   }, [selectedAvatar]);
+
+  const authSession = useSession();
+  const loggedInUserId = authSession.data?.user?.id ?? null;
+  const userName = authSession.data?.user?.name ?? "ゲスト";
+  const isLoggedIn = Boolean(authSession.data?.user);
+  const userAvatarSrc =
+    authSession.data?.user?.image && authSession.data.user.image.length > 0
+      ? authSession.data.user.image
+      : "/avatars/avatar-1.svg";
 
   // Persist selected avatar for use on feedback page (e.g., to choose voice)
   useEffect(() => {
@@ -227,12 +237,7 @@ export default function SimulationPage() {
 
   // Send recorded audio when recording stops
   useEffect(() => {
-    if (
-      audioBlobs.length === 0 ||
-      isRecording ||
-      !session ||
-      !analysisResult
-    )
+    if (audioBlobs.length === 0 || isRecording || !session || !analysisResult)
       return;
 
     const sendRecordedAudio = async () => {
@@ -266,12 +271,7 @@ export default function SimulationPage() {
     } else if (lipSyncValue > 0.1) {
       setAvatarGesture("talking");
     } else {
-      const gestures: GestureType[] = [
-        "idle",
-        "idle",
-        "idle",
-        "explaining",
-      ];
+      const gestures: GestureType[] = ["idle", "idle", "idle", "explaining"];
       const randomGesture =
         gestures[Math.floor(Math.random() * gestures.length)];
       setAvatarGesture(randomGesture);
@@ -312,19 +312,38 @@ export default function SimulationPage() {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse" />
-          <span className="font-bold text-foreground text-base sm:text-lg">恋AI</span>
+          <span className="font-bold text-foreground text-base sm:text-lg">
+            恋AI
+          </span>
         </div>
 
-        <div className="w-10 sm:w-12 md:w-16 flex items-center justify-center">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:bg-primary/10 text-xs sm:text-sm px-2 sm:px-3"
+        <div className="flex items-center justify-center min-w-[2.5rem] sm:min-w-[3rem]">
+          {isLoggedIn ? (
+            <Link
+              href="/account"
+              className="group relative h-9 w-9 sm:h-10 sm:w-10 rounded-full border-2 border-primary/30 bg-primary/10 overflow-hidden hover:border-primary transition-colors"
+              aria-label={`${userName}のプロフィール`}
             >
-              ホーム
-            </Button>
-          </Link>
+              <Image
+                src={userAvatarSrc}
+                alt={`${userName}のアイコン`}
+                fill
+                sizes="40px"
+                className="object-cover"
+                priority={false}
+              />
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full hover:bg-primary/10 text-xs sm:text-sm px-3 py-1 min-h-[2.25rem]"
+              >
+                ログイン
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -434,8 +453,8 @@ export default function SimulationPage() {
                 className="rounded-full px-8 sm:px-10 md:px-12 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                 onClick={handleStartConversation}
               >
-                <Video className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-                "{avatarName}"にはなしかける
+                <Video className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />"{avatarName}
+                "にはなしかける
               </Button>
             </Card>
           </div>
@@ -483,7 +502,6 @@ export default function SimulationPage() {
               showHistory={showHistory}
               onToggleHistory={setShowHistory}
             />
-
           </div>
 
           {/* Control Panel */}

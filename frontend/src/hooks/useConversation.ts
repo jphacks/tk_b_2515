@@ -15,7 +15,7 @@ interface UseConversationOptions {
   onLipSyncUpdate?: (value: number) => void;
   ttsVoiceId?: string;
   onEmotionUpdate?: (
-    emotion: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful",
+    emotion: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
   ) => void;
 }
 
@@ -28,7 +28,13 @@ interface ConversationState {
 }
 
 export function useConversation(options: UseConversationOptions) {
-  const { systemPrompt, onAudioReady, onLipSyncUpdate, ttsVoiceId, onEmotionUpdate } = options;
+  const {
+    systemPrompt,
+    onAudioReady,
+    onLipSyncUpdate,
+    ttsVoiceId,
+    onEmotionUpdate,
+  } = options;
 
   const [state, setState] = useState<ConversationState>({
     session: null,
@@ -49,16 +55,19 @@ export function useConversation(options: UseConversationOptions) {
       setState((prev) => ({ ...prev, isProcessing: true, error: null }));
 
       // localStorageから既存のuserIdを取得
-      const existingUserId = localStorage.getItem("conversationUserId");
-      console.log("Existing user ID from localStorage:", existingUserId);
+      let existingUserId: string | null = null;
+      if (typeof window !== "undefined" && !currentUserId) {
+        existingUserId = localStorage.getItem("conversationUserId");
+        console.log("Existing user ID from localStorage:", existingUserId);
+      }
 
       // 既存のuserIdがあればそれを使用、なければバックエンドで新規作成
       const session = await sessionApi.createSession(
-        existingUserId || undefined
+        currentUserId || existingUserId || undefined
       );
 
       // userIdをlocalStorageに保存して永続化
-      if (session.userId) {
+      if (session.userId && typeof window !== "undefined") {
         localStorage.setItem("conversationUserId", session.userId);
         console.log("User ID saved to localStorage:", session.userId);
       }
@@ -78,7 +87,7 @@ export function useConversation(options: UseConversationOptions) {
       }));
       throw err;
     }
-  }, []);
+  }, [currentUserId]);
 
   // セッションを終了
   const endSession = useCallback(async () => {
@@ -112,7 +121,7 @@ export function useConversation(options: UseConversationOptions) {
   const sendAudio = useCallback(
     async (
       audioBlob: Blob,
-      _voiceAnalysis?: VoiceAnalysisResult | null,
+      _voiceAnalysis?: VoiceAnalysisResult | null
     ): Promise<Message | null> => {
       if (!state.session) {
         throw new Error("No active session");
@@ -138,7 +147,12 @@ export function useConversation(options: UseConversationOptions) {
           systemPrompt,
         });
 
-        console.log("AI Response:", aiResponse.response, "Emotion:", aiResponse.emotion);
+        console.log(
+          "AI Response:",
+          aiResponse.response,
+          "Emotion:",
+          aiResponse.emotion
+        );
 
         // Emotion update to UI
         if (onEmotionUpdate) {
