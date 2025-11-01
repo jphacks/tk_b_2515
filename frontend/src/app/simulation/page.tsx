@@ -42,7 +42,7 @@ export default function SimulationPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [avatarEmotion, setAvatarEmotion] = useState<
-    "neutral" | "happy" | "sad" | "surprised" | "angry"
+    "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
   >("happy");
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
   const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">("female");
@@ -122,6 +122,7 @@ export default function SimulationPage() {
   } = useConversation({
     onLipSyncUpdate: handleLipSyncUpdate,
     ttsVoiceId: selectedVoiceId || undefined,
+    onEmotionUpdate: setAvatarEmotion,
   });
 
   // Timer management
@@ -254,21 +255,7 @@ export default function SimulationPage() {
     analysisResult,
   ]);
 
-  // Random emotion changes
-  useEffect(() => {
-    if (!conversationStarted) return;
-
-    const emotions: Array<"neutral" | "happy" | "sad" | "surprised" | "angry"> =
-      ["happy", "happy", "happy", "neutral", "neutral", "surprised"];
-
-    const emotionInterval = setInterval(() => {
-      const randomEmotion =
-        emotions[Math.floor(Math.random() * emotions.length)];
-      setAvatarEmotion(randomEmotion);
-    }, 10000 + Math.random() * 10000);
-
-    return () => clearInterval(emotionInterval);
-  }, [conversationStarted]);
+  // 会話内容に基づくemotion更新は useConversation の onEmotionUpdate から反映
 
   // Gesture changes based on recording/processing state
   useEffect(() => {
@@ -509,6 +496,7 @@ export default function SimulationPage() {
             showControls={showControls}
             timeRemaining={timeRemaining}
             messageCount={messages.length}
+            avatarName={avatarName}
             onToggleRecording={toggleRecording}
             onToggleVideo={toggleVideo}
             onEndConversation={handleEndConversation}

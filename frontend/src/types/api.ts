@@ -139,6 +139,7 @@ export interface GenerateConversationRequest {
 
 export interface GenerateConversationResponse {
 	response: string;
+	emotion: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful";
 	userMessage: Message;
 	assistantMessage: Message;
 }

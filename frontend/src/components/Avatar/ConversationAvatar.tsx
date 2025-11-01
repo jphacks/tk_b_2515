@@ -16,7 +16,7 @@ type GestureType =
 interface ConversationAvatarProps {
 	modelUrl: string;
 	lipSyncValue?: number;
-	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry";
+	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful";
 	gesture?: GestureType;
 	className?: string;
 }
