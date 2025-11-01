@@ -314,7 +314,7 @@ function FeedbackContent() {
   const sessionId = searchParams.get("sessionId");
 
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">(
+  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male" | "neutral">(
     "female"
   );
   const [selectedAvatarModelUrl, setSelectedAvatarModelUrl] = useState<
@@ -357,7 +357,7 @@ function FeedbackContent() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("selectedAvatar");
-      if (saved === "male" || saved === "female") {
+      if (saved === "male" || saved === "female" || saved === "neutral") {
         setSelectedAvatar(saved);
       }
       const savedModelUrl = localStorage.getItem("selectedAvatarModelUrl");
@@ -370,8 +370,10 @@ function FeedbackContent() {
   }, []);
 
   const feedbackAvatarImageSrc = useMemo(() => {
-    // 男性が選ばれていたら rento.png、それ以外は従来の画像を使用
-    return selectedAvatar === "male" ? "/rento.png" : "/maki.webp";
+    // 男性/中性で画像を切り替え
+    if (selectedAvatar === "male") return "/rento.png";
+    if (selectedAvatar === "neutral") return "/kouta.png";
+    return "/maki.webp";
   }, [selectedAvatar]);
 
   // 話者名（コメントボタン/文言用）: モデルファイル名（ローマ字）→ひらがな
@@ -566,17 +568,19 @@ function FeedbackContent() {
       }
 
       // 話者（アバター）選択を取得し、ボイスIDを決定
-      let selectedAvatar: "female" | "male" = "female";
+      let selectedAvatar: "female" | "male" | "neutral" = "female";
       try {
         const saved = localStorage.getItem("selectedAvatar");
-        if (saved === "male" || saved === "female") selectedAvatar = saved;
+        if (saved === "male" || saved === "female" || saved === "neutral") selectedAvatar = saved;
       } catch {
         // ignore
       }
       const voiceId =
         selectedAvatar === "male"
           ? config.tts.voices?.male || config.tts.voiceId || undefined
-          : config.tts.voices?.female || config.tts.voiceId || undefined;
+          : selectedAvatar === "neutral"
+            ? config.tts.voices?.neutral || config.tts.voices?.female || config.tts.voiceId || undefined
+            : config.tts.voices?.female || config.tts.voiceId || undefined;
 
       // 音声を生成して再生
       const audioUrl = await textToSpeechUrl({ text: comment, voiceId });

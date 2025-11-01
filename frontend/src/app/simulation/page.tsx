@@ -41,16 +41,16 @@ export default function SimulationPage() {
     "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
   >("happy");
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
-  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">(
+  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male" | "neutral">(
     "female"
   );
 
   const videoStreamRef = useRef<VideoStreamRef>(null);
-  const avatarModelUrl = useMemo(
-    () =>
-      selectedAvatar === "male" ? "/models/rento.vrm" : "/models/maki.vrm",
-    [selectedAvatar]
-  );
+  const avatarModelUrl = useMemo(() => {
+    if (selectedAvatar === "male") return "/models/rento.vrm";
+    if (selectedAvatar === "neutral") return "/models/kouta.vrm";
+    return "/models/maki.vrm"; // female
+  }, [selectedAvatar]);
   const avatarName = useMemo(() => {
     const parts = avatarModelUrl.split("/");
     const file = parts[parts.length - 1] || "";
@@ -60,9 +60,10 @@ export default function SimulationPage() {
   const selectedVoiceId = useMemo(() => {
     const femaleId = config.tts.voices?.female || config.tts.voiceId || "";
     const maleId = config.tts.voices?.male || "";
-    return selectedAvatar === "male"
-      ? maleId || config.tts.voiceId || ""
-      : femaleId;
+    const neutralId = config.tts.voices?.neutral || femaleId;
+    if (selectedAvatar === "male") return maleId || config.tts.voiceId || "";
+    if (selectedAvatar === "neutral") return neutralId || config.tts.voiceId || "";
+    return femaleId;
   }, [selectedAvatar]);
 
   const authSession = useSession();
@@ -394,7 +395,7 @@ export default function SimulationPage() {
                 </p>
               </div>
               {/* Avatar Selection (Image Buttons) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <button
                   type="button"
                   onClick={() => setSelectedAvatar("female")}
@@ -444,6 +445,32 @@ export default function SimulationPage() {
                   </div>
                   <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                     男性アバター
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedAvatar("neutral")}
+                  className={`group relative overflow-hidden rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/60 ${
+                    selectedAvatar === "neutral"
+                      ? "border-primary shadow-lg"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                  aria-pressed={selectedAvatar === "neutral"}
+                  aria-label="中性アバターを選択"
+                >
+                  <div className="relative w-full aspect-[4/3]">
+                    <Image
+                      src="/kouta.png"
+                      alt="中性アバター"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      sizes="(max-width: 768px) 33vw, 240px"
+                      priority
+                    />
+                  </div>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    中性アバター
                   </div>
                 </button>
               </div>
