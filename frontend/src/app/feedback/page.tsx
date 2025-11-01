@@ -30,6 +30,10 @@ import { feedbackApi, sessionApi } from "@/lib/api";
 import { textToSpeechUrl } from "@/lib/api/tts";
 import { getFeedbackComment } from "@/lib/feedbackComments";
 import type { Feedback, VoiceMetrics } from "@/types/api";
+import {
+	getVoiceAnalysisSummary,
+	clearVoiceAnalysis,
+} from "@/lib/audio/voiceAnalysisStorage";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Modal } from "../../components/ui/modal";
@@ -48,9 +52,67 @@ const speedLevelLabels: Record<VoiceMetrics["speedLevel"], string> = {
 
 type VoiceMetricsSectionProps = {
   metrics?: VoiceMetrics | null;
+  liveSummary?: {
+    sampleCount: number;
+    averageStrength: number;
+    averageTremble: number;
+    averageEmotion: number;
+  } | null;
 };
 
-function VoiceMetricsSection({ metrics }: VoiceMetricsSectionProps) {
+function describeStrength(score: number): string {
+  if (score >= 0.7) return "声が堂々としている";
+  if (score >= 0.45) return "十分な声量";
+  return "穏やかで控えめな声量";
+}
+
+function describeTremble(score: number): string {
+  if (score >= 0.65) return "やや震えが感じられる";
+  if (score <= 0.3) return "声は安定している";
+  return "わずかに揺らぎがある";
+}
+
+function describeEmotion(score: number): string {
+  if (score >= 0.65) return "感情がよく乗っている";
+  if (score >= 0.4) return "自然な抑揚";
+  return "落ち着いたトーンが多い";
+}
+
+function buildLiveSummaryComment(summary: {
+  averageStrength: number;
+  averageTremble: number;
+  averageEmotion: number;
+}): string {
+  const remarks: string[] = [];
+
+  if (summary.averageStrength >= 0.7) {
+    remarks.push("声量がしっかりしていて堂々とした印象でした。");
+  } else if (summary.averageStrength <= 0.3) {
+    remarks.push("全体的に穏やかで控えめな声量でした。");
+  } else {
+    remarks.push("声量はちょうど良いバランスで伝わっていました。");
+  }
+
+  if (summary.averageTremble >= 0.65) {
+    remarks.push("発声には少し震えがあり、自信が揺らいだ場面が見られました。");
+  } else if (summary.averageTremble <= 0.3) {
+    remarks.push("声は安定していて落ち着きが感じられました。");
+  } else {
+    remarks.push("ごく自然な揺らぎで緊張感はほとんど感じられません。");
+  }
+
+  if (summary.averageEmotion >= 0.7) {
+    remarks.push("感情表現が豊かで、抑揚のある話し方が好印象です。");
+  } else if (summary.averageEmotion <= 0.35) {
+    remarks.push("抑揚は控えめで、冷静さや落ち着きを感じました。");
+  } else {
+    remarks.push("感情の起伏は適度で、自然な聞きやすさがありました。");
+  }
+
+  return remarks.join(" ");
+}
+
+function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps) {
   return (
     <Card className="p-6 border-2 space-y-6">
       <div className="flex items-center gap-2">
@@ -65,105 +127,143 @@ function VoiceMetricsSection({ metrics }: VoiceMetricsSectionProps) {
         </div>
       </div>
 
-      {!metrics ? (
+      {!metrics && !liveSummary ? (
         <p className="text-sm text-muted-foreground">
           音声データが不足しているため、声の分析結果を表示できませんでした。
         </p>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground leading-relaxed">{metrics.summary}</p>
+          {metrics ? (
+            <>
+              <p className="text-sm text-muted-foreground leading-relaxed">{metrics.summary}</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                <Volume2 className="w-4 h-4 text-primary" />
-                声のボリューム
-              </div>
-              <div className="text-3xl font-bold text-primary">
-                {metrics.volumeScore}
-                <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
-              </div>
-              <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-                {volumeLevelLabels[metrics.volumeLevel]}
-              </span>
-              <p className="text-sm text-muted-foreground">{metrics.volumeComment}</p>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                    <Volume2 className="w-4 h-4 text-primary" />
+                    声のボリューム
+                  </div>
+                  <div className="text-3xl font-bold text-primary">
+                    {metrics.volumeScore}
+                    <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
+                  </div>
+                  <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                    {volumeLevelLabels[metrics.volumeLevel]}
+                  </span>
+                  <p className="text-sm text-muted-foreground">{metrics.volumeComment}</p>
+                </div>
 
-            <div className="rounded-2xl border border-accent/15 bg-accent/5 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                <Activity className="w-4 h-4 text-accent" />
-                滑舌
-              </div>
-              <div className="text-3xl font-bold text-accent">
-                {metrics.articulationScore}
-                <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
-              </div>
-              <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent">
-                {metrics.articulationScore >= 80 ? "クリア" : "改善の余地あり"}
-              </span>
-              <p className="text-sm text-muted-foreground">{metrics.articulationComment}</p>
-            </div>
+                <div className="rounded-2xl border border-accent/15 bg-accent/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                    <Activity className="w-4 h-4 text-accent" />
+                    滑舌
+                  </div>
+                  <div className="text-3xl font-bold text-accent">
+                    {metrics.articulationScore}
+                    <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
+                  </div>
+                  <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent">
+                    {metrics.articulationScore >= 80 ? "クリア" : "改善の余地あり"}
+                  </span>
+                  <p className="text-sm text-muted-foreground">{metrics.articulationComment}</p>
+                </div>
 
-            <div className="rounded-2xl border border-blue-200/60 bg-blue-50/50 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                <Gauge className="w-4 h-4 text-blue-500" />
-                話すスピード
+                <div className="rounded-2xl border border-blue-200/60 bg-blue-50/50 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                    <Gauge className="w-4 h-4 text-blue-500" />
+                    話すスピード
+                  </div>
+                  <div className="text-3xl font-bold text-blue-600">
+                    {metrics.speedScore}
+                    <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
+                  </div>
+                  <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                    {speedLevelLabels[metrics.speedLevel]}
+                  </span>
+                  <p className="text-sm text-muted-foreground">{metrics.speedComment}</p>
+                </div>
               </div>
-              <div className="text-3xl font-bold text-blue-600">
-                {metrics.speedScore}
-                <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
-              </div>
-              <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
-                {speedLevelLabels[metrics.speedLevel]}
-              </span>
-              <p className="text-sm text-muted-foreground">{metrics.speedComment}</p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-muted/40 bg-muted/10 p-4 space-y-2">
-              <p className="text-sm font-semibold text-foreground">フィラーの回数</p>
-              <div className="text-2xl font-bold text-foreground">
-                {metrics.fillerWords.totalCount}
-                <span className="text-base font-medium text-muted-foreground ml-1">回</span>
-              </div>
-              {metrics.fillerWords.breakdown.length > 0 ? (
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {metrics.fillerWords.breakdown.slice(0, 4).map((item) => (
-                    <li key={item.word} className="flex items-center justify-between">
-                      <span>{item.word}</span>
-                      <span className="font-medium text-foreground">
-                        {item.count}
-                        <span className="text-muted-foreground text-xs ml-1">回</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  「えー」「えっと」などのフィラーはほとんど見られませんでした。
-                </p>
-              )}
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-muted/40 bg-muted/10 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">フィラーの回数</p>
+                  <div className="text-2xl font-bold text-foreground">
+                    {metrics.fillerWords.totalCount}
+                    <span className="text-base font-medium text-muted-foreground ml-1">回</span>
+                  </div>
+                  {metrics.fillerWords.breakdown.length > 0 ? (
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {metrics.fillerWords.breakdown.slice(0, 4).map((item) => (
+                        <li key={item.word} className="flex items-center justify-between">
+                          <span>{item.word}</span>
+                          <span className="font-medium text-foreground">
+                            {item.count}
+                            <span className="text-muted-foreground text-xs ml-1">回</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      「えー」「えっと」などのフィラーはほとんど見られませんでした。
+                    </p>
+                  )}
+                </div>
 
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 space-y-2">
-              <p className="text-sm font-semibold text-foreground">声の安定性</p>
-              <div className="inline-flex items-center gap-2 text-base font-semibold">
-                {metrics.tremblingDetected ? (
-                  <>
-                    <AlertCircle className="w-4 h-4 text-destructive" />
-                    <span className="text-destructive">震えを検知</span>
-                  </>
-                ) : (
-                  <>
-                    <Heart className="w-4 h-4 text-primary" />
-                    <span className="text-primary">安定しています</span>
-                  </>
-                )}
+                <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">声の安定性</p>
+                  <div className="inline-flex items-center gap-2 text-base font-semibold">
+                    {metrics.tremblingDetected ? (
+                      <>
+                        <AlertCircle className="w-4 h-4 text-destructive" />
+                        <span className="text-destructive">震えを検知</span>
+                      </>
+                    ) : (
+                      <>
+                        <Heart className="w-4 h-4 text-primary" />
+                        <span className="text-primary">安定しています</span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{metrics.tremblingComment}</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">{metrics.tremblingComment}</p>
+            </>
+          ) : null}
+
+          {liveSummary ? (
+            <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 space-y-4">
+              <p className="text-base sm:text-lg font-semibold text-foreground leading-relaxed">
+                {buildLiveSummaryComment(liveSummary)}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-muted-foreground">
+                <div>
+                  <p className="font-medium text-foreground">
+                    {describeStrength(liveSummary.averageStrength)}
+                  </p>
+                  <p className="text-xs">
+                    平均スコア {Math.round(liveSummary.averageStrength * 100)} / 100
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    {describeTremble(liveSummary.averageTremble)}
+                  </p>
+                  <p className="text-xs">
+                    揺らぎスコア {Math.round(liveSummary.averageTremble * 100)} / 100
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">
+                    {describeEmotion(liveSummary.averageEmotion)}
+                  </p>
+                  <p className="text-xs">
+                    感情スコア {Math.round(liveSummary.averageEmotion * 100)} / 100
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : null}
         </>
       )}
     </Card>
@@ -315,6 +415,21 @@ function FeedbackContent() {
   >("conversation");
 
   const voiceMetrics = feedback?.voiceMetrics ?? null;
+  const [voiceLiveSummary, setVoiceLiveSummary] = useState<{
+    sampleCount: number;
+    averageStrength: number;
+    averageTremble: number;
+    averageEmotion: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const summary = getVoiceAnalysisSummary(sessionId);
+    if (summary) {
+      setVoiceLiveSummary(summary);
+      clearVoiceAnalysis(sessionId);
+    }
+  }, [sessionId]);
 
   const conversationGoodPointsList = useMemo(() => {
     if (!feedback) return [];
@@ -749,7 +864,7 @@ function FeedbackContent() {
             </div>
 
             {selectedCategory === "conversation" && (
-              <VoiceMetricsSection metrics={voiceMetrics} />
+              <VoiceMetricsSection metrics={voiceMetrics} liveSummary={voiceLiveSummary} />
             )}
 
             {/* Good Points */}

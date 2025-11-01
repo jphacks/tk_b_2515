@@ -25,6 +25,7 @@ import {
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 import { config } from "@/lib/config";
 import { gestureApi } from "@/lib/api";
+import { appendVoiceAnalysis } from "@/lib/audio/voiceAnalysisStorage";
 
 type GestureType =
   | "idle"
@@ -74,6 +75,7 @@ export default function SimulationPage() {
     isRecording,
     audioURL,
     audioBlobs,
+    analysisResult,
     error: recorderError,
     startRecording,
     stopRecording,
@@ -207,19 +209,33 @@ export default function SimulationPage() {
 
   // Send recorded audio when recording stops
   useEffect(() => {
-    if (audioBlobs.length === 0 || isRecording || !session) return;
+    if (
+      audioBlobs.length === 0 ||
+      isRecording ||
+      !session ||
+      !analysisResult
+    )
+      return;
 
     const sendRecordedAudio = async () => {
       console.log("Sending recorded audio...");
       const audioBlob = new Blob(audioBlobs, {
         type: audioBlobs[0]?.type || "audio/webm",
       });
-      await sendAudio(audioBlob);
+      appendVoiceAnalysis(session.id, analysisResult);
+      await sendAudio(audioBlob, analysisResult);
       clearRecording();
     };
 
     sendRecordedAudio();
-  }, [audioBlobs, isRecording, session, sendAudio, clearRecording]);
+  }, [
+    audioBlobs,
+    isRecording,
+    session,
+    sendAudio,
+    clearRecording,
+    analysisResult,
+  ]);
 
   // Random emotion changes
   useEffect(() => {
@@ -463,6 +479,7 @@ export default function SimulationPage() {
               showHistory={showHistory}
               onToggleHistory={setShowHistory}
             />
+
           </div>
 
           {/* Control Panel */}

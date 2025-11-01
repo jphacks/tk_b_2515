@@ -6,6 +6,7 @@ import {
   textToSpeechUrl,
 } from "@/lib/api";
 import type { ConversationSession, Message } from "@/types/api";
+import type { VoiceAnalysisResult } from "@/lib/audio/voiceAnalysis";
 import { useLipSync } from "./useLipSync";
 
 interface UseConversationOptions {
@@ -106,7 +107,10 @@ export function useConversation(options: UseConversationOptions) {
 
   // 音声を送信して応答を取得（STT → AI → TTS）
   const sendAudio = useCallback(
-    async (audioBlob: Blob): Promise<Message | null> => {
+    async (
+      audioBlob: Blob,
+      _voiceAnalysis?: VoiceAnalysisResult | null,
+    ): Promise<Message | null> => {
       if (!state.session) {
         throw new Error("No active session");
       }
