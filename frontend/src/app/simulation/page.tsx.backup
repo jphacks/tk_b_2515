@@ -128,7 +128,7 @@ export default function SimulationPage() {
   });
 
   // デモ用VRMモデルURL（実際のプロジェクトのVRMファイルパスに変更してください）
-  // innocent_girl.vrm を `/public/models/` に配置している想定
+  // maki.vrm を `/public/models/` に配置している想定
   const avatarModelUrl = "/models/my_honey_A.vrm";
 
   const gestureStatsRef = useRef({

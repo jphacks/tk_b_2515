@@ -47,7 +47,7 @@ export default function SimulationPage() {
 
   const videoStreamRef = useRef<VideoStreamRef>(null);
   const avatarModelUrl = useMemo(
-    () => (selectedAvatar === "male" ? "/models/tyarao.vrm" : "/models/innocent_girl.vrm"),
+    () => (selectedAvatar === "male" ? "/models/rento.vrm" : "/models/maki.vrm"),
     [selectedAvatar]
   );
   const avatarName = useMemo(() => {  // プログラムを改善すればアバターの名前を日本語表記にすることも可能
@@ -370,7 +370,7 @@ export default function SimulationPage() {
                 >
                   <div className="relative w-full aspect-[4/3]">
                     <Image
-                      src="/innocent_girl.png"
+                      src="/maki.png"
                       alt="女性アバター"
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
@@ -396,7 +396,7 @@ export default function SimulationPage() {
                 >
                   <div className="relative w-full aspect-[4/3]">
                     <Image
-                      src="/tyarao.png"
+                      src="/rento.png"
                       alt="男性アバター"
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
