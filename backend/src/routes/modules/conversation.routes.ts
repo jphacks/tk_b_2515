@@ -41,6 +41,7 @@ const generateResponseRoute = createRoute({
         "application/json": {
           schema: z.object({
             response: z.string(),
+            emotion: z.enum(["neutral", "happy", "sad", "surprised", "angry", "bashful"]),
             userMessage: z.object({
               id: z.string(),
               role: z.string(),
@@ -136,23 +137,36 @@ conversation.openapi(generateResponseRoute, async (c) => {
     ];
 
     // Generate AI response
-    const aiResponse = await generateConversationResponse(apiKey, {
+    const aiResult = await generateConversationResponse(apiKey, {
       messages: conversationHistory,
       systemPrompt,
+      gestureSummary: session.gestures
+        ? {
+            totalSamples: session.gestures.totalSamples,
+            smilingSamples: session.gestures.smilingSamples,
+            smileIntensityAvg: session.gestures.smileIntensityAvg,
+            smileIntensityMax: session.gestures.smileIntensityMax,
+            gazeScoreAvg: session.gestures.gazeScoreAvg,
+            lookingSamples: session.gestures.lookingSamples,
+            gazeUpSamples: session.gestures.gazeUpSamples,
+            gazeDownSamples: session.gestures.gazeDownSamples,
+          }
+        : undefined,
     });
 
     // Save AI response
     const savedAssistantMessage = await prisma.message.create({
       data: {
         role: "assistant",
-        content: aiResponse,
+        content: aiResult.text,
         conversationId: sessionId,
       },
     });
 
     return c.json(
       {
-        response: aiResponse,
+        response: aiResult.text,
+        emotion: aiResult.emotion,
         userMessage: savedUserMessage,
         assistantMessage: savedAssistantMessage,
       },

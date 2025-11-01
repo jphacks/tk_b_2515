@@ -46,7 +46,7 @@ type GestureType =
 interface VRMAvatarProps {
 	modelUrl: string;
 	lipSyncValue?: number; // 0.0 to 1.0
-	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry"; // 感情
+	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"; // 感情
 	gesture?: GestureType; // ジェスチャー
 }
 
@@ -67,6 +67,10 @@ export default function VRMAvatar({
 	const mixerRef = useRef<THREE.AnimationMixer | null>(null);
 	const currentActionRef = useRef<THREE.AnimationAction | null>(null);
 	const clipCacheRef = useRef<Map<string, THREE.AnimationClip>>(new Map());
+	const lastPlayedUrlRef = useRef<string | null>(null);
+	const lastEmotionRef = useRef<
+		"neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
+	>("neutral");
 
 	const gestureToVrmaPath = useMemo<Record<GestureType, string>>(
 		() => ({
@@ -214,6 +218,10 @@ export default function VRMAvatar({
 			case "angry":
 				vrm.expressionManager.setValue("angry", 0.7);
 				break;
+			case "bashful":
+				// 恥ずかしがりのときは控えめな笑顔に
+				vrm.expressionManager.setValue("happy", 0.6);
+				break;
 			default:
 				vrm.expressionManager.setValue("relaxed", 0.3);
 		}
@@ -307,31 +315,87 @@ export default function VRMAvatar({
 		setIsReady(true);
 	}, [vrm]);
 
-	// ジェスチャー変更時に対応する VRMA を再生
+	// ジェスチャーや特定感情（bashful/angry/sad）に応じた VRMA を再生
 	useEffect(() => {
 		if (!vrm || !isReady) return;
 
-			const url = gestureToVrmaPath[gesture] ?? gestureToVrmaPath.idle;
 		let cancelled = false;
 
-			loadVrmaClip(url).then(async (clip) => {
-				if (cancelled) return;
-
-				let finalClip = clip;
-				if (!finalClip && url !== gestureToVrmaPath.idle) {
-					// フォールバック: idle を試す
-					finalClip = await loadVrmaClip(gestureToVrmaPath.idle);
+		(async () => {
+			// 感情優先のURL候補を作る
+			const preferredUrls: string[] = (() => {
+				if (emotion === "bashful") {
+					return [
+						"/animations/bashful.vrma",
+						gestureToVrmaPath.idle,
+					];
 				}
-				if (!finalClip) return;
+				if (emotion === "angry") {
+					return [
+						"/animations/angry.vrma",
+						"/animations/explaining.vrma",
+						gestureToVrmaPath.idle,
+					];
+				}
+				if (emotion === "sad") {
+					return [
+						"/animations/sad.vrma",
+						gestureToVrmaPath.thinking,
+						gestureToVrmaPath.idle,
+					];
+				}
+				// 通常はジェスチャーに従う
+				return [gestureToVrmaPath[gesture] ?? gestureToVrmaPath.idle, gestureToVrmaPath.idle];
+			})();
 
-				// すべてループ再生（継続的な動作のため）
-				playClip(finalClip, { fadeSec: 0.25 });
-			});
+			// 候補を順番に試す
+			let chosenUrl: string | null = null;
+			let finalClip: THREE.AnimationClip | null = null;
+			for (const u of preferredUrls) {
+				if (cancelled) return;
+				// 同じURL・同じ感情なら更新不要
+				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emotion) {
+					return;
+				}
+				// 読み込み
+				// eslint-disable-next-line no-await-in-loop
+				const clip = await loadVrmaClip(u);
+				if (clip) {
+					chosenUrl = u;
+					finalClip = clip;
+					break;
+				}
+			}
+
+			if (!finalClip || !chosenUrl) return;
+
+			// 感情ごとにクロスフェード時間を微調整
+			const fadeSec = (() => {
+				switch (emotion) {
+					case "bashful":
+						return 0.4;
+					case "sad":
+						return 0.35;
+					case "happy":
+						return 0.3;
+					case "angry":
+						return 0.2;
+					case "surprised":
+						return 0.15;
+					default:
+						return 0.25;
+				}
+			})();
+			// すべてループ再生（継続的な動作のため）
+			playClip(finalClip, { fadeSec });
+			lastPlayedUrlRef.current = chosenUrl;
+			lastEmotionRef.current = emotion;
+		})();
 
 		return () => {
 			cancelled = true;
 		};
-		}, [gesture, isReady, vrm, gestureToVrmaPath, loadVrmaClip, playClip]);
+		}, [gesture, emotion, isReady, vrm, gestureToVrmaPath, loadVrmaClip, playClip]);
 
 	if (error) {
 		console.error("VRM load error:", error);

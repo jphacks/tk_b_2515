@@ -12,6 +12,16 @@ export interface ConversationContext {
   messages: ConversationMessage[];
   systemPrompt?: string;
   relationshipStage?: "shy" | "friendly" | "open";
+  gestureSummary?: {
+    totalSamples: number;
+    smilingSamples: number;
+    smileIntensityAvg: number;
+    smileIntensityMax: number;
+    gazeScoreAvg: number;
+    lookingSamples: number;
+    gazeUpSamples: number;
+    gazeDownSamples: number;
+  };
 }
 
 /**
@@ -21,6 +31,47 @@ export interface ConversationContext {
  * @param options 生成オプション
  * @returns AIによる応答テキスト
  */
+export type EmotionLabel = "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful";
+
+function inferEmotionFromConversation(
+  history: ConversationContext["messages"],
+  responseText: string,
+): EmotionLabel {
+  // 直近ユーザー発話とAI応答を対象に軽量ルールベースで判定（将来的にLLM分類へ置換可能）
+  const lastUser = history
+    .slice()
+    .reverse()
+    .find((m) => m.role === "user")?.content.toLowerCase() ?? "";
+  const resp = responseText.toLowerCase();
+
+  const text = `${lastUser}\n${resp}`;
+
+  // キーワード辞書
+  const contains = (re: RegExp) => re.test(text);
+
+  // bashful: 恥ずかし/照れ、褒められた/好き など
+  if (contains(/恥ずか|照れ|てれる|褒め|好き|ドキドキ|照れて|赤面/)) {
+    return "bashful";
+  }
+  // angry: 否定/対立/罵倒/苛立ちを優先検出（surprisedやhappyよりも優先）
+  if (contains(/むか|ムカ|怒|ふざけ(んな)?|いやだ|やだ|無理|ばか|バカ|くそ|クソ|あほ|アホ|ごみ|ゴミ|最悪|やめろ|は[?？]|違うだろ|許せない|イライラ|腹立|もういい|くだらない/)) {
+    return "angry";
+  }
+  // happy: うれしい/楽しい/よかった/ありがとう/笑
+  if (contains(/うれし|楽しい|よかった|ありがと|笑|嬉し|楽しかった/)) {
+    return "happy";
+  }
+  // surprised: ほんと|マジ|えっ|えー|すご|びっくり|！？|
+  if (contains(/ほんと|本当|まじ|マジ|えっ|えー|すご|びっくり|!\?|\?!|！？/)) {
+    return "surprised";
+  }
+  // sad: かなしい|悲し|つら|泣|しんど|もうだめ
+  if (contains(/かなしい|悲し|つら|辛|泣|しんど|もうだめ|落ち込/)) {
+    return "sad";
+  }
+  return "neutral";
+}
+
 export async function generateConversationResponse(
   apiKey: string,
   context: ConversationContext,
@@ -29,9 +80,9 @@ export async function generateConversationResponse(
     maxTokens?: number;
     modelName?: string;
   }
-): Promise<string> {
+): Promise<{ text: string; emotion: EmotionLabel }> {
   const client = getGeminiClient(apiKey) as GoogleGenAI;
-  const modelName = options?.modelName || "	gemini-2.5-flash-lite";
+  const modelName = options?.modelName || "gemini-2.5-flash-lite";
 
   // ユーザーメッセージが対応していない言語の場合、自然に促す
   const lastUserMessage = context.messages[context.messages.length - 1];
@@ -46,9 +97,10 @@ export async function generateConversationResponse(
       "ごめんね、わたし日本語と英語しかわからないんだ",
       "ん？何の話？",
     ];
-    return naturalResponses[
+    const text = naturalResponses[
       Math.floor(Math.random() * naturalResponses.length)
     ];
+    return { text, emotion: "neutral" };
   }
 
   // relationshipStage を使ったシステムプロンプト設定
@@ -111,11 +163,27 @@ export async function generateConversationResponse(
     systemPrompt = context.systemPrompt;
   }
 
-  // 会話履歴をGemini形式に変換
-  const contents = context.messages.map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
+  // 直近Nターンを強調（ユーザー発話に重み付け）
+  const N = 6;
+  const recent = context.messages.slice(-N);
+  const recentUserTexts = recent.filter((m) => m.role === "user").map((m) => m.content);
+  const recentAssistantTexts = recent.filter((m) => m.role === "assistant").map((m) => m.content);
+
+  // マルチモーダル（表情/視線）サマリ
+  const g = context.gestureSummary;
+  const gestureInfo = g
+    ? `表情視線メトリクス:\n- 笑顔検出回数: ${g.smilingSamples}\n- 笑顔強度平均: ${g.smileIntensityAvg.toFixed(2)}\n- 視線安定スコア(0-1): ${g.gazeScoreAvg.toFixed(2)}\n- 視線上: ${g.gazeUpSamples}, 視線下: ${g.gazeDownSamples}, 注視: ${g.lookingSamples}`
+    : "表情/視線メトリクス: データなし";
+
+  // LLMへのシステム誘導: JSONで {text, emotion}
+  const instruction = `以下の入力をもとに、会話の次の応答を日本語で1-3文で生成し、同時に感情ラベルを付与してください。必ず次のJSON形式のみを出力してください（前後に解説やマークダウンを付けない）：\n{\n  "text": string,\n  "emotion": one of ["neutral", "happy", "sad", "surprised", "angry", "bashful"]\n}\n\n付与方針（重み付け）:\n- 【最重視】会話内容（特に直近のユーザー発話）: 最新>1つ前>それ以前\n- 【重視】視線(gaze)の傾向: 安定=neutral/happy寄り, 下向き多い=sad/不安寄り, 上向き多い=surprised寄り\n- 【弱め】表情(smile): 補助的なシグナルとしてのみ考慮（会話内容と視線に劣後）\n- 対立・否定・苛立ち・罵倒（例: 「ふざけんな」「最悪」「違うだろ」「やめろ」「は？」など）が含まれる場合は、sadやsurprisedではなくangryを優先して選ぶ。曖昧な時はangry寄りに判断する\n- 全体文脈も考慮しつつ、過度に感情が揺れないよう連続ターンでの急変は避ける`;
+
+  const compiledInput = `【最近のユーザー発話（新しい順）】\n${recentUserTexts.slice().reverse().map((t, i) => `(${i+1}) ${t}`).join("\n")}\n\n【最近のAI発話（新しい順）】\n${recentAssistantTexts.slice().reverse().map((t, i) => `(${i+1}) ${t}`).join("\n")}\n\n${gestureInfo}`;
+
+  // LLMへは role/user と systemInstruction を併用
+  const contents = [
+    { role: "user" as const, parts: [{ text: compiledInput }] },
+  ];
 
   // 最後のユーザーメッセージで応答を生成
   const lastMessage = contents[contents.length - 1];
@@ -130,7 +198,7 @@ export async function generateConversationResponse(
     config: {
       temperature: options?.temperature ?? 0.9,
       maxOutputTokens: options?.maxTokens ?? 150,
-      systemInstruction: systemPrompt,
+      systemInstruction: `${systemPrompt}\n\n${instruction}`,
     },
   });
 
@@ -138,8 +206,37 @@ export async function generateConversationResponse(
   if (!responseText) {
     throw new Error("No response text generated");
   }
-
-  return responseText;
+  // JSON抽出・パース
+  let text = "";
+  let emotion: EmotionLabel = "neutral";
+  try {
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]) as { text?: string; emotion?: EmotionLabel };
+      text = (parsed.text ?? "").toString();
+      emotion = (parsed.emotion ?? "neutral") as EmotionLabel;
+    }
+  } catch {
+    // ignore, fallback below
+  }
+  if (!text) {
+    // 万一JSONで来なかった場合は、全文をtextとして扱い、旧ルールでemotionを補完
+    text = responseText.trim();
+    emotion = inferEmotionFromConversation(context.messages, text);
+  }
+  // 追加バイアス: ユーザーの直近発話に強い否定/対立ワードや強い感嘆がある場合は angry を優先
+  try {
+    const lastTwoUserTexts = recentUserTexts.slice(-2).join("\n");
+    const lowered = lastTwoUserTexts.toLowerCase();
+    const angryHint = /(むか|怒|ふざけ(んな)?|いやだ|やだ|無理|ばか|くそ|あほ|ごみ|最悪|やめろ|は[?？]|違うだろ|許せない|いらいら|腹立|もういい|くだらない)/i;
+    const exclamations = (lastTwoUserTexts.match(/[!！]/g)?.length ?? 0);
+    if (emotion !== "angry" && (angryHint.test(lowered) || exclamations >= 3)) {
+      emotion = "angry";
+    }
+  } catch {
+    // 解析失敗時は素通し
+  }
+  return { text, emotion };
 }
 
 /**

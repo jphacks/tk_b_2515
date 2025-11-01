@@ -10,6 +10,7 @@ interface ConversationControlsProps {
   showControls: boolean;
   timeRemaining: number | null;
   messageCount: number;
+  avatarName?: string;
   onToggleRecording: () => void;
   onToggleVideo: () => void;
   onEndConversation: () => void;
@@ -25,6 +26,7 @@ export function ConversationControls({
   showControls,
   timeRemaining,
   messageCount,
+  avatarName = "まき",
   onToggleRecording,
   onToggleVideo,
   onEndConversation,
@@ -56,10 +58,10 @@ export function ConversationControls({
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
             {isProcessing
-              ? "まきが考えてるよ"
+              ? `${avatarName}が考えてるよ`
               : isRecording
-              ? "まきが考えてるよ"
-              : "「はなしかける」を押してまきに話しかけよう!"}
+              ? `${avatarName}が考えてるよ`
+              : `「はなしかける」を押して${avatarName}に話しかけよう!`}
           </p>
           {timeRemaining !== null && (
             <p className="text-xs text-primary mt-2">

@@ -14,6 +14,9 @@ interface UseConversationOptions {
   onAudioReady?: (audioUrl: string) => void;
   onLipSyncUpdate?: (value: number) => void;
   ttsVoiceId?: string;
+  onEmotionUpdate?: (
+    emotion: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful",
+  ) => void;
 }
 
 interface ConversationState {
@@ -25,7 +28,7 @@ interface ConversationState {
 }
 
 export function useConversation(options: UseConversationOptions) {
-  const { systemPrompt, onAudioReady, onLipSyncUpdate, ttsVoiceId } = options;
+  const { systemPrompt, onAudioReady, onLipSyncUpdate, ttsVoiceId, onEmotionUpdate } = options;
 
   const [state, setState] = useState<ConversationState>({
     session: null,
@@ -135,7 +138,12 @@ export function useConversation(options: UseConversationOptions) {
           systemPrompt,
         });
 
-        console.log("AI Response:", aiResponse.response);
+        console.log("AI Response:", aiResponse.response, "Emotion:", aiResponse.emotion);
+
+        // Emotion update to UI
+        if (onEmotionUpdate) {
+          onEmotionUpdate(aiResponse.emotion);
+        }
 
         // メッセージを状態に追加
         setState((prev) => ({
@@ -199,7 +207,7 @@ export function useConversation(options: UseConversationOptions) {
         return null;
       }
     },
-    [state.session, systemPrompt, ttsVoiceId, onAudioReady]
+    [state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate]
   );
 
   // クリーンアップ
