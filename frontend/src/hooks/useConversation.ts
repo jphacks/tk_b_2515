@@ -56,14 +56,14 @@ export function useConversation(options: UseConversationOptions) {
 
       // localStorageから既存のuserIdを取得
       let existingUserId: string | null = null;
-      if (typeof window !== "undefined" && !currentUserId) {
+      if (typeof window !== "undefined") {
         existingUserId = localStorage.getItem("conversationUserId");
         console.log("Existing user ID from localStorage:", existingUserId);
       }
 
       // 既存のuserIdがあればそれを使用、なければバックエンドで新規作成
       const session = await sessionApi.createSession(
-        currentUserId || existingUserId || undefined
+        existingUserId || undefined
       );
 
       // userIdをlocalStorageに保存して永続化
@@ -87,7 +87,7 @@ export function useConversation(options: UseConversationOptions) {
       }));
       throw err;
     }
-  }, [currentUserId]);
+  }, []);
 
   // セッションを終了
   const endSession = useCallback(async () => {

@@ -66,7 +66,6 @@ export default function SimulationPage() {
   }, [selectedAvatar]);
 
   const authSession = useSession();
-  const loggedInUserId = authSession.data?.user?.id ?? null;
   const userName = authSession.data?.user?.name ?? "ゲスト";
   const isLoggedIn = Boolean(authSession.data?.user);
   const userAvatarSrc =
