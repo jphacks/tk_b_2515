@@ -28,6 +28,8 @@ import {
 } from "react";
 import { feedbackApi, sessionApi } from "@/lib/api";
 import { textToSpeechUrl } from "@/lib/api/tts";
+import { config } from "@/lib/config";
+import { romajiToHiragana } from "@/lib/romajiToHiragana";
 import { getFeedbackComment } from "@/lib/feedbackComments";
 import type { Feedback, VoiceMetrics } from "@/types/api";
 import { Button } from "../../components/ui/button";
@@ -175,6 +177,8 @@ function FeedbackContent() {
   const sessionId = searchParams.get("sessionId");
 
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">("female");
+  const [selectedAvatarModelUrl, setSelectedAvatarModelUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scoreHistory, setScoreHistory] = useState<
@@ -201,6 +205,36 @@ function FeedbackContent() {
   } | null>(null);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Load selected avatar from localStorage to adjust visuals/voice
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("selectedAvatar");
+      if (saved === "male" || saved === "female") {
+        setSelectedAvatar(saved);
+      }
+      const savedModelUrl = localStorage.getItem("selectedAvatarModelUrl");
+      if (savedModelUrl) {
+        setSelectedAvatarModelUrl(savedModelUrl);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const feedbackAvatarImageSrc = useMemo(() => {
+    // 男性が選ばれていたら rento.png、それ以外は従来の画像を使用
+    return selectedAvatar === "male" ? "/rento.png" : "/maki.webp";
+  }, [selectedAvatar]);
+
+  // 話者名（コメントボタン/文言用）: モデルファイル名（ローマ字）→ひらがな
+  const speakerName = useMemo(() => {
+    const url = selectedAvatarModelUrl || "";
+    const file = url.split("/").pop() || "";
+    const base = file.replace(/\.vrm$/i, "");
+    const hira = romajiToHiragana(base);
+    return hira || "まき";
+  }, [selectedAvatarModelUrl]);
 
   useEffect(() => {
     const fetchFeedback = async () => {
@@ -376,8 +410,21 @@ function FeedbackContent() {
         audioRef.current = null;
       }
 
+      // 話者（アバター）選択を取得し、ボイスIDを決定
+      let selectedAvatar: "female" | "male" = "female";
+      try {
+        const saved = localStorage.getItem("selectedAvatar");
+        if (saved === "male" || saved === "female") selectedAvatar = saved;
+      } catch {
+        // ignore
+      }
+      const voiceId =
+        selectedAvatar === "male"
+          ? config.tts.voices?.male || config.tts.voiceId || undefined
+          : config.tts.voices?.female || config.tts.voiceId || undefined;
+
       // 音声を生成して再生
-      const audioUrl = await textToSpeechUrl({ text: comment });
+      const audioUrl = await textToSpeechUrl({ text: comment, voiceId });
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
@@ -608,7 +655,7 @@ function FeedbackContent() {
               フィードバックを生成中...
             </p>
             <p className="text-muted-foreground text-xs sm:text-sm">
-              AIがまきとの会話を分析しています
+              AIが{speakerName}との会話を分析しています
             </p>
           </div>
         ) : error ? (
@@ -661,7 +708,7 @@ function FeedbackContent() {
                 </p>
                 <Link href="/simulation">
                   <Button size="lg" className="rounded-full mt-4">
-                    まきにはなしかける(ドキドキ)
+                    {speakerName}にはなしかける(ドキドキ)
                   </Button>
                 </Link>
               </div>
@@ -673,7 +720,7 @@ function FeedbackContent() {
             <div className="flex justify-center">
               <div className="relative w-24 h-24 sm:w-32 sm:h-32">
                 <Image
-                  src="/IMG_8059.webp"
+                  src={feedbackAvatarImageSrc}
                   alt="恋AI アバター"
                   fill
                   className="object-cover rounded-full drop-shadow-lg border-2 border-primary/20"
@@ -721,7 +768,7 @@ function FeedbackContent() {
                       isPlayingVoice ? "animate-pulse" : ""
                     }`}
                   />
-                  {isPlayingVoice ? "再生中..." : "まきのコメントを聞く"}
+                  {isPlayingVoice ? "再生中..." : `${speakerName}のコメントを聞く`}
                 </Button>
               </div>
             </Card>

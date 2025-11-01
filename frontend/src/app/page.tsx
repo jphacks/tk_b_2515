@@ -81,7 +81,7 @@ export default function HomePage() {
               <div className="flex justify-center mb-6 sm:mb-8">
                 <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96">
                   <Image
-                    src="/IMG_8059.webp"
+                    src="/maki.webp"
                     alt="恋AI アバター"
                     fill
                     className="object-cover rounded-full drop-shadow-2xl border-2 sm:border-4 border-primary/20"
