@@ -3,7 +3,7 @@
 import { Heart, Video } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
@@ -43,9 +43,23 @@ export default function SimulationPage() {
     "neutral" | "happy" | "sad" | "surprised" | "angry"
   >("happy");
   const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
+  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">("female");
 
   const videoStreamRef = useRef<VideoStreamRef>(null);
-  const avatarModelUrl = "/models/my_honey_A.vrm";
+  const avatarModelUrl = useMemo(
+    () => (selectedAvatar === "male" ? "/models/tyarao.vrm" : "/models/innocent_girl.vrm"),
+    [selectedAvatar]
+  );
+  const avatarName = useMemo(() => {  // プログラムを改善すればアバターの名前を日本語表記にすることも可能
+    const parts = avatarModelUrl.split("/");
+    const file = parts[parts.length - 1] || "";
+    return file.replace(/\.vrm$/i, "");
+  }, [avatarModelUrl]);
+  const selectedVoiceId = useMemo(() => {
+    const femaleId = config.tts.voices?.female || config.tts.voiceId || "";
+    const maleId = config.tts.voices?.male || "";
+    return selectedAvatar === "male" ? (maleId || config.tts.voiceId || "") : femaleId;
+  }, [selectedAvatar]);
 
   // Media devices (camera/mic)
   const {
@@ -94,7 +108,7 @@ export default function SimulationPage() {
     sendAudio,
   } = useConversation({
     onLipSyncUpdate: handleLipSyncUpdate,
-    ttsVoiceId: config.tts.voiceId || undefined,
+    ttsVoiceId: selectedVoiceId || undefined,
   });
 
   // Timer management
@@ -103,13 +117,13 @@ export default function SimulationPage() {
     onTimeout: handleEndConversation,
   });
 
-  // Preload VRM model on mount
+  // Preload VRM model when selected avatar changes
   useEffect(() => {
     logMediaRecorderSupport();
     preloadVRM(avatarModelUrl).catch(() => {
       // Non-critical, ignore
     });
-  }, []);
+  }, [avatarModelUrl]);
 
   // Video ready handler
   const handleVideoReady = useCallback(
@@ -306,7 +320,7 @@ export default function SimulationPage() {
                 会話シミュレーション
               </h1>
               <p className="text-muted-foreground text-base sm:text-lg md:text-xl">
-                まきと会話の練習をしましょう
+                {avatarName}と会話の練習をしましょう
               </p>
             </div>
 
@@ -341,13 +355,67 @@ export default function SimulationPage() {
                   会話を始めよう!
                 </p>
               </div>
+              {/* Avatar Selection (Image Buttons) */}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAvatar("female")}
+                  className={`group relative overflow-hidden rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/60 ${
+                    selectedAvatar === "female"
+                      ? "border-primary shadow-lg"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                  aria-pressed={selectedAvatar === "female"}
+                  aria-label="女性アバターを選択"
+                >
+                  <div className="relative w-full aspect-[4/3]">
+                    <Image
+                      src="/innocent_girl.png"
+                      alt="女性アバター"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      sizes="(max-width: 768px) 50vw, 240px"
+                      priority
+                    />
+                  </div>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    女性アバター
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedAvatar("male")}
+                  className={`group relative overflow-hidden rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/60 ${
+                    selectedAvatar === "male"
+                      ? "border-primary shadow-lg"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                  aria-pressed={selectedAvatar === "male"}
+                  aria-label="男性アバターを選択"
+                >
+                  <div className="relative w-full aspect-[4/3]">
+                    <Image
+                      src="/tyarao.png"
+                      alt="男性アバター"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      sizes="(max-width: 768px) 50vw, 240px"
+                      priority
+                    />
+                  </div>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    男性アバター
+                  </div>
+                </button>
+              </div>
               <Button
                 size="lg"
                 className="rounded-full px-8 sm:px-10 md:px-12 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
                 onClick={handleStartConversation}
               >
                 <Video className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-                "まき"にはなしかける
+                "{avatarName}"にはなしかける
               </Button>
             </Card>
           </div>
@@ -363,7 +431,7 @@ export default function SimulationPage() {
                 lipSyncValue={lipSyncValue}
                 emotion={avatarEmotion}
                 gesture={avatarGesture}
-                avatarName="まき"
+                avatarName={avatarName}
               />
 
               {/* User Video */}
