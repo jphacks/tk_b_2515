@@ -2,11 +2,13 @@
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Heart, Mail, Lock, User, Loader2, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { signUp, signIn } from "@/lib/auth-client";
+import { AvatarSelector } from "@/components/auth/avatar-selector";
+import { avatarOptions } from "@/lib/avatar-options";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -18,6 +20,9 @@ export default function SignupPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(
+    avatarOptions[0]?.src ?? ""
+  );
   const nameId = useId();
   const emailId = useId();
   const passwordId = useId();
@@ -50,6 +55,7 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
+        image: selectedAvatar,
       });
 
       // サインアップ成功
@@ -113,11 +119,11 @@ export default function SignupPage() {
 
           {/* Signup Card */}
           <Card className="p-6 sm:p-8 border-2">
-            <div className="space-y-6">
-              {/* Google Signup */}
-              <Button
-                onClick={handleGoogleSignup}
-                disabled={isLoading}
+              <div className="space-y-6">
+                {/* Google Signup */}
+                <Button
+                  onClick={handleGoogleSignup}
+                  disabled={isLoading}
                 variant="outline"
                 size="lg"
                 className="w-full rounded-full border-2"
@@ -159,6 +165,18 @@ export default function SignupPage() {
 
               {/* Email/Password Signup */}
               <form onSubmit={handleEmailSignup} className="space-y-4">
+                {/* Avatar Selection */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <ImageIcon className="w-4 h-4 text-primary" />
+                    <span>アカウントアイコンを選択</span>
+                  </div>
+                  <AvatarSelector
+                    value={selectedAvatar}
+                    onChange={setSelectedAvatar}
+                  />
+                </div>
+
                 {/* Name Input */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground" htmlFor={nameId}>

@@ -33,8 +33,8 @@ import { romajiToHiragana } from "@/lib/romajiToHiragana";
 import { getFeedbackComment } from "@/lib/feedbackComments";
 import type { Feedback, VoiceMetrics } from "@/types/api";
 import {
-	getVoiceAnalysisSummary,
-	clearVoiceAnalysis,
+  getVoiceAnalysisSummary,
+  clearVoiceAnalysis,
 } from "@/lib/audio/voiceAnalysisStorage";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -114,7 +114,10 @@ function buildLiveSummaryComment(summary: {
   return remarks.join(" ");
 }
 
-function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps) {
+function VoiceMetricsSection({
+  metrics,
+  liveSummary,
+}: VoiceMetricsSectionProps) {
   return (
     <Card className="p-6 border-2 space-y-6">
       <div className="flex items-center gap-2">
@@ -122,7 +125,9 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
           <Mic className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-foreground">声のフィードバック</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            声のフィードバック
+          </h2>
           <p className="text-sm text-muted-foreground">
             ボリューム・滑舌・スピードを自動評価しました
           </p>
@@ -137,7 +142,9 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
         <>
           {metrics ? (
             <>
-              <p className="text-sm text-muted-foreground leading-relaxed">{metrics.summary}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {metrics.summary}
+              </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 space-y-3">
@@ -147,12 +154,16 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                   </div>
                   <div className="text-3xl font-bold text-primary">
                     {metrics.volumeScore}
-                    <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
+                    <span className="text-base font-medium text-muted-foreground ml-1">
+                      /100
+                    </span>
                   </div>
                   <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
                     {volumeLevelLabels[metrics.volumeLevel]}
                   </span>
-                  <p className="text-sm text-muted-foreground">{metrics.volumeComment}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {metrics.volumeComment}
+                  </p>
                 </div>
 
                 <div className="rounded-2xl border border-accent/15 bg-accent/5 p-4 space-y-3">
@@ -162,12 +173,18 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                   </div>
                   <div className="text-3xl font-bold text-accent">
                     {metrics.articulationScore}
-                    <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
+                    <span className="text-base font-medium text-muted-foreground ml-1">
+                      /100
+                    </span>
                   </div>
                   <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent">
-                    {metrics.articulationScore >= 80 ? "クリア" : "改善の余地あり"}
+                    {metrics.articulationScore >= 80
+                      ? "クリア"
+                      : "改善の余地あり"}
                   </span>
-                  <p className="text-sm text-muted-foreground">{metrics.articulationComment}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {metrics.articulationComment}
+                  </p>
                 </div>
 
                 <div className="rounded-2xl border border-blue-200/60 bg-blue-50/50 p-4 space-y-3">
@@ -177,30 +194,43 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                   </div>
                   <div className="text-3xl font-bold text-blue-600">
                     {metrics.speedScore}
-                    <span className="text-base font-medium text-muted-foreground ml-1">/100</span>
+                    <span className="text-base font-medium text-muted-foreground ml-1">
+                      /100
+                    </span>
                   </div>
                   <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
                     {speedLevelLabels[metrics.speedLevel]}
                   </span>
-                  <p className="text-sm text-muted-foreground">{metrics.speedComment}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {metrics.speedComment}
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-2xl border border-muted/40 bg-muted/10 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-foreground">フィラーの回数</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    フィラーの回数
+                  </p>
                   <div className="text-2xl font-bold text-foreground">
                     {metrics.fillerWords.totalCount}
-                    <span className="text-base font-medium text-muted-foreground ml-1">回</span>
+                    <span className="text-base font-medium text-muted-foreground ml-1">
+                      回
+                    </span>
                   </div>
                   {metrics.fillerWords.breakdown.length > 0 ? (
                     <ul className="text-sm text-muted-foreground space-y-1">
                       {metrics.fillerWords.breakdown.slice(0, 4).map((item) => (
-                        <li key={item.word} className="flex items-center justify-between">
+                        <li
+                          key={item.word}
+                          className="flex items-center justify-between"
+                        >
                           <span>{item.word}</span>
                           <span className="font-medium text-foreground">
                             {item.count}
-                            <span className="text-muted-foreground text-xs ml-1">回</span>
+                            <span className="text-muted-foreground text-xs ml-1">
+                              回
+                            </span>
                           </span>
                         </li>
                       ))}
@@ -213,7 +243,9 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                 </div>
 
                 <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-foreground">声の安定性</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    声の安定性
+                  </p>
                   <div className="inline-flex items-center gap-2 text-base font-semibold">
                     {metrics.tremblingDetected ? (
                       <>
@@ -227,7 +259,9 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                       </>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{metrics.tremblingComment}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {metrics.tremblingComment}
+                  </p>
                 </div>
               </div>
             </>
@@ -244,7 +278,8 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                     {describeStrength(liveSummary.averageStrength)}
                   </p>
                   <p className="text-xs">
-                    平均スコア {Math.round(liveSummary.averageStrength * 100)} / 100
+                    平均スコア {Math.round(liveSummary.averageStrength * 100)} /
+                    100
                   </p>
                 </div>
                 <div>
@@ -252,7 +287,8 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                     {describeTremble(liveSummary.averageTremble)}
                   </p>
                   <p className="text-xs">
-                    揺らぎスコア {Math.round(liveSummary.averageTremble * 100)} / 100
+                    揺らぎスコア {Math.round(liveSummary.averageTremble * 100)}{" "}
+                    / 100
                   </p>
                 </div>
                 <div>
@@ -260,7 +296,8 @@ function VoiceMetricsSection({ metrics, liveSummary }: VoiceMetricsSectionProps)
                     {describeEmotion(liveSummary.averageEmotion)}
                   </p>
                   <p className="text-xs">
-                    感情スコア {Math.round(liveSummary.averageEmotion * 100)} / 100
+                    感情スコア {Math.round(liveSummary.averageEmotion * 100)} /
+                    100
                   </p>
                 </div>
               </div>
@@ -277,8 +314,12 @@ function FeedbackContent() {
   const sessionId = searchParams.get("sessionId");
 
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">("female");
-  const [selectedAvatarModelUrl, setSelectedAvatarModelUrl] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male">(
+    "female"
+  );
+  const [selectedAvatarModelUrl, setSelectedAvatarModelUrl] = useState<
+    string | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scoreHistory, setScoreHistory] = useState<
@@ -305,6 +346,12 @@ function FeedbackContent() {
   } | null>(null);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [voiceLiveSummary, setVoiceLiveSummary] = useState<{
+    sampleCount: number;
+    averageStrength: number;
+    averageTremble: number;
+    averageEmotion: number;
+  } | null>(null);
 
   // Load selected avatar from localStorage to adjust visuals/voice
   useEffect(() => {
@@ -399,18 +446,18 @@ function FeedbackContent() {
         setIsHistoryLoading(true);
         setHistoryError(null);
 
-        // localStorageから現在のユーザーIDを取得
-        const currentUserId = localStorage.getItem("conversationUserId");
+        let currentUserId: string | null = null;
+        if (typeof window !== "undefined") {
+          currentUserId = localStorage.getItem("conversationUserId");
+        }
         console.log("Current user ID from localStorage:", currentUserId);
 
-        // userIdがない場合は履歴を表示しない
         if (!currentUserId) {
           setScoreHistory([]);
           setIsHistoryLoading(false);
           return;
         }
 
-        // userIdをパラメータとして渡してフィルタ（バックエンド側でフィルタ）
         const sessions = await sessionApi.getSessions(currentUserId);
         const historyData = sessions
           .flatMap((session) => {
@@ -431,7 +478,7 @@ function FeedbackContent() {
             (a, b) =>
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
-          .slice(0, 10); // 最近10回のみに制限
+          .slice(0, 10);
         setScoreHistory(historyData);
       } catch (err) {
         console.error("Failed to fetch score history:", err);
@@ -449,13 +496,6 @@ function FeedbackContent() {
   >("conversation");
 
   const voiceMetrics = feedback?.voiceMetrics ?? null;
-  const [voiceLiveSummary, setVoiceLiveSummary] = useState<{
-    sampleCount: number;
-    averageStrength: number;
-    averageTremble: number;
-    averageEmotion: number;
-  } | null>(null);
-
   useEffect(() => {
     if (!sessionId) return;
     const summary = getVoiceAnalysisSummary(sessionId);
@@ -883,7 +923,9 @@ function FeedbackContent() {
                       isPlayingVoice ? "animate-pulse" : ""
                     }`}
                   />
-                  {isPlayingVoice ? "再生中..." : `${speakerName}のコメントを聞く`}
+                  {isPlayingVoice
+                    ? "再生中..."
+                    : `${speakerName}のコメントを聞く`}
                 </Button>
               </div>
             </Card>
@@ -911,7 +953,10 @@ function FeedbackContent() {
             </div>
 
             {selectedCategory === "conversation" && (
-              <VoiceMetricsSection metrics={voiceMetrics} liveSummary={voiceLiveSummary} />
+              <VoiceMetricsSection
+                metrics={voiceMetrics}
+                liveSummary={voiceLiveSummary}
+              />
             )}
 
             {/* Good Points */}
