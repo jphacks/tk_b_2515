@@ -23,6 +23,7 @@ import {
   ConversationHistoryPanel,
 } from "@/components/simulation";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
+import { romajiToHiragana } from "@/lib/romajiToHiragana";
 import { config } from "@/lib/config";
 import { gestureApi } from "@/lib/api";
 import { appendVoiceAnalysis } from "@/lib/audio/voiceAnalysisStorage";
@@ -51,15 +52,25 @@ export default function SimulationPage() {
     () => (selectedAvatar === "male" ? "/models/rento.vrm" : "/models/maki.vrm"),
     [selectedAvatar]
   );
-  const avatarName = useMemo(() => {  // プログラムを改善すればアバターの名前を日本語表記にすることも可能
+  const avatarName = useMemo(() => {
     const parts = avatarModelUrl.split("/");
     const file = parts[parts.length - 1] || "";
-    return file.replace(/\.vrm$/i, "");
+    const base = file.replace(/\.vrm$/i, "");
+    return romajiToHiragana(base) || base;
   }, [avatarModelUrl]);
   const selectedVoiceId = useMemo(() => {
     const femaleId = config.tts.voices?.female || config.tts.voiceId || "";
     const maleId = config.tts.voices?.male || "";
     return selectedAvatar === "male" ? (maleId || config.tts.voiceId || "") : femaleId;
+  }, [selectedAvatar]);
+
+  // Persist selected avatar for use on feedback page (e.g., to choose voice)
+  useEffect(() => {
+    try {
+      localStorage.setItem("selectedAvatar", selectedAvatar);
+    } catch {
+      // ignore
+    }
   }, [selectedAvatar]);
 
   // Media devices (camera/mic)
@@ -125,6 +136,12 @@ export default function SimulationPage() {
     preloadVRM(avatarModelUrl).catch(() => {
       // Non-critical, ignore
     });
+    // フィードバック画面でも使えるようにモデルURLを永続化
+    try {
+      localStorage.setItem("selectedAvatarModelUrl", avatarModelUrl);
+    } catch {
+      // ignore
+    }
   }, [avatarModelUrl]);
 
   // Video ready handler
@@ -386,7 +403,7 @@ export default function SimulationPage() {
                 >
                   <div className="relative w-full aspect-[4/3]">
                     <Image
-                      src="/maki.png"
+                      src="/maki.webp"
                       alt="女性アバター"
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
