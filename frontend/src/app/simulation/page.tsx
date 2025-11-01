@@ -27,7 +27,6 @@ import { romajiToHiragana } from "@/lib/romajiToHiragana";
 import { config } from "@/lib/config";
 import { gestureApi } from "@/lib/api";
 import { appendVoiceAnalysis } from "@/lib/audio/voiceAnalysisStorage";
-import { useSession } from "@/lib/auth-client";
 
 type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
 
@@ -66,13 +65,7 @@ export default function SimulationPage() {
     return femaleId;
   }, [selectedAvatar]);
 
-  const authSession = useSession();
-  const userName = authSession.data?.user?.name ?? "ゲスト";
-  const isLoggedIn = Boolean(authSession.data?.user);
-  const userAvatarSrc =
-    authSession.data?.user?.image && authSession.data.user.image.length > 0
-      ? authSession.data.user.image
-      : "/avatars/avatar-1.svg";
+  // auth handled by shared Header; no local auth state here
 
   // Persist selected avatar for use on feedback page (e.g., to choose voice)
   useEffect(() => {
@@ -291,61 +284,7 @@ export default function SimulationPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header */}
-      <header className="h-14 sm:h-16 px-3 sm:px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
-        <div className="w-10 sm:w-12 md:w-16 flex items-center justify-center">
-          <Link href="/">
-            <button
-              type="button"
-              className="relative h-8 w-8 sm:h-10 sm:w-10 cursor-pointer hover:opacity-80 transition-opacity"
-              aria-label="ホームに戻る"
-            >
-              <Image
-                src="/a.png"
-                alt="恋AIのアイコン"
-                fill
-                className="object-contain"
-              />
-            </button>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse" />
-          <span className="font-bold text-foreground text-base sm:text-lg">
-            恋AI
-          </span>
-        </div>
-
-        <div className="flex items-center justify-center min-w-[2.5rem] sm:min-w-[3rem]">
-          {isLoggedIn ? (
-            <Link
-              href="/account"
-              className="group relative h-9 w-9 sm:h-10 sm:w-10 rounded-full border-2 border-primary/30 bg-primary/10 overflow-hidden hover:border-primary transition-colors"
-              aria-label={`${userName}のプロフィール`}
-            >
-              <Image
-                src={userAvatarSrc}
-                alt={`${userName}のアイコン`}
-                fill
-                sizes="40px"
-                className="object-cover"
-                priority={false}
-              />
-            </Link>
-          ) : (
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-full hover:bg-primary/10 text-xs sm:text-sm px-3 py-1 min-h-[2.25rem]"
-              >
-                ログイン
-              </Button>
-            </Link>
-          )}
-        </div>
-      </header>
+      {/* Header is provided by shared Header component in layout */}
 
       {!conversationStarted ? (
         /* Initial State - Full Screen Welcome */

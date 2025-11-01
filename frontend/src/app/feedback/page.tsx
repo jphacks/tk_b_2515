@@ -784,26 +784,7 @@ function FeedbackContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="p-3 sm:p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm border-b border-border">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="rounded-full text-xs sm:text-sm px-2 sm:px-3"
-          >
-            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">ホームへ</span>
-          </Button>
-        </Link>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary" />
-          <span className="font-semibold text-foreground text-sm sm:text-base">
-            恋ai
-          </span>
-        </div>
-        <div className="w-12 sm:w-20" /> {/* Spacer for alignment */}
-      </header>
+      {/* Header is provided by the shared Header component in layout.tsx */}
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6">

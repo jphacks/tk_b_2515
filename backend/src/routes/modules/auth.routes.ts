@@ -122,7 +122,6 @@ const authConfigRoute = createRoute({
 
 auth.openapi(authConfigRoute, async (c) => {
   const secret = process.env.BETTER_AUTH_SECRET;
-  console.log("ぼけなすび！");
   if (!secret) {
     return c.json({ error: "BETTER_AUTH_SECRET is not configured" }, 500);
   }

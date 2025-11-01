@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 
 async function resolveBetterAuthSecret(): Promise<string> {
   if (process.env.BETTER_AUTH_SECRET) {
-    console.log("ぼけなすび！");
     return process.env.BETTER_AUTH_SECRET;
   }
 
