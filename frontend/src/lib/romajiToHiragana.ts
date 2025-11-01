@@ -133,7 +133,7 @@ const CONSONANTS = new Set(
 );
 
 export function romajiToHiragana(input: string): string {
-  let s = input.toLowerCase().replace(/[^a-z]/g, "");
+  const s = input.toLowerCase().replace(/[^a-z]/g, "");
   if (!s) return "";
   let result = "";
   for (let i = 0; i < s.length; ) {
