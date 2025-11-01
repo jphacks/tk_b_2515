@@ -54,7 +54,7 @@ function inferEmotionFromConversation(
     return "bashful";
   }
   // angry: 否定/対立/罵倒/苛立ちを優先検出（surprisedやhappyよりも優先）
-  if (contains(/むか|ムカ|怒|ふざけ(んな)?|いやだ|やだ|無理|ばか|バカ|くそ|クソ|あほ|アホ|ごみ|ゴミ|最悪|やめろ|は[\?？]|違うだろ|許せない|イライラ|腹立|もういい|くだらない/)) {
+  if (contains(/むか|ムカ|怒|ふざけ(んな)?|いやだ|やだ|無理|ばか|バカ|くそ|クソ|あほ|アホ|ごみ|ゴミ|最悪|やめろ|は[?？]|違うだろ|許せない|イライラ|腹立|もういい|くだらない/)) {
     return "angry";
   }
   // happy: うれしい/楽しい/よかった/ありがとう/笑
@@ -176,7 +176,7 @@ export async function generateConversationResponse(
     : "表情/視線メトリクス: データなし";
 
   // LLMへのシステム誘導: JSONで {text, emotion}
-  const instruction = `以下の入力をもとに、会話の次の応答を日本語で1-3文で生成し、同時に感情ラベルを付与してください。必ず次のJSON形式のみを出力してください（前後に解説やマークダウンを付けない）：\n{\n  \"text\": string,\n  \"emotion\": one of [\"neutral\", \"happy\", \"sad\", \"surprised\", \"angry\", \"bashful\"]\n}\n\n付与方針（重み付け）:\n- 【最重視】会話内容（特に直近のユーザー発話）: 最新>1つ前>それ以前\n- 【重視】視線(gaze)の傾向: 安定=neutral/happy寄り, 下向き多い=sad/不安寄り, 上向き多い=surprised寄り\n- 【弱め】表情(smile): 補助的なシグナルとしてのみ考慮（会話内容と視線に劣後）\n- 対立・否定・苛立ち・罵倒（例: 「ふざけんな」「最悪」「違うだろ」「やめろ」「は？」など）が含まれる場合は、sadやsurprisedではなくangryを優先して選ぶ。曖昧な時はangry寄りに判断する\n- 全体文脈も考慮しつつ、過度に感情が揺れないよう連続ターンでの急変は避ける`;
+  const instruction = `以下の入力をもとに、会話の次の応答を日本語で1-3文で生成し、同時に感情ラベルを付与してください。必ず次のJSON形式のみを出力してください（前後に解説やマークダウンを付けない）：\n{\n  "text": string,\n  "emotion": one of ["neutral", "happy", "sad", "surprised", "angry", "bashful"]\n}\n\n付与方針（重み付け）:\n- 【最重視】会話内容（特に直近のユーザー発話）: 最新>1つ前>それ以前\n- 【重視】視線(gaze)の傾向: 安定=neutral/happy寄り, 下向き多い=sad/不安寄り, 上向き多い=surprised寄り\n- 【弱め】表情(smile): 補助的なシグナルとしてのみ考慮（会話内容と視線に劣後）\n- 対立・否定・苛立ち・罵倒（例: 「ふざけんな」「最悪」「違うだろ」「やめろ」「は？」など）が含まれる場合は、sadやsurprisedではなくangryを優先して選ぶ。曖昧な時はangry寄りに判断する\n- 全体文脈も考慮しつつ、過度に感情が揺れないよう連続ターンでの急変は避ける`;
 
   const compiledInput = `【最近のユーザー発話（新しい順）】\n${recentUserTexts.slice().reverse().map((t, i) => `(${i+1}) ${t}`).join("\n")}\n\n【最近のAI発話（新しい順）】\n${recentAssistantTexts.slice().reverse().map((t, i) => `(${i+1}) ${t}`).join("\n")}\n\n${gestureInfo}`;
 
@@ -228,7 +228,7 @@ export async function generateConversationResponse(
   try {
     const lastTwoUserTexts = recentUserTexts.slice(-2).join("\n");
     const lowered = lastTwoUserTexts.toLowerCase();
-    const angryHint = /(むか|怒|ふざけ(んな)?|いやだ|やだ|無理|ばか|くそ|あほ|ごみ|最悪|やめろ|は[\?？]|違うだろ|許せない|いらいら|腹立|もういい|くだらない)/i;
+    const angryHint = /(むか|怒|ふざけ(んな)?|いやだ|やだ|無理|ばか|くそ|あほ|ごみ|最悪|やめろ|は[?？]|違うだろ|許せない|いらいら|腹立|もういい|くだらない)/i;
     const exclamations = (lastTwoUserTexts.match(/[!！]/g)?.length ?? 0);
     if (emotion !== "angry" && (angryHint.test(lowered) || exclamations >= 3)) {
       emotion = "angry";

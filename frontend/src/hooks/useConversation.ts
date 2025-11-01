@@ -207,7 +207,7 @@ export function useConversation(options: UseConversationOptions) {
         return null;
       }
     },
-    [state.session, systemPrompt, ttsVoiceId, onAudioReady]
+    [state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate]
   );
 
   // クリーンアップ
