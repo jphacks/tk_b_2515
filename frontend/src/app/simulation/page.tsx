@@ -30,6 +30,26 @@ import { appendVoiceAnalysis } from "@/lib/audio/voiceAnalysisStorage";
 
 type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
 
+type BackgroundKey = "library" | "classroom" | "xmas";
+
+const BACKGROUNDS: Record<BackgroundKey, { src: string; label: string; scenario: string }> = {
+  library: {
+    src: "/uec_library.jpg",
+    label: "図書館",
+    scenario: "静かな図書館。声は控えめに、落ち着いたトーンで趣味や勉強の話から始めると自然です。",
+  },
+  classroom: {
+    src: "/kokuban.png",
+    label: "教室",
+    scenario: "放課後の教室。授業や課題、サークル、週末の予定など身近な話題が話しやすい雰囲気です。",
+  },
+  xmas: {
+    src: "/xmas.png",
+    label: "クリスマス",
+    scenario: "イルミネーションの前。最近の出来事やプレゼント、冬の予定など明るい話題で盛り上がりやすいです。",
+  },
+};
+
 export default function SimulationPage() {
   const [conversationStarted, setConversationStarted] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
@@ -43,6 +63,7 @@ export default function SimulationPage() {
   const [selectedAvatar, setSelectedAvatar] = useState<"female" | "male" | "neutral">(
     "female"
   );
+  const [selectedBackground, setSelectedBackground] = useState<BackgroundKey>("library");
 
   const videoStreamRef = useRef<VideoStreamRef>(null);
   const avatarModelUrl = useMemo(() => {
@@ -50,6 +71,25 @@ export default function SimulationPage() {
     if (selectedAvatar === "neutral") return "/models/kouta.vrm";
     return "/models/maki.vrm"; // female
   }, [selectedAvatar]);
+
+  // 背景の保存/復元
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("selectedBackground") as BackgroundKey | null;
+      if (saved === "library" || saved === "classroom" || saved === "xmas") {
+        setSelectedBackground(saved);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("selectedBackground", selectedBackground);
+    } catch {
+      // ignore
+    }
+  }, [selectedBackground]);
   const avatarName = useMemo(() => {
     const parts = avatarModelUrl.split("/");
     const file = parts[parts.length - 1] || "";
@@ -413,6 +453,47 @@ export default function SimulationPage() {
                   </div>
                 </button>
               </div>
+              {/* Background Selection (Image Buttons) */}
+              <div className="space-y-2 text-left">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">背景を選択</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {(Object.keys(BACKGROUNDS) as Array<BackgroundKey>).map((key) => {
+                    const bg = BACKGROUNDS[key];
+                    const selected = selectedBackground === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setSelectedBackground(key)}
+                        className={`group relative overflow-hidden rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/60 ${
+                          selected ? "border-primary shadow-lg" : "border-border hover:border-primary/40"
+                        }`}
+                        aria-pressed={selected}
+                        aria-label={`${bg.label}の背景を選択`}
+                      >
+                        <div className="relative w-full aspect-[4/3]">
+                          <Image
+                            src={bg.src}
+                            alt={`${bg.label}の背景`}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                            sizes="(max-width: 768px) 33vw, 240px"
+                            priority={false}
+                          />
+                        </div>
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                          {bg.label}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Situation Hint */}
+                <div className="mt-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-lg p-3">
+                  <p className="font-semibold text-foreground mb-1">シチュエーション</p>
+                  <p>{BACKGROUNDS[selectedBackground].scenario}</p>
+                </div>
+              </div>
               <Button
                 size="lg"
                 className="rounded-full px-8 sm:px-10 md:px-12 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
@@ -427,7 +508,19 @@ export default function SimulationPage() {
       ) : (
         /* Conversation State - Split Screen Layout */
         <main className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 relative bg-gradient-to-br from-black/95 via-primary/5 to-black/95">
+          <div className="flex-1 relative">
+            {/* Background image + overlay */}
+            <div className="absolute inset-0 -z-10">
+              <Image
+                src={BACKGROUNDS[selectedBackground].src}
+                alt={`${BACKGROUNDS[selectedBackground].label}の背景`}
+                fill
+                sizes="100vw"
+                priority={false}
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/40 to-black/80" />
+            </div>
             <div className="w-full h-full flex flex-col md:flex-row gap-2 p-2">
               {/* AI Avatar */}
               <AvatarDisplay
