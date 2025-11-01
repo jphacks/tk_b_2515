@@ -32,7 +32,7 @@
 		"tsx": "^4.20.6"
 	},
 	"dependencies": {
-		"@prisma/client": "^6.17.0",
+		"@prisma/client": "^6.18.0",
 		"prisma": "^6.17.0"
 	}
 }

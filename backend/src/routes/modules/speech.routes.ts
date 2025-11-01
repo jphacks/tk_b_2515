@@ -11,6 +11,12 @@ import { createApiRoute } from "../utils";
 
 const speech = createApiRoute();
 
+const isFile = (value: unknown): value is File =>
+  typeof File !== "undefined" && value instanceof File;
+
+const extractSingleValue = (value: unknown): unknown =>
+  Array.isArray(value) ? value[0] : value ?? undefined;
+
 // Voice schema for OpenAPI documentation
 const voiceSchema = z.object({
   voiceId: z.string(),
@@ -193,19 +199,24 @@ speech.post("/stt", async (c) => {
     }
 
     const body = await c.req.parseBody();
-    const audioFile = body.audio;
-    const voiceId = body.voiceId as string | undefined;
+    const audioField = extractSingleValue(
+      "audio" in body ? (body as Record<string, unknown>).audio : undefined
+    );
+    const voiceField = extractSingleValue(
+      "voiceId" in body ? (body as Record<string, unknown>).voiceId : undefined
+    );
+    const voiceId = typeof voiceField === "string" ? voiceField : undefined;
 
     console.log("STT Request received:", {
-      hasAudio: !!audioFile,
-      audioType: audioFile instanceof File ? audioFile.type : typeof audioFile,
-      audioSize: audioFile instanceof File ? audioFile.size : 0,
+      hasAudio: !!audioField,
+      audioType: isFile(audioField) ? audioField.type : typeof audioField,
+      audioSize: isFile(audioField) ? audioField.size : 0,
       voiceId: voiceId || "none",
     });
 
-    if (!audioFile || !(audioFile instanceof File)) {
+    if (!audioField || !isFile(audioField)) {
       console.error("STT Error: Invalid audio file", {
-        audioFile: typeof audioFile,
+        audioFile: typeof audioField,
       });
       return c.json({ error: "Audio file is required" }, 400);
     }
@@ -213,7 +224,7 @@ speech.post("/stt", async (c) => {
     if (voiceId) {
       // Get voice info along with transcription
       console.log("Calling speechToTextWithVoice with voiceId:", voiceId);
-      const result = await speechToTextWithVoice(apiKey, audioFile, voiceId);
+      const result = await speechToTextWithVoice(apiKey, audioField, voiceId);
       console.log("STT Success:", {
         textLength: result.text.length,
         hasVoice: !!result.voice,
@@ -222,7 +233,7 @@ speech.post("/stt", async (c) => {
     }
     // Simple STT without voiceId
     console.log("Calling speechToText without voiceId");
-    const text = await speechToText(apiKey, audioFile);
+    const text = await speechToText(apiKey, audioField);
     console.log("STT Success:", { textLength: text.length });
     return c.json({ text });
   } catch (error) {

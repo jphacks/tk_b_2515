@@ -60,7 +60,7 @@ const createCheckoutSessionRoute = createRoute({
 
 payment.openapi(createCheckoutSessionRoute, async (c) => {
   try {
-    const { partnerId, partnerName, amount } = await c.req.json();
+    const { partnerId, partnerName, amount } = c.req.valid("json");
     const stripe = getStripeInstance();
 
     const baseUrl = process.env.FRONTEND_URL || "http://localhost:3001";
@@ -149,7 +149,7 @@ const verifyPaymentSessionRoute = createRoute({
 
 payment.openapi(verifyPaymentSessionRoute, async (c) => {
   try {
-    const { sessionId } = await c.req.json();
+    const { sessionId } = c.req.valid("json");
     const stripe = getStripeInstance();
 
     // Retrieve the checkout session
@@ -254,7 +254,7 @@ payment.openapi(stripeWebhookRoute, async (c) => {
     // Handle different event types
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object;
+        const session = event.data.object as Stripe.Checkout.Session;
         console.log("Payment successful:", session.id);
         // TODO: Additional processing (send email, update database, etc.)
         break;
