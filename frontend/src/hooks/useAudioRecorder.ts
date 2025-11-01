@@ -1,4 +1,6 @@
 import { useCallback, useRef, useState } from "react";
+import type { VoiceAnalysisResult } from "@/lib/audio/voiceAnalysis";
+import { analyzeVoiceFromBlob } from "@/lib/audio/voiceAnalysis";
 
 export interface AudioRecorderOptions {
 	mimeType?: string;
@@ -10,6 +12,7 @@ export interface UseAudioRecorderReturn {
 	isPaused: boolean;
 	audioBlobs: Blob[];
 	audioURL: string | null;
+	analysisResult: VoiceAnalysisResult | null;
 	error: Error | null;
 	startRecording: (stream: MediaStream, options?: AudioRecorderOptions) => void;
 	stopRecording: () => void;
@@ -26,6 +29,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 	const [isPaused, setIsPaused] = useState(false);
 	const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
 	const [audioURL, setAudioURL] = useState<string | null>(null);
+	const [analysisResult, setAnalysisResult] = useState<VoiceAnalysisResult | null>(null);
 	const [error, setError] = useState<Error | null>(null);
 
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -38,6 +42,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 				chunksRef.current = [];
 				setAudioBlobs([]);
 				setAudioURL(null);
+				setAnalysisResult(null);
 
 				// 音声トラックのみを含む新しいストリームを作成
 				const audioTracks = stream.getAudioTracks();
@@ -111,6 +116,16 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 						blobType: audioBlob.type,
 						url,
 					});
+
+					analyzeVoiceFromBlob(audioBlob)
+						.then((result) => {
+							setAnalysisResult(result);
+							console.log("Voice analysis result:", result);
+						})
+						.catch((analysisError) => {
+							console.error("Voice analysis failed:", analysisError);
+							setAnalysisResult(null);
+						});
 				};
 
 				// エラーハンドラ
@@ -173,6 +188,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 		chunksRef.current = [];
 		setAudioBlobs([]);
 		setAudioURL(null);
+		setAnalysisResult(null);
 		setError(null);
 	}, [audioURL]);
 
@@ -181,6 +197,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 		isPaused,
 		audioBlobs,
 		audioURL,
+		analysisResult,
 		error,
 		startRecording,
 		stopRecording,
