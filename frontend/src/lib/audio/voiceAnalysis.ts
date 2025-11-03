@@ -191,7 +191,7 @@ export async function analyzeVoiceFromBlob(
   const pitchSummary = computePitchSummary(frames, buffer.sampleRate);
 
   const loudnessScore = clamp01((rmsAverage - 0.018) / 0.06);
-  const normalizedVariance = Math.pow(Math.max(rmsVariance, 0) / 0.006, 1.19);
+  const normalizedVariance = (Math.max(rmsVariance, 0) / 0.006) ** 1.19;
   const emotionScore = clamp01(normalizedVariance);
 
   return {
