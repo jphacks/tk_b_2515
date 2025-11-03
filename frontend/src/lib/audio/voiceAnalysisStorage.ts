@@ -6,8 +6,9 @@ type StoredResult = {
 	sessionId: string;
 	timestamp: number;
 	strengthScore: number;
-	trembleScore: number;
 	emotionScore: number;
+	rmsVariance: number;
+	pitchRange: number;
 };
 
 type StorageShape = Record<string, StoredResult[]>;
@@ -43,8 +44,9 @@ export function appendVoiceAnalysis(
 		sessionId,
 		timestamp: Date.now(),
 		strengthScore: result.strengthScore,
-		trembleScore: result.trembleScore,
 		emotionScore: result.emotionScore,
+		rmsVariance: result.details.rmsVariance,
+		pitchRange: result.details.pitchRange,
 	};
 	if (!storage[sessionId]) {
 		storage[sessionId] = [];
@@ -66,8 +68,9 @@ export function getVoiceAnalysisSummary(sessionId: string):
 	| {
 			sampleCount: number;
 			averageStrength: number;
-			averageTremble: number;
 			averageEmotion: number;
+			averageRmsVariance: number;
+			averagePitchRange: number;
 	  }
 	| null {
 	if (typeof window === "undefined") return null;
@@ -78,16 +81,20 @@ export function getVoiceAnalysisSummary(sessionId: string):
 	const total = results.reduce(
 		(acc, item) => ({
 			strength: acc.strength + item.strengthScore,
-			tremble: acc.tremble + item.trembleScore,
 			emotion: acc.emotion + item.emotionScore,
+			rmsVariance: acc.rmsVariance + item.rmsVariance,
+			pitchRange: acc.pitchRange + item.pitchRange,
 		}),
-		{ strength: 0, tremble: 0, emotion: 0 },
+		{ strength: 0, emotion: 0, rmsVariance: 0, pitchRange: 0 },
 	);
 
+	const averageRmsVariance = total.rmsVariance / results.length;
+	const averagePitchRange = total.pitchRange / results.length;
 	return {
 		sampleCount: results.length,
 		averageStrength: Number((total.strength / results.length).toFixed(2)),
-		averageTremble: Number((total.tremble / results.length).toFixed(2)),
 		averageEmotion: Number((total.emotion / results.length).toFixed(2)),
+		averageRmsVariance: Number(averageRmsVariance.toFixed(6)),
+		averagePitchRange: Number(averagePitchRange.toFixed(2)),
 	};
 }
