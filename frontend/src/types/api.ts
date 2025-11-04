@@ -1,5 +1,7 @@
 // API型定義
 
+import type { VoiceAnalysisDetails } from "@/lib/audio/voiceAnalysis";
+
 // Voice型定義
 export interface Voice {
 	voice_id: string;
@@ -58,6 +60,7 @@ export interface VoiceMetrics {
 	tremblingDetected: boolean;
 	tremblingComment: string;
 	summary: string;
+	details: VoiceAnalysisDetails;
 }
 
 export interface Feedback {
