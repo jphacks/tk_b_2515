@@ -137,11 +137,6 @@ function VoiceMetricsSection({
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {metrics.summary}
               </p>
-              <p className="text-xs text-muted-foreground">
-                Debug: RMS平均 ≈ {metrics.details.rmsAverage} / RMS分散 ≈{" "}
-                {metrics.details.rmsVariance} / ピッチレンジ ≈{" "}
-                {metrics.details.pitchRange}
-              </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 space-y-3">
@@ -289,10 +284,6 @@ function VoiceMetricsSection({
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Debug: 平均RMS分散 ≈ {liveSummary.averageRmsVariance} /
-                平均ピッチレンジ ≈ {liveSummary.averagePitchRange}
-              </p>
             </div>
           ) : null}
         </>
