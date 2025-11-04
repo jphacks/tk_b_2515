@@ -57,56 +57,48 @@ type VoiceMetricsSectionProps = {
   liveSummary?: {
     sampleCount: number;
     averageStrength: number;
-    averageTremble: number;
     averageEmotion: number;
+    averageRmsVariance: number;
+    averagePitchRange: number;
   } | null;
 };
 
 function describeStrength(score: number): string {
-  if (score >= 0.7) return "声が堂々としている";
-  if (score >= 0.45) return "十分な声量";
+  if (score >= 0.6) return "声が堂々としている";
+  if (score >= 0.3) return "十分な声量";
   return "穏やかで控えめな声量";
 }
 
-function describeTremble(score: number): string {
-  if (score >= 0.65) return "やや震えが感じられる";
-  if (score <= 0.3) return "声は安定している";
-  return "わずかに揺らぎがある";
-}
-
 function describeEmotion(score: number): string {
-  if (score >= 0.65) return "感情がよく乗っている";
-  if (score >= 0.4) return "自然な抑揚";
+  if (score >= 0.55) return "感情がよく乗っている";
+  if (score >= 0.35) return "自然な抑揚";
   return "落ち着いたトーンが多い";
 }
 
 function buildLiveSummaryComment(summary: {
   averageStrength: number;
-  averageTremble: number;
   averageEmotion: number;
+  averageRmsVariance: number;
+  averagePitchRange: number;
 }): string {
   const remarks: string[] = [];
 
-  if (summary.averageStrength >= 0.7) {
-    remarks.push("声量がしっかりしていて堂々とした印象でした。");
-  } else if (summary.averageStrength <= 0.3) {
-    remarks.push("全体的に穏やかで控えめな声量でした。");
+  if (summary.averageStrength >= 0.6) {
+    remarks.push("声量がしっかりしていてとても堂々とした印象でした。");
+  } else if (summary.averageStrength <= 0.25) {
+    remarks.push(
+      "全体的に控えめな声量でした。もう少し声圧を乗せると自信が相手に伝わります。"
+    );
   } else {
     remarks.push("声量はちょうど良いバランスで伝わっていました。");
   }
 
-  if (summary.averageTremble >= 0.65) {
-    remarks.push("発声には少し震えがあり、自信が揺らいだ場面が見られました。");
-  } else if (summary.averageTremble <= 0.3) {
-    remarks.push("声は安定していて落ち着きが感じられました。");
-  } else {
-    remarks.push("ごく自然な揺らぎで緊張感はほとんど感じられません。");
-  }
-
-  if (summary.averageEmotion >= 0.7) {
-    remarks.push("感情表現が豊かで、抑揚のある話し方が好印象です。");
-  } else if (summary.averageEmotion <= 0.35) {
-    remarks.push("抑揚は控えめで、冷静さや落ち着きを感じました。");
+  if (summary.averageEmotion >= 0.75) {
+    remarks.push("感情表現が豊かで、抑揚のある話し方がとても好印象です。");
+  } else if (summary.averageEmotion <= 0.3) {
+    remarks.push(
+      "抑揚はかなり控えめで、感情が相手に伝わらず少し話しかけづらい印象を与えるかもしれません。"
+    );
   } else {
     remarks.push("感情の起伏は適度で、自然な聞きやすさがありました。");
   }
@@ -129,7 +121,7 @@ function VoiceMetricsSection({
             声のフィードバック
           </h2>
           <p className="text-sm text-muted-foreground">
-            ボリューム・滑舌・スピードを自動評価しました
+            周囲の環境音が大きいと正確に評価できない場合があります。
           </p>
         </div>
       </div>
@@ -272,7 +264,7 @@ function VoiceMetricsSection({
               <p className="text-base sm:text-lg font-semibold text-foreground leading-relaxed">
                 {buildLiveSummaryComment(liveSummary)}
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-muted-foreground">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
                 <div>
                   <p className="font-medium text-foreground">
                     {describeStrength(liveSummary.averageStrength)}
@@ -280,15 +272,6 @@ function VoiceMetricsSection({
                   <p className="text-xs">
                     平均スコア {Math.round(liveSummary.averageStrength * 100)} /
                     100
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">
-                    {describeTremble(liveSummary.averageTremble)}
-                  </p>
-                  <p className="text-xs">
-                    揺らぎスコア {Math.round(liveSummary.averageTremble * 100)}{" "}
-                    / 100
                   </p>
                 </div>
                 <div>
@@ -349,8 +332,9 @@ function FeedbackContent() {
   const [voiceLiveSummary, setVoiceLiveSummary] = useState<{
     sampleCount: number;
     averageStrength: number;
-    averageTremble: number;
     averageEmotion: number;
+    averageRmsVariance: number;
+    averagePitchRange: number;
   } | null>(null);
 
   // Load selected avatar from localStorage to adjust visuals/voice

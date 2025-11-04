@@ -7,7 +7,7 @@ export const authClient = createAuthClient({
   hooks: {
     after: [
       {
-        matcher: ({ path, method }) =>
+        matcher: ({ path, method }: { path: string; method: string }) =>
           path === "/sign-out" && method === "POST",
         handler: async () => {
           try {
