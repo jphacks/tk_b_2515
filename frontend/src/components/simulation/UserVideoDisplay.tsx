@@ -12,7 +12,7 @@ export const UserVideoDisplay = memo(
 	forwardRef<VideoStreamRef, UserVideoDisplayProps>(
 		({ stream, videoEnabled, onVideoReady }, ref) => {
 			return (
-				<div className="w-full md:w-80 h-48 md:h-auto relative bg-black rounded-xl overflow-hidden border border-border/50 shadow-2xl flex flex-col">
+				<div className="w-full md:w-80 h-48 md:h-auto self-start relative bg-black rounded-xl overflow-hidden border border-border/50 shadow-2xl flex flex-col">
 					{stream && videoEnabled ? (
 						<div className="flex-1 relative">
 							<VideoStream
