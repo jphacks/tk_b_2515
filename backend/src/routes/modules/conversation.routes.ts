@@ -1,4 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import {
 	generateConversationFeedback,
@@ -215,8 +216,12 @@ const generateFeedbackRoute = createRoute({
 							goodPoints: z.string(),
 							improvementPoints: z.string(),
 							overallScore: z.number().nullable(),
+							conversationScore: z.number().nullable().optional(),
+							gestureScore: z.number().nullable().optional(),
+							voiceScore: z.number().nullable().optional(),
 							gestureGoodPoints: z.string().nullable().optional(),
 							gestureImprovementPoints: z.string().nullable().optional(),
+							voiceMetrics: z.any().nullable().optional(),
 							createdAt: z.string(),
 						}),
 					}),
@@ -285,9 +290,15 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
 			return c.json({ error: "No messages found in this session" }, 400);
 		}
 
-		// Return existing feedback if available (don't regenerate)
+		// Return existing feedback if available and already migrated
 		const existingFeedback = session.feedback;
-		if (existingFeedback) {
+		const needsRefresh =
+			existingFeedback &&
+			(existingFeedback.conversationScore === null ||
+				existingFeedback.gestureScore === null ||
+				existingFeedback.voiceScore === null);
+
+		if (existingFeedback && !needsRefresh) {
 			return c.json(
 				{
 					feedback: existingFeedback,
@@ -302,7 +313,7 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
 			content: msg.content,
 		}));
 
-		// Generate feedback (first time only)
+		// Generate feedback (first time or refresh)
 		const feedbackData = await generateConversationFeedback(
 			apiKey,
 			conversationHistory,
@@ -326,17 +337,38 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
 		const gestureImprovementPointsStr =
 			feedbackData.gestureImprovementPoints ?? "";
 
-		// Save feedback (create only)
-		const savedFeedback = await prisma.feedback.create({
-			data: {
-				goodPoints: goodPointsStr,
-				improvementPoints: improvementPointsStr,
-				overallScore: feedbackData.overallScore,
-				gestureGoodPoints: gestureGoodPointsStr,
-				gestureImprovementPoints: gestureImprovementPointsStr,
-				conversationId: sessionId,
-			},
-		});
+		let savedFeedback;
+		if (existingFeedback) {
+			savedFeedback = await prisma.feedback.update({
+				where: { id: existingFeedback.id },
+				data: {
+					goodPoints: goodPointsStr,
+					improvementPoints: improvementPointsStr,
+					overallScore: feedbackData.overallScore,
+					conversationScore: feedbackData.conversationScore,
+					gestureScore: feedbackData.gestureScore,
+					voiceScore: feedbackData.voiceScore,
+					gestureGoodPoints: gestureGoodPointsStr,
+					gestureImprovementPoints: gestureImprovementPointsStr,
+					voiceMetrics: feedbackData.voiceMetrics as Prisma.JsonObject,
+				},
+			});
+		} else {
+			savedFeedback = await prisma.feedback.create({
+				data: {
+					goodPoints: goodPointsStr,
+					improvementPoints: improvementPointsStr,
+					overallScore: feedbackData.overallScore,
+					conversationScore: feedbackData.conversationScore,
+					gestureScore: feedbackData.gestureScore,
+					voiceScore: feedbackData.voiceScore,
+					gestureGoodPoints: gestureGoodPointsStr,
+					gestureImprovementPoints: gestureImprovementPointsStr,
+					voiceMetrics: feedbackData.voiceMetrics as Prisma.JsonObject,
+					conversationId: sessionId,
+				},
+			});
+		}
 
 		return c.json({ feedback: savedFeedback }, 200);
 	} catch (error) {
