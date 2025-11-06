@@ -12,7 +12,7 @@ export default function AdminDashboardPage() {
 
 	const handleSignOut = async () => {
 		await signOut();
-		router.push("/admin/login");
+		router.push("/");
 	};
 
 	if (isPending) {

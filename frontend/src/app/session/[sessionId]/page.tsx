@@ -34,36 +34,12 @@ export default function SessionRoomPage() {
 
 	// セッション情報からroleを取得
 	useEffect(() => {
-		if (!session?.user?.id) {
-			router.push("/admin/login");
-			return;
-		}
+		// デフォルトでuserロールを設定
+		setUserRole("user");
+	}, []);
 
-		// セッション情報を取得してroleを判定
-		const fetchSessionInfo = async () => {
-			try {
-				const response = await fetch(`/api/sessions/${sessionId}/info`);
-				if (response.ok) {
-					const data = await response.json();
-					// ユーザーIDがpartnerIdと一致すればpartner、userIdと一致すればuser
-					if (data.partnerId === session.user.id) {
-						setUserRole("partner");
-					} else if (data.userId === session.user.id) {
-						setUserRole("user");
-					} else {
-						alert("このセッションへのアクセス権限がありません");
-						router.push("/");
-					}
-				}
-			} catch (error) {
-				console.error("Failed to fetch session info:", error);
-			}
-		};
-
-		fetchSessionInfo();
-	}, [session, sessionId, router]);
-
-	const userId = session?.user?.id || "";
+	// ダミーのuserIdを使用
+	const userId = session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
 	const role = userRole || "user";
 
 	// カメラとマイクの初期化
