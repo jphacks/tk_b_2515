@@ -65,6 +65,9 @@ export interface Feedback {
 	goodPoints: string;
 	improvementPoints: string;
 	overallScore: number | null;
+	conversationScore?: number | null;
+	gestureScore?: number | null;
+	voiceScore?: number | null;
 	conversationId: string;
 	createdAt: string;
 	updatedAt: string;

@@ -567,6 +567,9 @@ export async function generateConversationFeedback(
 	goodPoints: string;
 	improvementPoints: string;
 	overallScore: number | null;
+	conversationScore: number | null;
+	gestureScore: number | null;
+	voiceScore: number | null;
 	gestureGoodPoints?: string;
 	gestureImprovementPoints?: string;
 	voiceMetrics: VoiceMetrics;
@@ -590,13 +593,26 @@ export async function generateConversationFeedback(
 - 視線が下方向だった回数: ${gestureSummary.gazeDownSamples}`
 		: "仕草データはありません";
 
-	const prompt = `以下の会話と仕草データを分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
+	const voiceMetrics = calculateVoiceMetrics(messages);
+
+	const voiceInfo = `声の分析データ:
+- ボリュームスコア(0-100): ${voiceMetrics.volumeScore}
+- 滑舌スコア(0-100): ${voiceMetrics.articulationScore}
+- 話速スコア(0-100): ${voiceMetrics.speedScore}
+- フィラー出現合計: ${voiceMetrics.fillerWords.totalCount}
+- 震え検知: ${voiceMetrics.tremblingDetected ? "あり" : "なし"}
+- サマリー: ${voiceMetrics.summary}`;
+
+	const prompt = `以下の会話と仕草・音声データを分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
 
 【会話内容】
 ${conversationText}
 
 【仕草データ】
 ${gestureInfo}
+
+【声のデータ】
+${voiceInfo}
 
 【評価基準】
 以下の観点で評価してください：
@@ -635,7 +651,8 @@ ${gestureInfo}
 - 視線スコア平均（0〜1で1が最も安定した視線）を活用し、視線の安定度が高い場合はプラス評価、低い場合は課題として触れる。
 - 視線スコア平均が 0.5 未満、または視線が上・下方向に向いた回数の合計が総サンプル数の 20% を超える場合は「視線がキョロキョロ動きまくっていて少し挙動不審でした」というニュアンスを改善点に必ず含める。
 - 数値データが提供されていない項目については、推測せず「データ不足」と明記する。
-- 会話と仕草の両方を総合的に考慮して、最終的な総合スコア（1〜100）を決定する。
+- スコア配分は「会話: 40点満点」「仕草: 50点満点」「声: 10点満点」です。各カテゴリは満点を超えないようにしてください。
+- JSONには必ず各カテゴリのスコアを含め、総合スコアは出力しないでください（こちらで合算します）。
 
 【フィードバック形式】
 以下のJSON形式で応答してください：
@@ -643,13 +660,19 @@ ${gestureInfo}
   "conversation": {
     "goodPoints": ["会話面の良かった点"...],
     "improvementPoints": ["会話面の改善点"...],
-    "score": 会話面のスコア（1-100）
+    "score": 会話面のスコア（0-40）
   },
   "gestures": {
     "goodPoints": ["仕草面の良かった点"...],
-    "improvementPoints": ["仕草面の改善点"...]
+    "improvementPoints": ["仕草面の改善点"...],
+    "score": 仕草面のスコア（0-50）
   },
-  "overallScore": 会話と仕草を総合したスコア（1-100）
+  "voice": {
+    "goodPoints": ["声の良かった点"...],
+    "improvementPoints": ["声の改善点"...],
+    "score": 声のスコア（0-10）
+  },
+  "notes": ["追加の特記事項"...]
 }
 
 【注意】
@@ -679,7 +702,44 @@ ${gestureInfo}
 
 	const conversationFeedback = feedback.conversation ?? {};
 	const gestureFeedback = feedback.gestures ?? {};
-	const voiceMetrics = calculateVoiceMetrics(messages);
+	const voiceFeedback = feedback.voice ?? {};
+
+	const normalizeScore = (value: unknown, max: number): number | null => {
+		if (value === null || value === undefined) {
+			return null;
+		}
+		const parsed =
+			typeof value === "number"
+				? value
+				: typeof value === "string"
+					? Number.parseFloat(value.replace(/[^\d.-]/g, ""))
+					: Number.NaN;
+
+		if (Number.isNaN(parsed) || !Number.isFinite(parsed)) {
+			return null;
+		}
+
+		return clamp(Math.round(parsed), 0, max);
+	};
+
+	const conversationScore = normalizeScore(conversationFeedback.score, 40);
+	const gestureScore = normalizeScore(gestureFeedback.score, 50);
+	const voiceScore = normalizeScore(voiceFeedback.score, 10);
+
+	const hasAnyScore =
+		conversationScore !== null ||
+		gestureScore !== null ||
+		voiceScore !== null;
+
+	const overallScore = hasAnyScore
+		? clamp(
+				(conversationScore ?? 0) +
+					(gestureScore ?? 0) +
+					(voiceScore ?? 0),
+				0,
+				100,
+			)
+		: null;
 
 	const toText = (value: unknown): string => {
 		if (Array.isArray(value)) {
@@ -696,13 +756,10 @@ ${gestureInfo}
 		improvementPoints: toText(
 			conversationFeedback.improvementPoints ?? feedback.improvementPoints,
 		),
-		overallScore:
-			(typeof feedback.overallScore === "number"
-				? feedback.overallScore
-				: null) ??
-			(typeof conversationFeedback.score === "number"
-				? conversationFeedback.score
-				: null),
+		overallScore,
+		conversationScore,
+		gestureScore,
+		voiceScore,
 		gestureGoodPoints: toText(
 			gestureFeedback.goodPoints ?? feedback.gestureGoodPoints,
 		),
