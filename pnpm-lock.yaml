@@ -72,6 +72,9 @@ importers:
       stripe:
         specifier: ^19.1.0
         version: 19.1.0(@types/node@24.7.1)
+      ws:
+        specifier: ^8.18.3
+        version: 8.18.3
       zod:
         specifier: ^4.1.12
         version: 4.1.12
@@ -82,6 +85,9 @@ importers:
       '@types/node':
         specifier: ^24.7.1
         version: 24.7.1
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       prisma:
         specifier: ^6.17.0
         version: 6.17.0(typescript@5.9.3)
