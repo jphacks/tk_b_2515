@@ -21,7 +21,8 @@ export async function getVoiceById(
  */
 function containsUnsupportedLanguage(text: string): boolean {
 	// 日本語（ひらがな、カタカナ、漢字）、英語（ASCII）、数字、一般的な記号を除外
-	const allowedPattern = /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uFF00-\uFFEFa-zA-Z0-9\s.,!?、。！？\-_()（）「」『』【】\n\r]*$/;
+	const allowedPattern =
+		/^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uFF00-\uFFEFa-zA-Z0-9\s.,!?、。！？\-_()（）「」『』【】\n\r]*$/;
 
 	// パターンにマッチしない = 許可されていない文字が含まれている
 	return !allowedPattern.test(text);
@@ -59,7 +60,10 @@ export async function speechToText(
 		let transcribedText = "";
 		if ("text" in result) {
 			transcribedText = result.text || "";
-		} else if ("transcription" in result && typeof result.transcription === "string") {
+		} else if (
+			"transcription" in result &&
+			typeof result.transcription === "string"
+		) {
 			transcribedText = result.transcription;
 		} else {
 			console.warn("Unexpected STT result format:", result);
@@ -68,7 +72,10 @@ export async function speechToText(
 
 		// 日本語と英語以外の言語チェック
 		if (containsUnsupportedLanguage(transcribedText)) {
-			console.warn("Detected unsupported language in transcription:", transcribedText);
+			console.warn(
+				"Detected unsupported language in transcription:",
+				transcribedText,
+			);
 			// エラーではなく、ユーザーに日本語か英語で話すよう促すプレースホルダーテキストを返す
 			return "[UNSUPPORTED_LANGUAGE]";
 		}

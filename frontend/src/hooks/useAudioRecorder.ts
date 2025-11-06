@@ -29,7 +29,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 	const [isPaused, setIsPaused] = useState(false);
 	const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
 	const [audioURL, setAudioURL] = useState<string | null>(null);
-	const [analysisResult, setAnalysisResult] = useState<VoiceAnalysisResult | null>(null);
+	const [analysisResult, setAnalysisResult] =
+		useState<VoiceAnalysisResult | null>(null);
 	const [error, setError] = useState<Error | null>(null);
 
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);

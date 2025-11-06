@@ -63,7 +63,10 @@ function mergeToMono(buffer: AudioBuffer): Float32Array {
 	return tmp;
 }
 
-function computeRmsStats(frames: number[][]): { average: number; variance: number } {
+function computeRmsStats(frames: number[][]): {
+	average: number;
+	variance: number;
+} {
 	const rmsValues = frames.map((frame) => {
 		let sumSquares = 0;
 		for (let i = 0; i < frame.length; i += 1) {
@@ -73,8 +76,7 @@ function computeRmsStats(frames: number[][]): { average: number; variance: numbe
 	});
 
 	const average =
-		rmsValues.reduce((acc, value) => acc + value, 0) /
-		(rmsValues.length || 1);
+		rmsValues.reduce((acc, value) => acc + value, 0) / (rmsValues.length || 1);
 	const variance =
 		rmsValues.reduce((acc, value) => acc + (value - average) ** 2, 0) /
 		(rmsValues.length || 1);
@@ -82,7 +84,10 @@ function computeRmsStats(frames: number[][]): { average: number; variance: numbe
 	return { average, variance };
 }
 
-function autocorrelationPitch(frame: number[], sampleRate: number): number | null {
+function autocorrelationPitch(
+	frame: number[],
+	sampleRate: number,
+): number | null {
 	const frameLength = frame.length;
 	if (frameLength === 0) return null;
 
@@ -152,11 +157,7 @@ function computePitchSummary(
 
 function framesFromSignal(data: Float32Array): number[][] {
 	const frames: number[][] = [];
-	for (
-		let start = 0;
-		start + FRAME_SIZE <= data.length;
-		start += HOP_SIZE
-	) {
+	for (let start = 0; start + FRAME_SIZE <= data.length; start += HOP_SIZE) {
 		const frame = data.slice(start, start + FRAME_SIZE);
 		frames.push(Array.from(frame));
 	}
@@ -197,7 +198,8 @@ export async function analyzeVoiceFromBlob(
 	const mono = mergeToMono(buffer);
 	const frames = framesFromSignal(mono);
 
-	const { average: rmsAverage, variance: rmsVariance } = computeRmsStats(frames);
+	const { average: rmsAverage, variance: rmsVariance } =
+		computeRmsStats(frames);
 	const pitchSummary = computePitchSummary(frames, buffer.sampleRate);
 
 	const loudnessScore = clamp01((rmsAverage - 0.035) / 0.12);
@@ -206,8 +208,7 @@ export async function analyzeVoiceFromBlob(
 			Math.sqrt(pitchSummary.pitchVariance || 0) / 70,
 	);
 	const emotionScore = clamp01(
-		(pitchSummary.pitchRange / 160 || 0) * 0.45 +
-			Math.sqrt(rmsVariance) * 6,
+		(pitchSummary.pitchRange / 160 || 0) * 0.45 + Math.sqrt(rmsVariance) * 6,
 	);
 
 	return {

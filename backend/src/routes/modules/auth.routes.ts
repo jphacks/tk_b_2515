@@ -6,127 +6,127 @@ const auth = createApiRoute();
 
 // Sign up route
 const signUpRoute = createRoute({
-  method: "post",
-  path: "/signup",
-  tags: ["Auth"],
-  request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: z.object({
-            email: z.string().email(),
-            password: z.string().min(6),
-          }),
-        },
-      },
-    },
-  },
-  responses: {
-    201: { description: "User created" },
-    400: { description: "Bad request" },
-    500: { description: "Internal server error" },
-  },
+	method: "post",
+	path: "/signup",
+	tags: ["Auth"],
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						email: z.string().email(),
+						password: z.string().min(6),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		201: { description: "User created" },
+		400: { description: "Bad request" },
+		500: { description: "Internal server error" },
+	},
 });
 
 auth.openapi(signUpRoute, async (c) => {
-  const { email, password } = c.req.valid("json");
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+	const { email, password } = c.req.valid("json");
+	const { data, error } = await supabase.auth.signUp({
+		email,
+		password,
+	});
 
-  if (error) {
-    return c.json({ error: error.message }, 400);
-  }
-  if (!data.user) {
-    return c.json({ error: "Failed to create user" }, 500);
-  }
+	if (error) {
+		return c.json({ error: error.message }, 400);
+	}
+	if (!data.user) {
+		return c.json({ error: "Failed to create user" }, 500);
+	}
 
-  return c.json({ user: data.user, session: data.session }, 201);
+	return c.json({ user: data.user, session: data.session }, 201);
 });
 
 // Sign in route
 const signInRoute = createRoute({
-  method: "post",
-  path: "/signin",
-  tags: ["Auth"],
-  request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: z.object({
-            email: z.string().email(),
-            password: z.string(),
-          }),
-        },
-      },
-    },
-  },
-  responses: {
-    200: { description: "Signed in successfully" },
-    400: { description: "Invalid credentials" },
-  },
+	method: "post",
+	path: "/signin",
+	tags: ["Auth"],
+	request: {
+		body: {
+			content: {
+				"application/json": {
+					schema: z.object({
+						email: z.string().email(),
+						password: z.string(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: { description: "Signed in successfully" },
+		400: { description: "Invalid credentials" },
+	},
 });
 
 auth.openapi(signInRoute, async (c) => {
-  const { email, password } = c.req.valid("json");
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+	const { email, password } = c.req.valid("json");
+	const { data, error } = await supabase.auth.signInWithPassword({
+		email,
+		password,
+	});
 
-  if (error) {
-    return c.json({ error: error.message }, 400);
-  }
+	if (error) {
+		return c.json({ error: error.message }, 400);
+	}
 
-  return c.json({ user: data.user, session: data.session }, 200);
+	return c.json({ user: data.user, session: data.session }, 200);
 });
 
 // Sign out route
 auth.post("/signout", async (c) => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-  return c.json({ message: "Signed out successfully" });
+	const { error } = await supabase.auth.signOut();
+	if (error) {
+		return c.json({ error: error.message }, 500);
+	}
+	return c.json({ message: "Signed out successfully" });
 });
 
 // Internal route to expose Better Auth config to frontend server
 const authConfigRoute = createRoute({
-  method: "get",
-  path: "/config",
-  tags: ["Auth"],
-  responses: {
-    200: {
-      description: "Better Auth configuration",
-      content: {
-        "application/json": {
-          schema: z.object({
-            secret: z.string(),
-          }),
-        },
-      },
-    },
-    500: {
-      description: "Failed to load configuration",
-      content: {
-        "application/json": {
-          schema: z.object({
-            error: z.string(),
-          }),
-        },
-      },
-    },
-  },
+	method: "get",
+	path: "/config",
+	tags: ["Auth"],
+	responses: {
+		200: {
+			description: "Better Auth configuration",
+			content: {
+				"application/json": {
+					schema: z.object({
+						secret: z.string(),
+					}),
+				},
+			},
+		},
+		500: {
+			description: "Failed to load configuration",
+			content: {
+				"application/json": {
+					schema: z.object({
+						error: z.string(),
+					}),
+				},
+			},
+		},
+	},
 });
 
 auth.openapi(authConfigRoute, async (c) => {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) {
-    return c.json({ error: "BETTER_AUTH_SECRET is not configured" }, 500);
-  }
+	const secret = process.env.BETTER_AUTH_SECRET;
+	if (!secret) {
+		return c.json({ error: "BETTER_AUTH_SECRET is not configured" }, 500);
+	}
 
-  return c.json({ secret }, 200);
+	return c.json({ secret }, 200);
 });
 
 export default auth;

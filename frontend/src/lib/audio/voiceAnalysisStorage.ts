@@ -62,14 +62,12 @@ export function clearVoiceAnalysis(sessionId: string): void {
 	}
 }
 
-export function getVoiceAnalysisSummary(sessionId: string):
-	| {
-			sampleCount: number;
-			averageStrength: number;
-			averageTremble: number;
-			averageEmotion: number;
-	  }
-	| null {
+export function getVoiceAnalysisSummary(sessionId: string): {
+	sampleCount: number;
+	averageStrength: number;
+	averageTremble: number;
+	averageEmotion: number;
+} | null {
 	if (typeof window === "undefined") return null;
 	const storage = readStorage();
 	const results = storage[sessionId];

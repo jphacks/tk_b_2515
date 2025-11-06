@@ -26,10 +26,10 @@
 		"dotenv": "^17.2.3",
 		"hono": "^4.9.10",
 		"stripe": "^19.1.0",
-		"supabase": "link:@/lib/supabase",
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20241127.0",
 		"@types/node": "^24.7.1",
 		"prisma": "^6.17.0",
 		"tsx": "^4.20.6",
