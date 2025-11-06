@@ -77,7 +77,9 @@ export function useVRM(url: string | null) {
 			.catch((e) => {
 				console.error("Error loading VRM:", e);
 				const errorMessage =
-					e instanceof Error ? e.message : "VRMファイルの読み込みに失敗しました";
+					e instanceof Error
+						? e.message
+						: "VRMファイルの読み込みに失敗しました";
 				setError(new Error(`${errorMessage}\nURL: ${url}`));
 				setLoading(false);
 			});

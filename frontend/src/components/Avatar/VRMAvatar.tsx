@@ -1,16 +1,16 @@
 "use client";
 
+import type { VRMAnimation } from "@pixiv/three-vrm-animation";
+import {
+	createVRMAnimationClip,
+	VRMAnimationLoaderPlugin,
+} from "@pixiv/three-vrm-animation";
 import { useFrame } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { useVRM } from "@/hooks/useVRM";
 // import { Loader } from "lucide-react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import {
-	VRMAnimationLoaderPlugin,
-	createVRMAnimationClip,
-} from "@pixiv/three-vrm-animation";
-import type { VRMAnimation } from "@pixiv/three-vrm-animation";
+import { useVRM } from "@/hooks/useVRM";
 
 type VRMUserData = {
 	vrmAnimation?: unknown;
@@ -28,7 +28,9 @@ const isVRMAnimation = (value: unknown): value is VRMAnimation =>
 const extractVRMAnimation = (userData: VRMUserData): VRMAnimation | null => {
 	const vrmaCandidate =
 		userData.vrmAnimation ||
-		(Array.isArray(userData.vrmAnimations) ? userData.vrmAnimations[0] : null) ||
+		(Array.isArray(userData.vrmAnimations)
+			? userData.vrmAnimations[0]
+			: null) ||
 		userData.VRMAnimation ||
 		userData.VRMA ||
 		null;
@@ -36,12 +38,7 @@ const extractVRMAnimation = (userData: VRMUserData): VRMAnimation | null => {
 	return isVRMAnimation(vrmaCandidate) ? vrmaCandidate : null;
 };
 
-type GestureType =
-	| "idle"
-	| "thinking"
-	| "talking"
-	| "explaining"
-	| "nodding";
+type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
 
 interface VRMAvatarProps {
 	modelUrl: string;
@@ -84,79 +81,87 @@ export default function VRMAvatar({
 	);
 
 	// VRMA を読み込んで AnimationClip を生成（キャッシュ付き）
-		const loadVrmaClip = useCallback(async (
-			url: string,
-		): Promise<THREE.AnimationClip | null> => {
-		if (!vrm) return null;
-		const cached = clipCacheRef.current.get(url);
-		if (cached) return cached;
+	const loadVrmaClip = useCallback(
+		async (url: string): Promise<THREE.AnimationClip | null> => {
+			if (!vrm) return null;
+			const cached = clipCacheRef.current.get(url);
+			if (cached) return cached;
 
-		return new Promise((resolve) => {
-			const loader = new GLTFLoader();
-			loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
-			loader.load(
-				url,
-				(gltf) => {
-					try {
-						const userData: VRMUserData = (gltf.userData ?? {}) as VRMUserData;
-						const vrma = extractVRMAnimation(userData);
+			return new Promise((resolve) => {
+				const loader = new GLTFLoader();
+				loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+				loader.load(
+					url,
+					(gltf) => {
+						try {
+							const userData: VRMUserData = (gltf.userData ??
+								{}) as VRMUserData;
+							const vrma = extractVRMAnimation(userData);
 
-						if (!vrma) {
-							console.warn("VRMAnimation not found in gltf.userData for", url);
+							if (!vrma) {
+								console.warn(
+									"VRMAnimation not found in gltf.userData for",
+									url,
+								);
+								resolve(null);
+								return;
+							}
+
+							const clip = createVRMAnimationClip(vrma, vrm);
+							if (clip) {
+								clipCacheRef.current.set(url, clip);
+							}
+							resolve(clip ?? null);
+						} catch (e) {
+							console.warn("Failed to create VRMAnimationClip for", url, e);
 							resolve(null);
-							return;
 						}
-
-						const clip = createVRMAnimationClip(vrma, vrm);
-						if (clip) {
-							clipCacheRef.current.set(url, clip);
-						}
-						resolve(clip ?? null);
-					} catch (e) {
-						console.warn("Failed to create VRMAnimationClip for", url, e);
+					},
+					undefined,
+					(err) => {
+						console.warn("Failed to load VRMA:", url, err);
 						resolve(null);
-					}
-				},
-				undefined,
-				(err) => {
-					console.warn("Failed to load VRMA:", url, err);
-					resolve(null);
-				},
-			);
+					},
+				);
 			});
-		}, [vrm]);
+		},
+		[vrm],
+	);
 
 	// 指定クリップをクロスフェードで再生
-			const playClip = useCallback((
-				clip: THREE.AnimationClip,
-				{ fadeSec = 0.3 }: { fadeSec?: number } = {},
-			) => {
-		if (!mixerRef.current) return;
-		const mixer = mixerRef.current;
-		const nextAction = mixer.clipAction(clip);
-		nextAction.reset();
-		nextAction.enabled = true;
-				nextAction.clampWhenFinished = false;
-				nextAction.setLoop(THREE.LoopRepeat, Infinity);
+	const playClip = useCallback(
+		(
+			clip: THREE.AnimationClip,
+			{ fadeSec = 0.3 }: { fadeSec?: number } = {},
+		) => {
+			if (!mixerRef.current) return;
+			const mixer = mixerRef.current;
+			const nextAction = mixer.clipAction(clip);
+			nextAction.reset();
+			nextAction.enabled = true;
+			nextAction.clampWhenFinished = false;
+			nextAction.setLoop(THREE.LoopRepeat, Infinity);
 
-		const prev = currentActionRef.current;
-		if (prev && prev !== nextAction) {
-			prev.crossFadeTo(nextAction, fadeSec, false);
-			nextAction.play();
-			currentActionRef.current = nextAction;
-		} else if (!prev) {
-			nextAction.play();
-			currentActionRef.current = nextAction;
+			const prev = currentActionRef.current;
+			if (prev && prev !== nextAction) {
+				prev.crossFadeTo(nextAction, fadeSec, false);
+				nextAction.play();
+				currentActionRef.current = nextAction;
+			} else if (!prev) {
+				nextAction.play();
+				currentActionRef.current = nextAction;
 			}
-		}, []);
+		},
+		[],
+	);
 
-		// Update VRM every frame
+	// Update VRM every frame
 	useFrame((_state, delta) => {
 		if (vrm) {
 			vrm.update(delta);
-				if (mixerRef.current) {
-					mixerRef.current.update(delta);
-				}
+			if (mixerRef.current) {
+				mixerRef.current.update(delta);
+			}
 
 			// 微妙な呼吸のような動き（基本スケールに対して）
 			gestureTimeRef.current += delta;
@@ -234,9 +239,9 @@ export default function VRMAvatar({
 			return;
 		}
 
-			// AnimationMixer を初期化
-			mixerRef.current = new THREE.AnimationMixer(vrm.scene);
-			currentActionRef.current = null;
+		// AnimationMixer を初期化
+		mixerRef.current = new THREE.AnimationMixer(vrm.scene);
+		currentActionRef.current = null;
 
 		setIsReady(false);
 		initialBonesRef.current = new Map();
@@ -325,10 +330,7 @@ export default function VRMAvatar({
 			// 感情優先のURL候補を作る
 			const preferredUrls: string[] = (() => {
 				if (emotion === "bashful") {
-					return [
-						"/animations/bashful.vrma",
-						gestureToVrmaPath.idle,
-					];
+					return ["/animations/bashful.vrma", gestureToVrmaPath.idle];
 				}
 				if (emotion === "angry") {
 					return [
@@ -345,7 +347,10 @@ export default function VRMAvatar({
 					];
 				}
 				// 通常はジェスチャーに従う
-				return [gestureToVrmaPath[gesture] ?? gestureToVrmaPath.idle, gestureToVrmaPath.idle];
+				return [
+					gestureToVrmaPath[gesture] ?? gestureToVrmaPath.idle,
+					gestureToVrmaPath.idle,
+				];
 			})();
 
 			// 候補を順番に試す
@@ -354,7 +359,10 @@ export default function VRMAvatar({
 			for (const u of preferredUrls) {
 				if (cancelled) return;
 				// 同じURL・同じ感情なら更新不要
-				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emotion) {
+				if (
+					lastPlayedUrlRef.current === u &&
+					lastEmotionRef.current === emotion
+				) {
 					return;
 				}
 				// 読み込み
@@ -395,7 +403,15 @@ export default function VRMAvatar({
 		return () => {
 			cancelled = true;
 		};
-		}, [gesture, emotion, isReady, vrm, gestureToVrmaPath, loadVrmaClip, playClip]);
+	}, [
+		gesture,
+		emotion,
+		isReady,
+		vrm,
+		gestureToVrmaPath,
+		loadVrmaClip,
+		playClip,
+	]);
 
 	if (error) {
 		console.error("VRM load error:", error);

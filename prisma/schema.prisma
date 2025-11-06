@@ -77,40 +77,21 @@ model HumanPartnerSession {
   startedAt DateTime? @map("started_at") // セッション開始時刻
   endedAt   DateTime? @map("ended_at") // セッション終了時刻
   duration  Int? // セッション時間（秒）
+  rating    Int? // セッション後の評価（1-5）
+  notes     String?   @db.Text // セッションメモ
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
 
   // リレーション
-  user     Partner               @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
-  partner  Partner               @relation("PartnerSessions", fields: [partnerId], references: [id], onDelete: Cascade)
-  feedback HumanPartnerFeedback?
+  user         User                  @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  partner      User                  @relation("PartnerSessions", fields: [partnerId], references: [id], onDelete: Cascade)
+  feedback     HumanPartnerFeedback?
+  practiceSlot PracticeSlot?
 
   @@index([userId])
   @@index([partnerId])
   @@index([status])
   @@map("human_partner_sessions")
-}
-
-// パートナー（練習者と女の子の両方）の情報
-model Partner {
-  id            String   @id @default(uuid())
-  name          String // 表示名
-  bio           String? // 自己紹介
-  avatarUrl     String?  @map("avatar_url") // プロフィール画像
-  role          String   @default("user") // user（練習者）, partner（女の子）
-  isAvailable   Boolean  @default(false) @map("is_available") // パートナーとして対応可能か
-  rating        Float? // 評価（1-5）
-  totalSessions Int      @default(0) @map("total_sessions") // 総セッション数
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-
-  // リレーション
-  userSessions    HumanPartnerSession[] @relation("UserSessions")
-  partnerSessions HumanPartnerSession[] @relation("PartnerSessions")
-
-  @@index([role])
-  @@index([isAvailable])
-  @@map("partners")
 }
 
 // 人間パートナーセッションのフィードバック
@@ -137,20 +118,39 @@ model HumanPartnerFeedback {
 }
 
 model User {
-  id            String     @id @default(cuid())
+  id            String  @id @default(cuid())
   name          String
-  email         String     @unique
-  emailVerified Boolean    @default(false)
+  email         String  @unique
+  emailVerified Boolean @default(false)
   image         String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @default(now()) @updatedAt
+  role          String  @default("user") // user（一般ユーザー）, admin（管理者）, partner（パートナー）
 
-  accounts Account[]
-  sessions Session[]
+  // パートナー用の追加情報
+  bio           String? @db.Text // 自己紹介
+  isAvailable   Boolean @default(false) @map("is_available") // パートナーとして対応可能か
+  rating        Float? // 評価（1-5）
+  totalSessions Int     @default(0) @map("total_sessions") // 総セッション数
+  hourlyRate    Int?    @map("hourly_rate") // 時給（円）
+  availableDays String? @map("available_days") @db.Text // 対応可能な曜日（JSON形式）
+  languages     String? @db.Text // 対応可能な言語（カンマ区切り）
+  specialties   String? @db.Text // 専門分野（カンマ区切り）
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  userSessions    HumanPartnerSession[] @relation("UserSessions")
+  partnerSessions HumanPartnerSession[] @relation("PartnerSessions")
+  partnerSlots    PracticeSlot[]        @relation("PartnerSlots")
+  bookedSlots     PracticeSlot[]        @relation("BookedSlots")
+
+  @@index([role])
+  @@index([isAvailable])
 }
 
 model Account {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
@@ -161,8 +161,8 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @default(now()) @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -171,14 +171,14 @@ model Account {
 }
 
 model Session {
-  id         String   @id @default(cuid())
-  token      String   @unique
-  userId     String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-  ipAddress  String?
-  userAgent  String?
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  ipAddress String?
+  userAgent String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -194,4 +194,30 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@index([identifier])
+}
+
+// パートナーが開放する練習枠
+model PracticeSlot {
+  id              String    @id @default(uuid())
+  partnerId       String    @map("partner_id") // パートナーのID
+  startTime       DateTime  @map("start_time") // 開始時刻
+  endTime         DateTime  @map("end_time") // 終了時刻
+  status          String    @default("available") // available, booked, completed, cancelled
+  bookedByUserId  String?   @map("booked_by_user_id") // 予約したユーザーのID
+  bookedAt        DateTime? @map("booked_at") // 予約日時
+  price           Int       @default(1000) // 価格（円）
+  sessionId       String?   @unique @map("session_id") // セッションIDへの参照
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // リレーション
+  partner     User                 @relation("PartnerSlots", fields: [partnerId], references: [id], onDelete: Cascade)
+  bookedByUser User?               @relation("BookedSlots", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  session     HumanPartnerSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([partnerId])
+  @@index([bookedByUserId])
+  @@index([status])
+  @@index([startTime])
+  @@map("practice_slots")
 }

@@ -6,12 +6,7 @@ import { Suspense } from "react";
 import * as THREE from "three";
 import VRMAvatar from "./VRMAvatar";
 
-type GestureType =
-	| "idle"
-	| "thinking"
-	| "talking"
-	| "explaining"
-	| "nodding";
+type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
 
 interface ConversationAvatarProps {
 	modelUrl: string;
@@ -48,7 +43,7 @@ export default function ConversationAvatar({
 	return (
 		<div className={`relative ${className}`}>
 			<Canvas
-				camera={{ position: [0, 1.6, 1.82], fov: 30 }}	// z軸正の方向はアバターから離れる向き
+				camera={{ position: [0, 1.6, 1.82], fov: 30 }} // z軸正の方向はアバターから離れる向き
 				gl={{ alpha: true, antialias: true }}
 				style={{ width: "100%", height: "100%" }}
 			>

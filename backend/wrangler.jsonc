@@ -9,6 +9,15 @@
 	// ELEVENLABS_API_KEY, GEMINI_API_KEY, DATABASE_URLなど
 	"vars": {
 		"NODE_ENV": "production"
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "SIGNALING_ROOM",
+				"class_name": "SignalingRoom",
+				"script_name": "renai-backend"
+			}
+		]
 	}
 	// "kv_namespaces": [
 	//   {

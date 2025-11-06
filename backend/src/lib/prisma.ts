@@ -1,18 +1,16 @@
-import { PrismaClient } from "@prisma/client/edge";
-import { withAccelerate } from "@prisma/extension-accelerate";
+import { PrismaClient } from "@prisma/client";
 
 // PrismaClientのシングルトンインスタンスを作成
 // 開発環境でのホットリロード時に複数のインスタンスが作成されるのを防ぐ
 const globalForPrisma = global as unknown as {
-	prisma: ReturnType<typeof createPrismaClient>;
+	prisma: PrismaClient;
 };
 
 function createPrismaClient() {
-	// Edge runtime用のPrisma Clientを使用
-	const client = new PrismaClient({
+	// 標準のPrisma Clientを使用（ローカル開発用）
+	return new PrismaClient({
 		log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
 	});
-	return client.$extends(withAccelerate());
 }
 
 export const prisma = globalForPrisma.prisma || createPrismaClient();

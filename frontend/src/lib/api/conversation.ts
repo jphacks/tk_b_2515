@@ -29,7 +29,9 @@ export const sessionApi = {
 	 * すべての会話セッションを取得（オプション: userIdでフィルタ）
 	 */
 	async getSessions(userId?: string): Promise<ConversationSession[]> {
-		const url = userId ? `/sessions?userId=${encodeURIComponent(userId)}` : "/sessions";
+		const url = userId
+			? `/sessions?userId=${encodeURIComponent(userId)}`
+			: "/sessions";
 		const response = await apiClient.get<GetSessionsResponse>(url);
 		return response.sessions;
 	},
