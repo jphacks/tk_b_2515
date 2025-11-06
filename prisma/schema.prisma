@@ -41,6 +41,9 @@ model Feedback {
   goodPoints               String       @map("good_points")
   improvementPoints        String       @map("improvement_points")
   overallScore             Int?         @map("overall_score")
+  conversationScore        Int?         @map("conversation_score")
+  gestureScore             Int?         @map("gesture_score")
+  voiceScore               Int?         @map("voice_score")
   gestureGoodPoints        String?      @map("gesture_good_points")
   gestureImprovementPoints String?      @map("gesture_improvement_points")
   voiceMetrics             Json?        @map("voice_metrics")
@@ -198,22 +201,22 @@ model Verification {
 
 // パートナーが開放する練習枠
 model PracticeSlot {
-  id              String    @id @default(uuid())
-  partnerId       String    @map("partner_id") // パートナーのID
-  startTime       DateTime  @map("start_time") // 開始時刻
-  endTime         DateTime  @map("end_time") // 終了時刻
-  status          String    @default("available") // available, booked, completed, cancelled
-  bookedByUserId  String?   @map("booked_by_user_id") // 予約したユーザーのID
-  bookedAt        DateTime? @map("booked_at") // 予約日時
-  price           Int       @default(1000) // 価格（円）
-  sessionId       String?   @unique @map("session_id") // セッションIDへの参照
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  partnerId      String    @map("partner_id") // パートナーのID
+  startTime      DateTime  @map("start_time") // 開始時刻
+  endTime        DateTime  @map("end_time") // 終了時刻
+  status         String    @default("available") // available, booked, completed, cancelled
+  bookedByUserId String?   @map("booked_by_user_id") // 予約したユーザーのID
+  bookedAt       DateTime? @map("booked_at") // 予約日時
+  price          Int       @default(1000) // 価格（円）
+  sessionId      String?   @unique @map("session_id") // セッションIDへの参照
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
 
   // リレーション
-  partner     User                 @relation("PartnerSlots", fields: [partnerId], references: [id], onDelete: Cascade)
-  bookedByUser User?               @relation("BookedSlots", fields: [bookedByUserId], references: [id], onDelete: SetNull)
-  session     HumanPartnerSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  partner      User                 @relation("PartnerSlots", fields: [partnerId], references: [id], onDelete: Cascade)
+  bookedByUser User?                @relation("BookedSlots", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  session      HumanPartnerSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@index([partnerId])
   @@index([bookedByUserId])

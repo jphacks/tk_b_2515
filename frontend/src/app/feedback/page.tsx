@@ -872,52 +872,66 @@ function FeedbackContent() {
 							</div>
 						</div>
 
-						{/* Title */}
-						<div className="text-center space-y-1 sm:space-y-2">
-							<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-								会話フィードバック
-							</h1>
-							<p className="text-muted-foreground text-sm sm:text-base">
-								AIがあなたの会話を分析しました
-							</p>
-						</div>
-
-						{/* Overall Score */}
-						<Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-							<div className="space-y-3 sm:space-y-4">
-								<div className="space-y-1 sm:space-y-2">
-									<p className="text-xs sm:text-sm text-muted-foreground font-medium">
-										総合スコア
-									</p>
-									<div className="text-5xl sm:text-6xl font-bold text-primary">
-										{feedback.overallScore}
-									</div>
-									<p className="text-xs sm:text-sm text-muted-foreground">
-										/ 100点
-									</p>
-								</div>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										if (feedback.overallScore !== null) {
-											playVoiceComment(feedback.overallScore);
-										}
-									}}
-									disabled={isPlayingVoice || feedback.overallScore === null}
-									className="rounded-full mx-auto"
-								>
-									<Volume2
-										className={`w-4 h-4 mr-2 ${
-											isPlayingVoice ? "animate-pulse" : ""
-										}`}
-									/>
-									{isPlayingVoice
-										? "再生中..."
-										: `${speakerName}のコメントを聞く`}
-								</Button>
+							{/* Title */}
+							<div className="text-center space-y-1 sm:space-y-2">
+								<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+									会話フィードバック
+								</h1>
+								<p className="text-muted-foreground text-sm sm:text-base">
+									AIがあなたの会話を分析しました
+								</p>
 							</div>
-						</Card>
+
+							{/* Overall Score */}
+							<Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+								<div className="space-y-3 sm:space-y-4">
+									<div className="space-y-1 sm:space-y-2">
+										<p className="text-xs sm:text-sm text-muted-foreground font-medium">
+											総合スコア
+										</p>
+										<div className="text-5xl sm:text-6xl font-bold text-primary">
+											{feedback.overallScore}
+										</div>
+										<p className="text-xs sm:text-sm text-muted-foreground">
+											/ 100点
+										</p>
+									</div>
+									<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+										<div className="rounded-lg border border-primary/10 px-3 py-2">
+											<p className="font-medium text-foreground">会話</p>
+											<p>{feedback.conversationScore ?? "—"} / 40点</p>
+										</div>
+										<div className="rounded-lg border border-primary/10 px-3 py-2">
+											<p className="font-medium text-foreground">仕草</p>
+											<p>{feedback.gestureScore ?? "—"} / 50点</p>
+										</div>
+										<div className="rounded-lg border border-primary/10 px-3 py-2">
+											<p className="font-medium text-foreground">声</p>
+											<p>{feedback.voiceScore ?? "—"} / 10点</p>
+										</div>
+									</div>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											if (feedback.overallScore !== null) {
+												playVoiceComment(feedback.overallScore);
+											}
+										}}
+										disabled={isPlayingVoice || feedback.overallScore === null}
+										className="rounded-full mx-auto"
+									>
+										<Volume2
+											className={`w-4 h-4 mr-2 ${
+												isPlayingVoice ? "animate-pulse" : ""
+											}`}
+										/>
+										{isPlayingVoice
+											? "再生中..."
+											: `${speakerName}のコメントを聞く`}
+									</Button>
+								</div>
+							</Card>
 
 						{/* Category Toggle */}
 						<div className="flex justify-center gap-2 sm:gap-4">
@@ -1305,17 +1319,33 @@ function FeedbackContent() {
 				) : selectedFeedback ? (
 					<div className="space-y-6">
 						{/* スコア表示 */}
-						<Card className="p-6 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-							<div className="space-y-2">
-								<p className="text-sm text-muted-foreground font-medium">
-									総合スコア
-								</p>
-								<div className="text-5xl font-bold text-primary">
-									{selectedFeedback.overallScore}
+							<Card className="p-6 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+								<div className="space-y-2">
+									<p className="text-sm text-muted-foreground font-medium">
+										総合スコア
+									</p>
+									<div className="text-5xl font-bold text-primary">
+										{selectedFeedback.overallScore}
+									</div>
+									<p className="text-sm text-muted-foreground">/ 100点</p>
+									<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-sm text-muted-foreground">
+										<div className="rounded-lg border border-primary/10 px-3 py-2">
+											<p className="font-medium text-foreground">会話</p>
+											<p>
+												{selectedFeedback.conversationScore ?? "—"} / 40点
+											</p>
+										</div>
+										<div className="rounded-lg border border-primary/10 px-3 py-2">
+											<p className="font-medium text-foreground">仕草</p>
+											<p>{selectedFeedback.gestureScore ?? "—"} / 50点</p>
+										</div>
+										<div className="rounded-lg border border-primary/10 px-3 py-2">
+											<p className="font-medium text-foreground">声</p>
+											<p>{selectedFeedback.voiceScore ?? "—"} / 10点</p>
+										</div>
+									</div>
 								</div>
-								<p className="text-sm text-muted-foreground">/ 100点</p>
-							</div>
-						</Card>
+							</Card>
 
 						{/* カテゴリ切り替え */}
 						<div className="flex justify-center gap-4">
