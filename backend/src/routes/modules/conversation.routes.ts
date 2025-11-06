@@ -358,7 +358,7 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
           voiceScore: feedbackData.voiceScore,
           gestureGoodPoints: gestureGoodPointsStr,
           gestureImprovementPoints: gestureImprovementPointsStr,
-          voiceMetrics: feedbackData.voiceMetrics as Prisma.JsonObject,
+          voiceMetrics: feedbackData.voiceMetrics as unknown as Prisma.InputJsonValue,
         },
       });
       console.log("[Feedback] Existing record updated with new scores", {
@@ -376,7 +376,7 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
           voiceScore: feedbackData.voiceScore,
           gestureGoodPoints: gestureGoodPointsStr,
           gestureImprovementPoints: gestureImprovementPointsStr,
-          voiceMetrics: feedbackData.voiceMetrics as Prisma.JsonObject,
+          voiceMetrics: feedbackData.voiceMetrics as unknown as Prisma.InputJsonValue,
           conversationId: sessionId,
         },
       });
