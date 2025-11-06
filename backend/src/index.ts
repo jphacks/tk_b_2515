@@ -5,14 +5,10 @@ import { envMiddleware } from "./middleware/env";
 import { errorHandler } from "./middleware/error";
 import { logger } from "./middleware/logger";
 import api from "./routes/api";
-import { SignalingRoom } from "./services/signaling";
-
-export { SignalingRoom };
 
 interface Bindings {
 	ELEVENLABS_API_KEY: string;
 	GEMINI_API_KEY: string;
-	SIGNALING_ROOM: DurableObjectNamespace<SignalingRoom>;
 }
 
 const app = new OpenAPIHono<{ Bindings: Bindings }>();
@@ -56,15 +52,6 @@ app.get("/", (c) => {
 
 // APIルート
 app.route("/api", api);
-
-// WebSocket シグナリングルート
-app.get("/ws/signal/:sessionId", async (c) => {
-	const sessionId = c.req.param("sessionId");
-	const id = c.env.SIGNALING_ROOM.idFromName(sessionId);
-	const stub = c.env.SIGNALING_ROOM.get(id);
-
-	return stub.fetch(c.req.raw);
-});
 
 // OpenAPI ドキュメントとSwagger UIは開発時のみ有効化（起動速度向上のため）
 if (process.env.NODE_ENV !== "production") {

@@ -1,5 +1,11 @@
 "use client";
 
+import AgoraRTC, {
+	type IAgoraRTCClient,
+	type IAgoraRTCRemoteUser,
+	type ICameraVideoTrack,
+	type IMicrophoneAudioTrack,
+} from "agora-rtc-sdk-ng";
 import { Heart, Mic, MicOff, PhoneOff, Video, VideoOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -7,22 +13,27 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSession } from "@/lib/auth-client";
 
-const SIGNALING_SERVER_URL =
-	process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787";
+// Agora App ID
+const AGORA_APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || "";
 
-export default function SessionRoomPage() {
+export default function SessionRoomPageAgora() {
 	const params = useParams();
 	const router = useRouter();
 	const { data: session } = useSession();
 	const sessionId = params.sessionId as string;
 
-	const localVideoRef = useRef<HTMLVideoElement>(null);
-	const remoteVideoRef = useRef<HTMLVideoElement>(null);
-	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-	const [_remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+	const localVideoRef = useRef<HTMLDivElement>(null);
+	const remoteVideoRef = useRef<HTMLDivElement>(null);
 
-	const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-	const wsRef = useRef<WebSocket | null>(null);
+	const [client, setClient] = useState<IAgoraRTCClient | null>(null);
+	const [localVideoTrack, setLocalVideoTrack] =
+		useState<ICameraVideoTrack | null>(null);
+	const [localAudioTrack, setLocalAudioTrack] =
+		useState<IMicrophoneAudioTrack | null>(null);
+
+	// トラックのrefを保持（クリーンアップ用）
+	const localVideoTrackRef = useRef<ICameraVideoTrack | null>(null);
+	const localAudioTrackRef = useRef<IMicrophoneAudioTrack | null>(null);
 
 	const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 	const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -32,9 +43,8 @@ export default function SessionRoomPage() {
 	const [callDuration, setCallDuration] = useState(0);
 	const [userRole, setUserRole] = useState<"user" | "partner" | null>(null);
 
-	// セッション情報からroleを取得
+	// URLパラメータからroleを取得
 	useEffect(() => {
-		// URLパラメータからroleを取得
 		if (typeof window !== "undefined") {
 			const params = new URLSearchParams(window.location.search);
 			const role = params.get("role") as "user" | "partner" | null;
@@ -45,194 +55,104 @@ export default function SessionRoomPage() {
 	}, []);
 
 	// ダミーのuserIdを使用
-	const userId = session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
+	const userId =
+		session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
 	const role = userRole || "user";
 
-	// カメラとマイクの初期化
+	// Agoraクライアントの初期化
 	useEffect(() => {
-		let isMounted = true;
-		let activeStream: MediaStream | null = null;
+		if (!AGORA_APP_ID) {
+			console.error("Agora App ID is not set");
+			alert("Agora App IDが設定されていません");
+			return;
+		}
 
-		const initMedia = async () => {
-			try {
-				const stream = await navigator.mediaDevices.getUserMedia({
-					video: true,
-					audio: true,
-				});
+		const agoraClient = AgoraRTC.createClient({
+			mode: "rtc",
+			codec: "vp8",
+		});
 
-				if (!isMounted) {
-					for (const track of stream.getTracks()) {
-						track.stop();
-					}
-					return;
-				}
-
-				activeStream = stream;
-				setLocalStream(stream);
-				if (localVideoRef.current) {
-					localVideoRef.current.srcObject = stream;
-				}
-			} catch (error) {
-				console.error("Error accessing media devices:", error);
-				alert("カメラまたはマイクへのアクセスに失敗しました");
-			}
-		};
-
-		initMedia();
+		setClient(agoraClient);
 
 		return () => {
-			isMounted = false;
-			if (activeStream) {
-				for (const track of activeStream.getTracks()) {
-					track.stop();
-				}
-			}
+			agoraClient.leave();
 		};
 	}, []);
 
-	// WebRTC接続の初期化
+	// チャンネルに参加してトラックを公開
 	useEffect(() => {
-		if (!localStream) return;
+		if (!client) return;
 
-		const initWebRTC = async () => {
-			// RTCPeerConnection作成
-			const peerConnection = new RTCPeerConnection({
-				iceServers: [
-					{ urls: "stun:stun.l.google.com:19302" },
-					{ urls: "stun:stun1.l.google.com:19302" },
-				],
-			});
+		const init = async () => {
+			try {
+				// ローカルトラックを作成
+				const [audioTrack, videoTrack] =
+					await AgoraRTC.createMicrophoneAndCameraTracks();
 
-			peerConnectionRef.current = peerConnection;
+				setLocalAudioTrack(audioTrack);
+				setLocalVideoTrack(videoTrack);
+				localAudioTrackRef.current = audioTrack;
+				localVideoTrackRef.current = videoTrack;
 
-			// ローカルストリームを追加
-			localStream.getTracks().forEach((track) => {
-				peerConnection.addTrack(track, localStream);
-			});
-
-			// リモートストリームの受信
-			peerConnection.ontrack = (event) => {
-				const [stream] = event.streams;
-				setRemoteStream(stream);
-				if (remoteVideoRef.current) {
-					remoteVideoRef.current.srcObject = stream;
+				// ローカルビデオを表示
+				if (localVideoRef.current) {
+					videoTrack.play(localVideoRef.current);
 				}
+
+				// チャンネルに参加
+				const uid = await client.join(
+					AGORA_APP_ID,
+					sessionId,
+					null,
+					userId,
+				);
+
+				console.log(`[Agora] Joined channel ${sessionId} with UID ${uid}`);
+
+				// トラックを公開
+				await client.publish([videoTrack, audioTrack]);
+				console.log("[Agora] Published local tracks");
+
 				setConnectionStatus("connected");
-			};
-
-			// ICE候補の処理
-			peerConnection.onicecandidate = (event) => {
-				if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-					wsRef.current.send(
-						JSON.stringify({
-							type: "ice-candidate",
-							candidate: event.candidate,
-						}),
-					);
-				}
-			};
-
-			// 接続状態の監視
-			peerConnection.onconnectionstatechange = () => {
-				console.log("Connection state:", peerConnection.connectionState);
-				if (peerConnection.connectionState === "connected") {
-					setConnectionStatus("connected");
-				} else if (
-					peerConnection.connectionState === "disconnected" ||
-					peerConnection.connectionState === "failed"
-				) {
-					setConnectionStatus("disconnected");
-				}
-			};
-
-			// WebSocketシグナリングサーバーに接続
-			const wsUrl = `${SIGNALING_SERVER_URL.replace("http", "ws")}/ws/signal/${sessionId}?userId=${userId}&role=${role}`;
-			const ws = new WebSocket(wsUrl);
-			wsRef.current = ws;
-
-			ws.onopen = () => {
-				console.log("WebSocket connected");
-			};
-
-			ws.onmessage = async (event) => {
-				const message = JSON.parse(event.data);
-
-				switch (message.type) {
-					case "user-joined":
-						// 相手が参加したらofferを送信（partnerの場合のみ）
-						if (role === "partner") {
-							const offer = await peerConnection.createOffer();
-							await peerConnection.setLocalDescription(offer);
-							ws.send(
-								JSON.stringify({
-									type: "offer",
-									offer,
-								}),
-							);
-						}
-						break;
-
-					case "offer": {
-						// offerを受信したらanswerを返す
-						await peerConnection.setRemoteDescription(
-							new RTCSessionDescription(message.offer),
-						);
-						const answer = await peerConnection.createAnswer();
-						await peerConnection.setLocalDescription(answer);
-						ws.send(
-							JSON.stringify({
-								type: "answer",
-								answer,
-							}),
-						);
-						break;
-					}
-
-					case "answer":
-						// answerを受信
-						await peerConnection.setRemoteDescription(
-							new RTCSessionDescription(message.answer),
-						);
-						break;
-
-					case "ice-candidate":
-						// ICE候補を追加
-						if (message.candidate) {
-							await peerConnection.addIceCandidate(
-								new RTCIceCandidate(message.candidate),
-							);
-						}
-						break;
-
-					case "user-left":
-						// 相手が退出
-						setConnectionStatus("disconnected");
-						break;
-				}
-			};
-
-			ws.onerror = (error) => {
-				console.error("WebSocket error:", error);
-			};
-
-			ws.onclose = () => {
-				console.log("WebSocket closed");
+			} catch (error) {
+				console.error("[Agora] Failed to initialize:", error);
+				alert("通話の開始に失敗しました");
 				setConnectionStatus("disconnected");
-			};
+			}
 		};
 
-		initWebRTC();
+		init();
+
+		// リモートユーザーの購読
+		client.on("user-published", async (user: IAgoraRTCRemoteUser, mediaType: "audio" | "video") => {
+			console.log(`[Agora] User ${user.uid} published ${mediaType}`);
+
+			await client.subscribe(user, mediaType);
+			console.log(`[Agora] Subscribed to ${mediaType} from ${user.uid}`);
+
+			if (mediaType === "video" && remoteVideoRef.current) {
+				user.videoTrack?.play(remoteVideoRef.current);
+			}
+
+			if (mediaType === "audio") {
+				user.audioTrack?.play();
+			}
+		});
+
+		client.on("user-unpublished", (user: IAgoraRTCRemoteUser, mediaType: "audio" | "video") => {
+			console.log(`[Agora] User ${user.uid} unpublished ${mediaType}`);
+		});
+
+		client.on("user-left", (user: IAgoraRTCRemoteUser) => {
+			console.log(`[Agora] User ${user.uid} left`);
+		});
 
 		return () => {
-			// クリーンアップ
-			if (wsRef.current) {
-				wsRef.current.close();
-			}
-			if (peerConnectionRef.current) {
-				peerConnectionRef.current.close();
-			}
+			localVideoTrackRef.current?.close();
+			localAudioTrackRef.current?.close();
+			client.leave();
 		};
-	}, [localStream, sessionId, userId, role]);
+	}, [client, sessionId, userId]);
 
 	// 通話時間のカウント
 	useEffect(() => {
@@ -246,44 +166,38 @@ export default function SessionRoomPage() {
 
 	// ビデオのオン/オフ
 	const toggleVideo = useCallback(() => {
-		if (localStream) {
-			const videoTrack = localStream.getVideoTracks()[0];
-			if (videoTrack) {
-				videoTrack.enabled = !videoTrack.enabled;
-				setIsVideoEnabled(videoTrack.enabled);
-			}
+		if (localVideoTrack) {
+			const enabled = !isVideoEnabled;
+			localVideoTrack.setEnabled(enabled);
+			setIsVideoEnabled(enabled);
 		}
-	}, [localStream]);
+	}, [localVideoTrack, isVideoEnabled]);
 
 	// オーディオのオン/オフ
 	const toggleAudio = useCallback(() => {
-		if (localStream) {
-			const audioTrack = localStream.getAudioTracks()[0];
-			if (audioTrack) {
-				audioTrack.enabled = !audioTrack.enabled;
-				setIsAudioEnabled(audioTrack.enabled);
-			}
+		if (localAudioTrack) {
+			const enabled = !isAudioEnabled;
+			localAudioTrack.setEnabled(enabled);
+			setIsAudioEnabled(enabled);
 		}
-	}, [localStream]);
+	}, [localAudioTrack, isAudioEnabled]);
 
 	// 通話終了
 	const endCall = useCallback(async () => {
-		if (localStream) {
-			for (const track of localStream.getTracks()) {
-				track.stop();
-			}
+		if (localVideoTrack) {
+			localVideoTrack.close();
 		}
-		if (wsRef.current) {
-			wsRef.current.close();
+		if (localAudioTrack) {
+			localAudioTrack.close();
 		}
-		if (peerConnectionRef.current) {
-			peerConnectionRef.current.close();
+		if (client) {
+			await client.leave();
 		}
 		setConnectionStatus("disconnected");
 
 		// フィードバックページへ遷移
 		router.push(`/partner-feedback/${sessionId}`);
-	}, [localStream, sessionId, router]);
+	}, [localVideoTrack, localAudioTrack, client, sessionId, router]);
 
 	// 通話時間のフォーマット
 	const formatDuration = (seconds: number) => {
@@ -300,7 +214,9 @@ export default function SessionRoomPage() {
 					<div className="flex items-center gap-3">
 						<Heart className="w-6 h-6 text-primary fill-primary" />
 						<div>
-							<h1 className="font-semibold text-foreground">練習セッション</h1>
+							<h1 className="font-semibold text-foreground">
+								練習セッション (Agora)
+							</h1>
 							<p className="text-sm text-muted-foreground">
 								{connectionStatus === "connecting" && "接続中..."}
 								{connectionStatus === "connected" &&
@@ -333,11 +249,10 @@ export default function SessionRoomPage() {
 				<div className="max-w-7xl w-full mx-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
 					{/* Remote Video (Partner/User) */}
 					<Card className="relative overflow-hidden border-2 bg-black">
-						<video
+						<div
 							ref={remoteVideoRef}
-							autoPlay
-							playsInline
-							className="w-full h-full object-cover"
+							className="w-full h-full"
+							style={{ minHeight: "400px" }}
 						/>
 						{connectionStatus === "connecting" && (
 							<div className="absolute inset-0 flex items-center justify-center bg-black/80">
@@ -356,12 +271,10 @@ export default function SessionRoomPage() {
 
 					{/* Local Video (You) */}
 					<Card className="relative overflow-hidden border-2 bg-black">
-						<video
+						<div
 							ref={localVideoRef}
-							autoPlay
-							playsInline
-							muted
-							className="w-full h-full object-cover scale-x-[-1]"
+							className="w-full h-full"
+							style={{ minHeight: "400px", transform: "scaleX(-1)" }}
 						/>
 						{!isVideoEnabled && (
 							<div className="absolute inset-0 flex items-center justify-center bg-black">
