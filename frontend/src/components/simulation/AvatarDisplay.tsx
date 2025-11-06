@@ -25,6 +25,7 @@ interface AvatarDisplayProps {
 	emotion: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful";
 	gesture: GestureType;
 	avatarName?: string;
+	backgroundSrc?: string;
 }
 
 export function AvatarDisplay({
@@ -33,6 +34,7 @@ export function AvatarDisplay({
 	emotion,
 	gesture,
 	avatarName = "まき",
+	backgroundSrc,
 }: AvatarDisplayProps) {
 	return (
 		<div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[360px] md:min-h-[420px]">
@@ -54,6 +56,7 @@ export function AvatarDisplay({
 						lipSyncValue={lipSyncValue}
 						emotion={emotion}
 						gesture={gesture}
+						backgroundSrc={backgroundSrc}
 						className="w-full h-full"
 					/>
 				</Suspense>

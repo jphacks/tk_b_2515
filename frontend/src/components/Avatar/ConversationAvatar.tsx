@@ -14,20 +14,24 @@ interface ConversationAvatarProps {
 	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful";
 	gesture?: GestureType;
 	className?: string;
+	backgroundSrc?: string;
 }
 
 /**
  * 背景画像を表示するコンポーネント
  */
-function BackgroundImage() {
-	const texture = useTexture("/uec_library.jpg");
+/**
+ * 背景画像を表示するコンポーネント（与えられたsrcを使う）
+ */
+function BackgroundImageWithSrc({ src }: { src: string }) {
+    const texture = useTexture(src);
 
-	return (
-		<mesh position={[0, 1.65, -2]}>
-			<planeGeometry args={[8, 4.5]} />
-			<meshBasicMaterial map={texture} side={THREE.DoubleSide} />
-		</mesh>
-	);
+    return (
+        <mesh position={[0, 1.65, -2]}>
+            <planeGeometry args={[8, 4.5]} />
+            <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
+        </mesh>
+    );
 }
 
 /**
@@ -39,6 +43,7 @@ export default function ConversationAvatar({
 	emotion = "neutral",
 	gesture = "idle",
 	className = "",
+ 	backgroundSrc = "/uec_library.jpg",
 }: ConversationAvatarProps) {
 	return (
 		<div className={`relative ${className}`}>
@@ -52,7 +57,8 @@ export default function ConversationAvatar({
 				<directionalLight position={[3, 5, 2]} intensity={1.2} />
 				<directionalLight position={[-3, 3, -2]} intensity={0.6} />
 				<Suspense fallback={null}>
-					<BackgroundImage />
+					{/* render background plane inside the three.js canvas using the selected src */}
+					<BackgroundImageWithSrc src={backgroundSrc} />
 					<VRMAvatar
 						modelUrl={modelUrl}
 						lipSyncValue={lipSyncValue}
