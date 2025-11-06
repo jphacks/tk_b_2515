@@ -79,7 +79,9 @@ export default function SessionRoomPage() {
 				});
 
 				if (!isMounted) {
-					stream.getTracks().forEach((track) => track.stop());
+					for (const track of stream.getTracks()) {
+						track.stop();
+					}
 					return;
 				}
 
@@ -99,7 +101,9 @@ export default function SessionRoomPage() {
 		return () => {
 			isMounted = false;
 			if (activeStream) {
-				activeStream.getTracks().forEach((track) => track.stop());
+				for (const track of activeStream.getTracks()) {
+					track.stop();
+				}
 			}
 		};
 	}, []);
@@ -283,7 +287,9 @@ export default function SessionRoomPage() {
 	// 通話終了
 	const endCall = useCallback(async () => {
 		if (localStream) {
-			localStream.getTracks().forEach((track) => track.stop());
+			for (const track of localStream.getTracks()) {
+				track.stop();
+			}
 		}
 		if (wsRef.current) {
 			wsRef.current.close();

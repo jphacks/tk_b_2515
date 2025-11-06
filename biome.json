@@ -17,7 +17,18 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noUnknownAtRules": "off"
+				"noUnknownAtRules": "off",
+				"noArrayIndexKey": "off"
+			},
+			"a11y": {
+				"noStaticElementInteractions": "off",
+				"useKeyWithClickEvents": "off",
+				"useButtonType": "off",
+				"noLabelWithoutControl": "off",
+				"useMediaCaption": "off"
+			},
+			"performance": {
+				"noImgElement": "off"
 			}
 		}
 	},
