@@ -48,8 +48,7 @@ export default function BookPage() {
 	const handleBookSlot = async (slotId: string, price: number) => {
 		try {
 			if (!session?.user?.id) {
-				alert("ログインが必要です");
-				router.push("/admin/login");
+				alert("セッションが見つかりません");
 				return;
 			}
 
