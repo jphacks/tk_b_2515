@@ -546,6 +546,7 @@ export default function SimulationPage() {
 								emotion={avatarEmotion}
 								gesture={avatarGesture}
 								avatarName={avatarName}
+												backgroundSrc={BACKGROUNDS[selectedBackground].src}
 							/>
 
 							{/* User Video */}
