@@ -34,8 +34,14 @@ export default function SessionRoomPage() {
 
 	// セッション情報からroleを取得
 	useEffect(() => {
-		// デフォルトでuserロールを設定
-		setUserRole("user");
+		// URLパラメータからroleを取得
+		if (typeof window !== "undefined") {
+			const params = new URLSearchParams(window.location.search);
+			const role = params.get("role") as "user" | "partner" | null;
+			setUserRole(role || "user");
+		} else {
+			setUserRole("user");
+		}
 	}, []);
 
 	// ダミーのuserIdを使用
