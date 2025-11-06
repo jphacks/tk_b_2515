@@ -37,7 +37,7 @@ export function AvatarDisplay({
 	backgroundSrc,
 }: AvatarDisplayProps) {
 	return (
-		<div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[360px] md:min-h-[420px]">
+		<div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[480px] md:min-h-[640px] lg:min-h-[720px]">
 			<div className="absolute inset-0">
 				<Suspense
 					fallback={
