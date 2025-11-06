@@ -6,4 +6,4 @@ PORT=8787
 lsof -ti :$PORT 2>/dev/null | xargs -r kill -9 2>/dev/null
 
 # ルートの.envファイルを読み込んでサーバーを起動
-tsx --env-file=../.env src/server.ts
+pnpm tsx --env-file=../.env src/server.ts
