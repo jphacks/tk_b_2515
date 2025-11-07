@@ -37,6 +37,12 @@ const generateResponseRoute = createRoute({
             relationshipStage: z.enum(["shy", "friendly", "open"]).optional().openapi({
               description: "親密度レベル（省略時はshy）",
             }),
+            backgroundKey: z.enum(["library", "classroom", "xmas"]).optional().openapi({
+              description: "背景キー（会話評価へのシチュエーション反映用）",
+            }),
+            adviceCompletedIds: z.array(z.string()).optional().openapi({
+              description: "ユーザーが達成したアドバイスID一覧（チェックリスト）",
+            }),
           }),
         },
       },
@@ -119,8 +125,10 @@ conversation.openapi(generateResponseRoute, async (c) => {
       systemPrompt?: string;
       avatarId?: string;
       relationshipStage?: "shy" | "friendly" | "open";
+      backgroundKey?: "library" | "classroom" | "xmas";
+      adviceCompletedIds?: string[];
     };
-    const { sessionId, userMessage, systemPrompt, avatarId, relationshipStage } = c.req.valid("json") as GenerateReq;
+    const { sessionId, userMessage, systemPrompt, avatarId, relationshipStage, backgroundKey, adviceCompletedIds } = c.req.valid("json") as GenerateReq;
 
     // Check if session exists
     const session = await prisma.conversation.findUnique({
@@ -176,7 +184,7 @@ conversation.openapi(generateResponseRoute, async (c) => {
     const aiResult = await generateConversationResponse(apiKey, {
       messages: conversationHistory,
       systemPrompt,
-  relationshipStage: relationshipStage ?? undefined,
+      relationshipStage: relationshipStage ?? undefined,
       avatarConfig,
       gestureSummary: session.gestures
         ? {
@@ -207,6 +215,8 @@ conversation.openapi(generateResponseRoute, async (c) => {
         emotion: aiResult.emotion,
         userMessage: savedUserMessage,
         assistantMessage: savedAssistantMessage,
+        backgroundKey: backgroundKey ?? null,
+        adviceCompletedIds: adviceCompletedIds ?? [],
       },
       200
     );
@@ -230,6 +240,12 @@ const generateFeedbackRoute = createRoute({
               description: "会話セッションID",
               example: "123e4567-e89b-12d3-a456-426614174000",
             }),
+            backgroundKey: z.enum(["library", "classroom", "xmas"]).optional().openapi({
+              description: "背景キー（評価ロジックに反映）",
+            }),
+            adviceCompletedIds: z.array(z.string()).optional().openapi({
+              description: "達成済みアドバイスID一覧",
+            }),
           }),
         },
       },
@@ -252,6 +268,18 @@ const generateFeedbackRoute = createRoute({
               gestureGoodPoints: z.string().nullable().optional(),
               gestureImprovementPoints: z.string().nullable().optional(),
               voiceMetrics: z.any().nullable().optional(),
+              adviceScoreAdded: z.number().nullable().optional(),
+              adviceUnfulfilled: z.string().nullable().optional(),
+              adviceFulfilledDetails: z
+                .array(
+                  z.object({
+                    id: z.string(),
+                    label: z.string(),
+                    points: z.number(),
+                  })
+                )
+                .nullable()
+                .optional(),
               createdAt: z.string(),
             }),
           }),
@@ -298,7 +326,7 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
       return c.json({ error: "Gemini API key not configured" }, 500);
     }
 
-    const { sessionId } = c.req.valid("json");
+  const { sessionId, backgroundKey, adviceCompletedIds } = c.req.valid("json");
 
     // Get session and messages
     const session = await prisma.conversation.findUnique({
@@ -358,7 +386,9 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
             gazeUpSamples: session.gestures.gazeUpSamples,
             gazeDownSamples: session.gestures.gazeDownSamples,
           }
-        : undefined
+        : undefined,
+      backgroundKey,
+      adviceCompletedIds
     );
 
     const goodPointsStr = feedbackData.goodPoints;
@@ -416,7 +446,13 @@ conversation.openapi(generateFeedbackRoute, async (c) => {
       });
     }
 
-    return c.json({ feedback: savedFeedback }, 200);
+    return c.json({
+      feedback: {
+        ...savedFeedback,
+        adviceScoreAdded: feedbackData.adviceScoreAdded ?? null,
+        adviceUnfulfilled: feedbackData.adviceUnfulfilled ?? null,
+      },
+    }, 200);
   } catch (error) {
     console.error("Failed to generate feedback:", error);
     return c.json({ error: "Failed to generate feedback" }, 500);

@@ -336,8 +336,29 @@ function FeedbackContent() {
 			try {
 				setIsLoading(true);
 				setError(null);
+				let backgroundKey: "library" | "classroom" | "xmas" | undefined;
+				let adviceCompletedIds: string[] | undefined;
+				try {
+					const savedBg = localStorage.getItem("selectedBackground");
+					if (savedBg === "library" || savedBg === "classroom" || savedBg === "xmas") {
+						backgroundKey = savedBg;
+					}
+					if (sessionId) {
+						const raw = localStorage.getItem(`adviceCompleted:${sessionId}`);
+						if (raw) {
+							const parsed = JSON.parse(raw) as Record<string, boolean>;
+							adviceCompletedIds = Object.entries(parsed)
+							  .filter(([, v]) => v)
+							  .map(([k]) => k);
+						}
+					}
+				} catch {
+					// ignore
+				}
 				const result = await feedbackApi.generateFeedback({
 					sessionId,
+					backgroundKey,
+					adviceCompletedIds,
 				});
 				setFeedback(result.feedback);
 				if (result.feedback.overallScore !== null) {
@@ -462,6 +483,22 @@ function FeedbackContent() {
 			.map((line) => line.trim())
 			.filter(Boolean)
 			.slice(0, 3); // 改善すべき優先度が高い順に最大3個まで
+	}, [feedback]);
+
+	// 達成済みアドバイスの詳細（項目ごとの加点）
+	const adviceFulfilledDetails = useMemo(
+		() => feedback?.adviceFulfilledDetails ?? [],
+		[feedback],
+	);
+
+	// 未達成アドバイス（会話カテゴリ向けに表示）
+	const adviceUnfulfilledList = useMemo(() => {
+		if (!feedback?.adviceUnfulfilled) return [] as string[];
+		return feedback.adviceUnfulfilled
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean)
+			.slice(0, 3);
 	}, [feedback]);
 
 	const gestureGoodPointsList = useMemo(() => {
@@ -626,6 +663,15 @@ function FeedbackContent() {
 	const selectedGestureImprovementPoints = useMemo(() => {
 		if (!selectedFeedback?.gestureImprovementPoints) return [];
 		return selectedFeedback.gestureImprovementPoints
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean)
+			.slice(0, 3);
+	}, [selectedFeedback]);
+
+	const selectedAdviceUnfulfilledList = useMemo(() => {
+		if (!selectedFeedback?.adviceUnfulfilled) return [] as string[];
+		return selectedFeedback.adviceUnfulfilled
 			.split(/\r?\n/)
 			.map((line) => line.trim())
 			.filter(Boolean)
@@ -857,6 +903,28 @@ function FeedbackContent() {
 											<p>{feedback.voiceScore ?? "—"} / 10点</p>
 										</div>
 									</div>
+									{typeof feedback.adviceScoreAdded === "number" && feedback.adviceScoreAdded > 0 && (
+										<div className="mt-2 text-sm font-medium inline-flex items-center justify-center gap-1 text-green-600">
+											<TrendingUp className="w-4 h-4" />
+											シチュエーション達成ボーナス +{feedback.adviceScoreAdded}点
+										</div>
+									)}
+									{adviceFulfilledDetails.length > 0 && (
+										<Card className="mt-4 p-4 border border-green-200 bg-green-50 space-y-3">
+											<div className="flex items-center gap-2">
+												<ThumbsUp className="w-4 h-4 text-green-600" />
+												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
+											</div>
+											<ul className="space-y-1">
+												{adviceFulfilledDetails.map((d) => (
+													<li key={`advice-fulfilled-${d.id}`} className="flex justify-between text-sm">
+														<span className="text-green-900">{d.label}</span>
+														<span className="font-medium text-green-700">+{d.points}点</span>
+													</li>
+												))}
+											</ul>
+										</Card>
+									)}
 									<Button
 										variant="outline"
 										size="sm"
@@ -986,6 +1054,23 @@ function FeedbackContent() {
 											? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
 											: "改善点が記録されていません。"}
 									</p>
+								)}
+
+								{/* 未達成のアドバイス（会話のみ） */}
+								{selectedCategory === "conversation" && adviceUnfulfilledList.length > 0 && (
+									<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+										<div className="flex items-center gap-2 mb-2">
+											<Lightbulb className="w-4 h-4 text-amber-600" />
+											<p className="font-semibold text-amber-800">未達成のアドバイス</p>
+										</div>
+										<ul className="list-disc pl-5 space-y-1">
+											{adviceUnfulfilledList.map((line, idx) => (
+												<li key={`unfulfilled-${idx}`} className="text-sm text-amber-900">
+													{line}
+												</li>
+											))}
+										</ul>
+									</div>
 								)}
 							</Card>
 						)}
@@ -1300,6 +1385,28 @@ function FeedbackContent() {
 											<p>{selectedFeedback.voiceScore ?? "—"} / 10点</p>
 										</div>
 									</div>
+									{typeof selectedFeedback.adviceScoreAdded === "number" && selectedFeedback.adviceScoreAdded > 0 && (
+										<div className="mt-2 text-sm font-medium inline-flex items-center justify-center gap-1 text-green-600">
+											<TrendingUp className="w-4 h-4" />
+											シチュエーション達成ボーナス +{selectedFeedback.adviceScoreAdded}点
+										</div>
+									)}
+									{(selectedFeedback.adviceFulfilledDetails?.length ?? 0) > 0 && (
+										<Card className="mt-4 p-4 border border-green-200 bg-green-50 space-y-3">
+											<div className="flex items-center gap-2">
+												<ThumbsUp className="w-4 h-4 text-green-600" />
+												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
+											</div>
+											<ul className="space-y-1">
+												{selectedFeedback.adviceFulfilledDetails!.map((d) => (
+													<li key={`modal-advice-fulfilled-${d.id}`} className="flex justify-between text-sm">
+														<span className="text-green-900">{d.label}</span>
+														<span className="font-medium text-green-700">+{d.points}点</span>
+													</li>
+												))}
+											</ul>
+										</Card>
+									)}
 								</div>
 							</Card>
 
@@ -1435,6 +1542,23 @@ function FeedbackContent() {
 											? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
 											: "改善点が記録されていません。"}
 									</p>
+								)}
+
+								{/* 未達成のアドバイス（会話のみ、モーダル） */}
+								{selectedCategory === "conversation" && selectedAdviceUnfulfilledList.length > 0 && (
+									<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+										<div className="flex items-center gap-2 mb-2">
+											<Lightbulb className="w-4 h-4 text-amber-600" />
+											<p className="font-semibold text-amber-800">未達成のアドバイス</p>
+										</div>
+										<ul className="list-disc pl-5 space-y-1">
+											{selectedAdviceUnfulfilledList.map((line, idx) => (
+												<li key={`modal-unfulfilled-${idx}`} className="text-sm text-amber-900">
+													{line}
+												</li>
+											))}
+										</ul>
+									</div>
 								)}
 							</div>
 						)}

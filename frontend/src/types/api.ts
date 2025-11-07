@@ -68,6 +68,9 @@ export interface Feedback {
 	conversationScore?: number | null;
 	gestureScore?: number | null;
 	voiceScore?: number | null;
+	adviceScoreAdded?: number | null; // アドバイス達成による加点
+	adviceUnfulfilled?: string | null; // 未達成アドバイス一覧（改行区切り）
+	adviceFulfilledDetails?: { id: string; label: string; points: number }[] | null; // 達成アドバイス詳細（実際に加点されたポイント）
 	conversationId: string;
 	createdAt: string;
 	updatedAt: string;
@@ -140,6 +143,8 @@ export interface GenerateConversationRequest {
 	systemPrompt?: string;
 	avatarId?: string; // backend persona id (e.g. maki, rento, kouta)
 	relationshipStage?: "shy" | "friendly" | "open"; // 会話の親密度段階
+	backgroundKey?: string; // 背景キー (library|classroom|xmas)
+	adviceCompletedIds?: string[]; // 達成済みアドバイスID一覧（任意送信）
 }
 
 export interface GenerateConversationResponse {
@@ -152,6 +157,8 @@ export interface GenerateConversationResponse {
 // API レスポンス型定義（フィードバック生成）
 export interface GenerateFeedbackRequest {
 	sessionId: string;
+	backgroundKey?: string; // 背景キー (library|classroom|xmas)
+	adviceCompletedIds?: string[]; // 達成済みアドバイスID
 }
 
 export interface GenerateFeedbackResponse {

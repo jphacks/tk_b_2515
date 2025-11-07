@@ -47,6 +47,8 @@ model Feedback {
   gestureGoodPoints        String?      @map("gesture_good_points")
   gestureImprovementPoints String?      @map("gesture_improvement_points")
   voiceMetrics             Json?        @map("voice_metrics")
+  adviceScoreAdded         Int?         @map("advice_score_added") // アドバイス達成による加点
+  adviceUnfulfilled        String?      @map("advice_unfulfilled") // 未達成アドバイス一覧（改行区切り）
   conversation             Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@map("feedback")

@@ -21,32 +21,28 @@ sessions.post("/", async (c) => {
 	try {
 		// Get userId from request body if exists
 		const body = await c.req.json().catch(() => ({}));
-		const existingUserId = body.userId;
+		const existingUserId = body.userId as string | undefined;
 
-		let userId: string;
+		let userId: string | undefined = existingUserId;
 
-		if (existingUserId) {
-			// Use existing userId
-			console.log("Using existing userId:", existingUserId);
-			userId = existingUserId;
-		} else {
-			// Create new anonymous user
-			const { data, error } = await supabase.auth.signInAnonymously();
-
-			if (error) {
-				console.error("Error signing in anonymously:", error);
-				return c.json({ error: "Failed to authenticate" }, 500);
+		if (!userId) {
+			// Try to create anonymous user (best-effort). If it fails, proceed without userId.
+			try {
+				const { data, error } = await supabase.auth.signInAnonymously();
+				if (error) {
+					console.warn("[Session] Anonymous sign-in failed, proceeding without userId:", error.message);
+				} else {
+					userId = data.user?.id || undefined;
+					console.log("[Session] Created anonymous user:", userId);
+				}
+			} catch (authErr) {
+				console.warn("[Session] Anonymous auth threw exception, proceeding without userId:", authErr);
 			}
-
-			userId = data.user?.id || "";
-			console.log("Created new anonymous user:", userId);
 		}
 
-		// Create session with userId
+		// Create session (userId is optional in schema)
 		const session = await prisma.conversation.create({
-			data: {
-				userId,
-			},
+			data: userId ? { userId } : {},
 		});
 
 		return c.json({ session }, 201);
