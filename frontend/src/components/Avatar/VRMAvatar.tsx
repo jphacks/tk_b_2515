@@ -8,7 +8,6 @@ import {
 import { useFrame } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-// import { Loader } from "lucide-react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { useVRM } from "@/hooks/useVRM";
 

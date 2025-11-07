@@ -1,22 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 export async function POST(
 	req: NextRequest,
 	{ params }: { params: Promise<{ slotId: string }> },
 ) {
 	try {
-		const { slotId } = await params;
-		const body = await req.json();
-		const { userId } = body;
+		// セッションから認証情報を取得
+		const authSession = await auth.api.getSession({
+			headers: req.headers,
+		});
 
-		// TODO: セッションからuserIdを取得するように変更
-		if (!userId) {
+		if (!authSession?.user) {
 			return NextResponse.json(
-				{ error: "User ID is required" },
-				{ status: 400 },
+				{ error: "認証が必要です" },
+				{ status: 401 },
 			);
 		}
+
+		const userId = authSession.user.id;
+		const { slotId } = await params;
 
 		// 枠が存在し、予約可能か確認
 		const slot = await prisma.practiceSlot.findUnique({
