@@ -1,3 +1,19 @@
+// Mock better-auth and nanostores to avoid ESM issues
+jest.mock("better-auth/react", () => ({
+	__esModule: true,
+	createAuthClient: jest.fn(() => ({
+		useSession: jest.fn(),
+		signIn: jest.fn(),
+		signOut: jest.fn(),
+	})),
+}));
+
+jest.mock("nanostores", () => ({
+	__esModule: true,
+	atom: jest.fn(),
+	readonlyType: jest.fn(),
+}));
+
 import { metadata } from "../../app/layout";
 
 describe("Layout metadata", () => {
