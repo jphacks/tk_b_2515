@@ -2,40 +2,21 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 
-async function resolveBetterAuthSecret(): Promise<string> {
-	if (process.env.BETTER_AUTH_SECRET) {
-		return process.env.BETTER_AUTH_SECRET;
+function getBetterAuthSecret(): string {
+	// ビルド時やランタイムで環境変数を使用
+	const secret = process.env.BETTER_AUTH_SECRET;
+
+	if (!secret) {
+		// ビルド時はダミーのシークレットを使用
+		// 本番環境では必ず環境変数を設定すること
+		console.warn("BETTER_AUTH_SECRET is not set, using fallback for build");
+		return "fallback-secret-for-build-only-do-not-use-in-production";
 	}
 
-	const backendUrl =
-		process.env.INTERNAL_API_URL ||
-		process.env.BACKEND_API_URL ||
-		process.env.NEXT_PUBLIC_API_URL ||
-		"http://localhost:8787";
-
-	const configUrl = new URL("/auth/config", backendUrl).toString();
-
-	const response = await fetch(configUrl, {
-		headers: {
-			Accept: "application/json",
-		},
-	});
-
-	if (!response.ok) {
-		throw new Error(
-			`Failed to fetch Better Auth secret from backend (status ${response.status})`,
-		);
-	}
-
-	const data = (await response.json()) as { secret?: string };
-	if (!data.secret) {
-		throw new Error("Backend did not return BETTER_AUTH_SECRET");
-	}
-
-	return data.secret;
+	return secret;
 }
 
-const betterAuthSecret = await resolveBetterAuthSecret();
+const betterAuthSecret = getBetterAuthSecret();
 
 export const auth = betterAuth({
 	secret: betterAuthSecret,
