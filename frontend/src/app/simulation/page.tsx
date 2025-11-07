@@ -194,7 +194,7 @@ export default function SimulationPage() {
 		if (!lastUser) return;
 		const text = lastUser.content;
 		const adviceList = BACKGROUND_ADVICE[selectedBackground];
-		let next = { ...adviceCompleted };
+		const next = { ...adviceCompleted };
 		let changed = false;
 		for (const item of adviceList) {
 			if (next[item.id]) continue;
