@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // パートナーがスケジュールを登録
 export async function POST(req: NextRequest) {
