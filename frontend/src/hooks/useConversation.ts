@@ -17,6 +17,7 @@ interface UseConversationOptions {
 	onEmotionUpdate?: (
 		emotion: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful",
 	) => void;
+	avatarId?: string; // persona id
 }
 
 interface ConversationState {
@@ -34,6 +35,7 @@ export function useConversation(options: UseConversationOptions) {
 		onLipSyncUpdate,
 		ttsVoiceId,
 		onEmotionUpdate,
+		avatarId,
 	} = options;
 
 	const [state, setState] = useState<ConversationState>({
@@ -141,10 +143,17 @@ export function useConversation(options: UseConversationOptions) {
 				console.log("STT Result:", sttResult.text);
 
 				// 2. AI: テキストから応答を生成
+				const relationshipStage = state.messages.length < 7
+					? "shy"
+					: state.messages.length < 15
+						? "friendly"
+						: "open";
 				const aiResponse = await conversationApi.generateResponse({
 					sessionId: state.session.id,
 					userMessage: sttResult.text,
 					systemPrompt,
+					avatarId,
+					relationshipStage,
 				});
 
 				console.log(
@@ -221,7 +230,7 @@ export function useConversation(options: UseConversationOptions) {
 				return null;
 			}
 		},
-		[state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate],
+		[state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate, avatarId],
 	);
 
 	// クリーンアップ

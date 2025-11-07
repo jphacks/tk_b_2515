@@ -138,6 +138,8 @@ export interface GenerateConversationRequest {
 	sessionId: string;
 	userMessage: string;
 	systemPrompt?: string;
+	avatarId?: string; // backend persona id (e.g. maki, rento, kouta)
+	relationshipStage?: "shy" | "friendly" | "open"; // 会話の親密度段階
 }
 
 export interface GenerateConversationResponse {

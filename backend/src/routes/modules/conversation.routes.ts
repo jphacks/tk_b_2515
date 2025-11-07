@@ -30,6 +30,12 @@ const generateResponseRoute = createRoute({
             systemPrompt: z.string().optional().openapi({
               description: "システムプロンプト（オプション）",
             }),
+            avatarId: z.string().optional().openapi({
+              description: "使用するアバターID（maki|rento|koutaなど）",
+            }),
+            relationshipStage: z.enum(["shy", "friendly", "open"]).optional().openapi({
+              description: "親密度レベル（省略時はshy）",
+            }),
           }),
         },
       },
@@ -106,7 +112,7 @@ conversation.openapi(generateResponseRoute, async (c) => {
       return c.json({ error: "Gemini API key not configured" }, 500);
     }
 
-    const { sessionId, userMessage, systemPrompt } = c.req.valid("json");
+  const { sessionId, userMessage, systemPrompt, avatarId, relationshipStage } = c.req.valid("json");
 
     // Check if session exists
     const session = await prisma.conversation.findUnique({
@@ -144,10 +150,23 @@ conversation.openapi(generateResponseRoute, async (c) => {
       },
     ];
 
-    // Generate AI response
+    // Load avatar persona (Supabase or local fallback)
+    let avatarConfig = undefined as import("../../services/conversation").AvatarPersona | undefined;
+    try {
+      // Local JSON fallback for now
+      const personas: import("../../services/conversation").AvatarPersona[] = (await import("../../config/avatar-personas.json", { assert: { type: "json" } }) as any).default ?? [];
+      const chosenId = avatarId ?? "maki";
+      avatarConfig = personas.find((p) => p.id === chosenId) ?? personas[0];
+    } catch (e) {
+      console.warn("Failed to load avatar personas JSON:", e);
+    }
+
+    // Generate AI response with persona-aware meta prompt
     const aiResult = await generateConversationResponse(apiKey, {
       messages: conversationHistory,
       systemPrompt,
+      relationshipStage: (relationshipStage as any) ?? undefined,
+      avatarConfig,
       gestureSummary: session.gestures
         ? {
             totalSamples: session.gestures.totalSamples,
