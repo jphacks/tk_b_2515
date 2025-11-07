@@ -20,6 +20,8 @@ import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
 import { useGestureTracking } from "@/hooks/useGestureTracking";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
 import { useSimulationTimer } from "@/hooks/useSimulationTimer";
+import { BACKGROUND_ADVICE } from "@/lib/advice";
+import { AdviceChecklist } from "@/components/simulation/AdviceChecklist";
 import { preloadVRM } from "@/hooks/useVRM";
 import { gestureApi } from "@/lib/api";
 import { appendVoiceAnalysis } from "@/lib/audio/voiceAnalysisStorage";
@@ -70,6 +72,8 @@ export default function SimulationPage() {
 	>("female");
 	const [selectedBackground, setSelectedBackground] =
 		useState<BackgroundKey>("library");
+	const [assistMode, setAssistMode] = useState<boolean>(true);
+	const [adviceCompleted, setAdviceCompleted] = useState<Record<string, boolean>>({});
 
 	const videoStreamRef = useRef<VideoStreamRef>(null);
 	const hasSentBatchRef = useRef(false);
@@ -88,6 +92,10 @@ export default function SimulationPage() {
 			if (saved === "library" || saved === "classroom" || saved === "xmas") {
 				setSelectedBackground(saved);
 			}
+			const savedAssist = localStorage.getItem("assistMode");
+			if (savedAssist === "true" || savedAssist === "false") {
+				setAssistMode(savedAssist === "true");
+			}
 		} catch {
 			// ignore
 		}
@@ -95,10 +103,11 @@ export default function SimulationPage() {
 	useEffect(() => {
 		try {
 			localStorage.setItem("selectedBackground", selectedBackground);
+			localStorage.setItem("assistMode", String(assistMode));
 		} catch {
 			// ignore
 		}
-	}, [selectedBackground]);
+	}, [selectedBackground, assistMode]);
 	const avatarName = useMemo(() => {
 		const parts = avatarModelUrl.split("/");
 		const file = parts[parts.length - 1] || "";
@@ -178,6 +187,48 @@ export default function SimulationPage() {
 		onEmotionUpdate: setAvatarEmotion,
 		avatarId: selectedAvatar === "female" ? "maki" : selectedAvatar === "male" ? "rento" : "kouta",
 	});
+	// 最新ユーザー発話でアドバイス達成判定
+	useEffect(() => {
+		if (!messages.length) return;
+		const lastUser = [...messages].reverse().find(m => m.role === 'user');
+		if (!lastUser) return;
+		const text = lastUser.content;
+		const adviceList = BACKGROUND_ADVICE[selectedBackground];
+		let changed = false;
+		adviceList.forEach(item => {
+			if (adviceCompleted[item.id]) return; // 既に達成
+			if (item.patterns.some(re => re.test(text))) {
+				changed = true;
+				setAdviceCompleted(prev => ({ ...prev, [item.id]: true }));
+			}
+		});
+		if (changed) {
+			try {
+				if (session?.id) {
+					localStorage.setItem(`adviceCompleted:${session.id}`, JSON.stringify({ ...adviceCompleted }));
+				}
+			} catch {}
+		}
+	}, [messages, selectedBackground, adviceCompleted, session?.id]);
+
+	// セッション開始時に過去の達成状況があれば復元
+	useEffect(() => {
+		if (!session?.id) return;
+		try {
+			const raw = localStorage.getItem(`adviceCompleted:${session.id}`);
+			if (raw) {
+				const parsed = JSON.parse(raw) as Record<string, boolean>;
+				setAdviceCompleted(parsed);
+			}
+		} catch {}
+	}, [session?.id]);
+
+	// 背景変更時にアドバイス進捗リセット
+	// biome-ignore lint/correctness/useExhaustiveDependencies: 背景変更トリガでのみリセットしたい
+	useEffect(() => {
+		setAdviceCompleted({});
+		void selectedBackground; // 明示的に依存を使用
+	}, [selectedBackground]);
 
 	// Timer management
 	const { timeRemaining, startTimer, stopTimer } = useSimulationTimer({
@@ -530,6 +581,23 @@ export default function SimulationPage() {
 									</p>
 									<p>{BACKGROUNDS[selectedBackground].scenario}</p>
 								</div>
+								{/* Assist Mode Toggle */}
+								<div className="mt-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-lg p-3 flex items-center justify-between gap-3">
+									<div>
+										<p className="font-semibold text-foreground mb-0.5">モード選択</p>
+										<p>アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。</p>
+									</div>
+									<label className="flex items-center gap-2 cursor-pointer select-none">
+										<input
+											type="checkbox"
+											checked={assistMode}
+											onChange={(e) => setAssistMode(e.target.checked)}
+											className="h-4 w-4"
+											aria-label="アシストモードを有効化"
+										/>
+										<span className="text-foreground text-xs">アシストモード</span>
+									</label>
+								</div>
 							</div>
 							<Button
 								size="lg"
@@ -576,6 +644,20 @@ export default function SimulationPage() {
 								videoEnabled={videoEnabled}
 								onVideoReady={handleVideoReady}
 							/>
+
+							{/* Advice Checklist (アシストモード時のみ表示) */}
+							{assistMode && (
+								<div className="md:absolute md:left-2 md:top-2 md:w-64 md:z-10 w-full md:w-auto">
+									<AdviceChecklist
+										title="背景に合わせたアドバイス"
+										items={BACKGROUND_ADVICE[selectedBackground].map(item => ({
+											id: item.id,
+											label: item.label,
+											checked: !!adviceCompleted[item.id],
+										}))}
+									/>
+								</div>
+							)}
 						</div>
 
 						{/* Recording Status Indicator */}

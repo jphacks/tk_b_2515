@@ -614,10 +614,45 @@ function calculateVoiceMetrics(messages: ConversationMessage[]): VoiceMetrics {
   };
 }
 
+const BACKGROUND_CONTEXT: Record<
+  "library" | "classroom" | "xmas",
+  { scenario: string; guidelines: string[] }
+> = {
+  library: {
+    scenario:
+      "静かな図書館。声は控えめに、落ち着いたトーンで趣味や勉強の話から始めると自然です。",
+    guidelines: [
+      "落ち着いた声量・トーンで話す（静かな場に配慮）",
+      "勉強・読書・授業などの話題を出す",
+      "オープンな質問で相手の話を引き出す",
+    ],
+  },
+  classroom: {
+    scenario:
+      "放課後の教室。授業や課題、サークル、週末の予定など身近な話題が話しやすい雰囲気です。",
+    guidelines: [
+      "授業・課題・サークルなど身近な話題を出す",
+      "週末や放課後の軽い予定提案/質問をする",
+      "相手発言に具体的な掘り下げ質問（いつ/どこ/どれくらい 等）",
+    ],
+  },
+  xmas: {
+    scenario:
+      "イルミネーションの前。最近の出来事やプレゼント、冬の予定など明るい話題で盛り上がりやすいです。",
+    guidelines: [
+      "明るく前向きなリアクションを返す",
+      "冬/クリスマス関連の話題（イルミ・プレゼント・予定）",
+      "軽い提案（観に行く/写真/カフェ など）",
+    ],
+  },
+};
+
 export async function generateConversationFeedback(
   apiKey: string,
   messages: ConversationMessage[],
-  gestureSummary?: GestureSummary
+  gestureSummary?: GestureSummary,
+  backgroundKey?: "library" | "classroom" | "xmas",
+  adviceCompletedIds?: string[]
 ): Promise<{
   goodPoints: string;
   improvementPoints: string;
@@ -628,6 +663,9 @@ export async function generateConversationFeedback(
   gestureGoodPoints?: string;
   gestureImprovementPoints?: string;
   voiceMetrics: VoiceMetrics;
+  adviceScoreAdded?: number;
+  adviceUnfulfilled?: string;
+  adviceFulfilledDetails?: { id: string; label: string; points: number }[];
 }> {
   const client = getGeminiClient(apiKey) as GoogleGenAI;
 
@@ -658,7 +696,15 @@ export async function generateConversationFeedback(
 - 震え検知: ${voiceMetrics.tremblingDetected ? "あり" : "なし"}
 - サマリー: ${voiceMetrics.summary}`;
 
-  const prompt = `以下の会話と仕草・音声データを分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
+  const backgroundBlock = backgroundKey
+    ? `\n【背景シチュエーション】\n${BACKGROUND_CONTEXT[backgroundKey].scenario}\n\n【背景に応じた評価観点（加点対象）】\n- ${BACKGROUND_CONTEXT[backgroundKey].guidelines.join(
+        "\n- "
+      )}`
+    : "";
+
+  const prompt = `以下の会話と仕草・音声データ${
+    backgroundKey ? "、背景シチュエーション" : ""
+  }を分析し、ユーザー（男子大学生）のコミュニケーションスキルについてフィードバックを提供してください。
 
 【会話内容】
 ${conversationText}
@@ -668,6 +714,8 @@ ${gestureInfo}
 
 【声のデータ】
 ${voiceInfo}
+
+${backgroundBlock}
 
 【評価基準】
 以下の観点で評価してください：
@@ -696,6 +744,13 @@ ${voiceInfo}
    6. **傲慢すぎていないか** (重要度: 高)
    - 自分主体の自慢話が多くないか
    - 変にカッコつけた会話をしていないか
+
+【背景適合に関する加点方針】
+${
+  backgroundKey
+    ? `- 上記「背景に応じた評価観点」に該当する発話や行動が確認できた場合、会話スコア内で適切に加点する（無理に満点化はしない）\n- 背景に明確にそぐわない配慮不足（例: 図書館での過度に騒がしい印象）が続く場合は、会話スコア内で軽度の減点を検討する（他の観点も加味して総合的に判断）`
+    : "- 背景情報がない場合は通常の評価基準を適用する"
+}
 
 【減点要素】
 - AI（女子大学生）が質問を投げかける回数が多い場合：-7点/回
@@ -789,7 +844,7 @@ ${voiceInfo}
   const hasAnyScore =
     conversationScore !== null || gestureScore !== null || voiceScore !== null;
 
-  const overallScore = hasAnyScore
+  let overallScore = hasAnyScore
     ? clamp(
         (conversationScore ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0),
         0,
@@ -807,11 +862,99 @@ ${voiceInfo}
     return "";
   };
 
+  // ---- アドバイス加点・未達算出（DB保存はせずレスポンスへ含める） ----
+  let adviceScoreAdded: number | undefined;
+  let adviceUnfulfilled: string | undefined;
+  let adviceFulfilledDetails: { id: string; label: string; points: number }[] | undefined;
+
+  let improvementPointsStr = toText(
+    (feedback.conversation?.improvementPoints ?? feedback.improvementPoints)
+  );
+  const backgroundAdviceMap: Record<
+    "library" | "classroom" | "xmas",
+    { id: string; label: string }[]
+  > = {
+    library: [
+      { id: "quiet_tone", label: "落ち着いた声量・トーン" },
+      { id: "study_topic", label: "勉強・読書・授業などの話題" },
+      { id: "open_question", label: "理由・好みなどを尋ねるオープン質問" },
+    ],
+    classroom: [
+      { id: "class_topic", label: "授業/課題/サークル話題" },
+      { id: "weekend_plan", label: "週末や放課後の軽い予定提案" },
+      { id: "follow_up_question", label: "具体的に掘るフォロー質問" },
+    ],
+    xmas: [
+      { id: "xmas_topic", label: "冬/クリスマス関連話題" },
+      { id: "positive_mood", label: "前向きリアクション" },
+      { id: "suggest_plan", label: "軽い提案（観に行く/写真/カフェ等）" },
+    ],
+  };
+  if (backgroundKey && adviceCompletedIds && Array.isArray(adviceCompletedIds)) {
+    const adviceIdsCompleted = new Set(adviceCompletedIds);
+    const weightPer = 3;
+    const maxBonus = 8;
+    const candidates = backgroundAdviceMap[backgroundKey] ?? [];
+    const completed = candidates.filter((c) => adviceIdsCompleted.has(c.id));
+    const completedCount = completed.length;
+    // 実際の加点をアイテム単位で配分（最大値を超える分は切り捨て）
+    let remaining = maxBonus;
+    adviceFulfilledDetails = [];
+    for (const item of completed) {
+      if (remaining <= 0) break;
+      const allocate = Math.min(weightPer, remaining);
+      adviceFulfilledDetails.push({ id: item.id, label: item.label, points: allocate });
+      remaining -= allocate;
+    }
+    const bonus = adviceFulfilledDetails.reduce((sum, i) => sum + i.points, 0);
+    adviceScoreAdded = Math.min(bonus, maxBonus);
+    const unfulfilled = candidates.filter((c) => !adviceIdsCompleted.has(c.id));
+    if (unfulfilled.length) {
+      adviceUnfulfilled = unfulfilled.map((u) => u.label).join("\n");
+      const lines = improvementPointsStr.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 3) {
+        lines.push(
+          `背景適合: 以下を盛り込むとさらに良い→ ${unfulfilled
+            .map((u) => u.label)
+            .slice(0, 2)
+            .join("、")}`
+        );
+        improvementPointsStr = lines.join("\n");
+      }
+    }
+    if (conversationScore !== null && hasAnyScore && bonus > 0) {
+      const convWithBonus = clamp(conversationScore + bonus, 0, 40);
+      overallScore = clamp(
+        (convWithBonus ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0),
+        0,
+        100
+      );
+      // 返却時にスコア上書き
+      // 注意: 下のreturnで conversationScore は convWithBonus を返却する
+      return {
+        goodPoints: toText(feedback.conversation?.goodPoints ?? feedback.goodPoints),
+        improvementPoints: improvementPointsStr,
+        overallScore,
+        conversationScore: convWithBonus,
+        gestureScore,
+        voiceScore,
+        gestureGoodPoints: toText(
+          feedback.gestures?.goodPoints ?? feedback.gestureGoodPoints
+        ),
+        gestureImprovementPoints: toText(
+          feedback.gestures?.improvementPoints ?? feedback.gestureImprovementPoints
+        ),
+        voiceMetrics,
+        adviceScoreAdded,
+        adviceUnfulfilled,
+        adviceFulfilledDetails,
+      };
+    }
+  }
+
   return {
     goodPoints: toText(conversationFeedback.goodPoints ?? feedback.goodPoints),
-    improvementPoints: toText(
-      conversationFeedback.improvementPoints ?? feedback.improvementPoints
-    ),
+    improvementPoints: improvementPointsStr,
     overallScore,
     conversationScore,
     gestureScore,
@@ -823,5 +966,8 @@ ${voiceInfo}
       gestureFeedback.improvementPoints ?? feedback.gestureImprovementPoints
     ),
     voiceMetrics,
+    adviceScoreAdded,
+    adviceUnfulfilled,
+    adviceFulfilledDetails,
   };
 }
