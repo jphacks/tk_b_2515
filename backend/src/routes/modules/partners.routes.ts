@@ -44,7 +44,7 @@ const getPartnersRoute = createRoute({
 
 partners.openapi(getPartnersRoute, async (c) => {
 	try {
-		const partnersList = await prisma.partner.findMany({
+		const partnersList = await prisma.user.findMany({
 			where: {
 				isAvailable: true,
 				role: "partner",

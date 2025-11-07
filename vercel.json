@@ -1,0 +1,9 @@
+{
+  "buildCommand": "pnpx prisma generate --schema=./prisma/schema.prisma && cd frontend && pnpm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null,
+  "env": {
+    "DATABASE_URL": "@database_url"
+  }
+}

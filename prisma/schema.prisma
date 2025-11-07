@@ -5,6 +5,12 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../frontend/src/generated/prisma"
+}
+
+generator backend_client {
+  provider = "prisma-client-js"
+  output   = "../backend/src/generated/prisma"
 }
 
 model Conversation {

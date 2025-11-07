@@ -34,7 +34,6 @@ export async function speechToText(
 ): Promise<string> {
 	try {
 		const client = getElevenLabsClient(apiKey);
-		// console.log(apiKey);
 
 		console.log("Converting audio to buffer...", {
 			size: audioFile.size,

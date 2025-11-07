@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma";
 
 // PrismaClientのシングルトンインスタンスを作成
 // 開発環境でのホットリロード時に複数のインスタンスが作成されるのを防ぐ

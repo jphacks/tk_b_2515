@@ -6,7 +6,7 @@ node_modules/
 package-lock.json
 yarn.lock
 .pnpm-store/
-
+.pnpm-store-user/
 # pnpmワークスペース使用時、ルート以外のlockファイルは不要
 backend/pnpm-lock.yaml
 frontend/pnpm-lock.yaml
@@ -40,6 +40,8 @@ next-env.d.ts
 # Prisma
 # --------------------
 /generated/prisma
+frontend/src/generated/prisma
+backend/src/generated/prisma
 
 # --------------------
 # 3Dアバター関連
