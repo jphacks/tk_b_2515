@@ -83,8 +83,11 @@ export class SignalingServer {
 		console.log(
 			`[Signaling] User ${userId} (${role}) joined session ${sessionId}`,
 		);
+		console.log(
+			`[Signaling] Session ${sessionId} now has ${sessionClients.size} participants`,
+		);
 
-		// 他の参加者に新しい参加者を通知
+		// 既存の参加者に新しい参加者を通知
 		this.broadcast(
 			sessionId,
 			{
@@ -94,6 +97,24 @@ export class SignalingServer {
 			},
 			ws,
 		);
+
+		// 新しく参加した人に、既存の参加者を通知（ready message）
+		// これにより、partnerが後から参加した場合でもofferを送信できる
+		if (sessionClients.size > 1) {
+			try {
+				ws.send(
+					JSON.stringify({
+						type: "ready",
+						participantCount: sessionClients.size,
+					}),
+				);
+				console.log(
+					`[Signaling] Sent ready message to ${userId} (${role})`,
+				);
+			} catch (error) {
+				console.error("[Signaling] Error sending ready message:", error);
+			}
+		}
 
 		// メッセージハンドラー
 		ws.on("message", (data) => {

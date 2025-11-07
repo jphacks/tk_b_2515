@@ -37,6 +37,7 @@ export default function SessionRoomPage() {
 
 	const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 	const wsRef = useRef<WebSocket | null>(null);
+	const iceCandidatesQueueRef = useRef<RTCIceCandidate[]>([]);
 
 	const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 	const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -160,12 +161,31 @@ export default function SessionRoomPage() {
 				console.log("[WebRTC] Connection state:", peerConnection.connectionState);
 				if (peerConnection.connectionState === "connected") {
 					setConnectionStatus("connected");
-				} else if (
-					peerConnection.connectionState === "disconnected" ||
-					peerConnection.connectionState === "failed"
-				) {
+				} else if (peerConnection.connectionState === "disconnected") {
+					console.warn("[WebRTC] Connection disconnected");
+					setConnectionStatus("disconnected");
+				} else if (peerConnection.connectionState === "failed") {
+					console.error("[WebRTC] Connection failed");
+					setConnectionStatus("disconnected");
+				} else if (peerConnection.connectionState === "closed") {
+					console.log("[WebRTC] Connection closed");
 					setConnectionStatus("disconnected");
 				}
+			};
+
+			// ICE接続状態の監視
+			peerConnection.oniceconnectionstatechange = () => {
+				console.log("[WebRTC] ICE connection state:", peerConnection.iceConnectionState);
+				if (peerConnection.iceConnectionState === "failed") {
+					console.error("[WebRTC] ICE connection failed");
+				} else if (peerConnection.iceConnectionState === "disconnected") {
+					console.warn("[WebRTC] ICE connection disconnected");
+				}
+			};
+
+			// ICE収集状態の監視
+			peerConnection.onicegatheringstatechange = () => {
+				console.log("[WebRTC] ICE gathering state:", peerConnection.iceGatheringState);
 			};
 
 			// WebSocketシグナリングサーバーに接続
@@ -182,64 +202,108 @@ export default function SessionRoomPage() {
 				const message = JSON.parse(event.data);
 				console.log("[WebRTC] Received message:", message.type);
 
-				switch (message.type) {
-					case "user-joined":
-						// 相手が参加したらofferを送信（partnerの場合のみ）
-						if (role === "partner") {
-							console.log("[WebRTC] Creating offer...");
-							const offer = await peerConnection.createOffer();
-							await peerConnection.setLocalDescription(offer);
+				try {
+					switch (message.type) {
+						case "ready":
+							// 既に相手がいる場合、partnerならofferを送信
+							console.log("[WebRTC] Room is ready, participants:", message.participantCount);
+							if (role === "partner") {
+								console.log("[WebRTC] Creating offer as partner...");
+								const offer = await peerConnection.createOffer();
+								await peerConnection.setLocalDescription(offer);
+								ws.send(
+									JSON.stringify({
+										type: "offer",
+										offer,
+									}),
+								);
+								console.log("[WebRTC] Offer sent");
+							}
+							break;
+
+						case "user-joined":
+							// 相手が参加したらofferを送信（partnerの場合のみ）
+							console.log("[WebRTC] User joined, role:", message.role);
+							if (role === "partner") {
+								console.log("[WebRTC] Creating offer...");
+								const offer = await peerConnection.createOffer();
+								await peerConnection.setLocalDescription(offer);
+								ws.send(
+									JSON.stringify({
+										type: "offer",
+										offer,
+									}),
+								);
+								console.log("[WebRTC] Offer sent");
+							}
+							break;
+
+						case "offer": {
+							// offerを受信したらanswerを返す
+							console.log("[WebRTC] Received offer, creating answer...");
+							await peerConnection.setRemoteDescription(
+								new RTCSessionDescription(message.offer),
+							);
+
+							// バッファリングされたICE候補を追加
+							console.log("[WebRTC] Processing buffered ICE candidates:", iceCandidatesQueueRef.current.length);
+							for (const candidate of iceCandidatesQueueRef.current) {
+								await peerConnection.addIceCandidate(candidate);
+							}
+							iceCandidatesQueueRef.current = [];
+
+							const answer = await peerConnection.createAnswer();
+							await peerConnection.setLocalDescription(answer);
 							ws.send(
 								JSON.stringify({
-									type: "offer",
-									offer,
+									type: "answer",
+									answer,
 								}),
 							);
-							console.log("[WebRTC] Offer sent");
+							console.log("[WebRTC] Answer sent");
+							break;
 						}
-						break;
 
-					case "offer": {
-						// offerを受信したらanswerを返す
-						console.log("[WebRTC] Received offer, creating answer...");
-						await peerConnection.setRemoteDescription(
-							new RTCSessionDescription(message.offer),
-						);
-						const answer = await peerConnection.createAnswer();
-						await peerConnection.setLocalDescription(answer);
-						ws.send(
-							JSON.stringify({
-								type: "answer",
-								answer,
-							}),
-						);
-						console.log("[WebRTC] Answer sent");
-						break;
-					}
-
-					case "answer":
-						// answerを受信
-						console.log("[WebRTC] Received answer");
-						await peerConnection.setRemoteDescription(
-							new RTCSessionDescription(message.answer),
-						);
-						break;
-
-					case "ice-candidate":
-						// ICE候補を追加
-						if (message.candidate) {
-							console.log("[WebRTC] Adding ICE candidate");
-							await peerConnection.addIceCandidate(
-								new RTCIceCandidate(message.candidate),
+						case "answer":
+							// answerを受信
+							console.log("[WebRTC] Received answer");
+							await peerConnection.setRemoteDescription(
+								new RTCSessionDescription(message.answer),
 							);
-						}
-						break;
 
-					case "user-left":
-						// 相手が退出
-						console.log("[WebRTC] Remote user left");
-						setConnectionStatus("disconnected");
-						break;
+							// バッファリングされたICE候補を追加
+							console.log("[WebRTC] Processing buffered ICE candidates:", iceCandidatesQueueRef.current.length);
+							for (const candidate of iceCandidatesQueueRef.current) {
+								await peerConnection.addIceCandidate(candidate);
+							}
+							iceCandidatesQueueRef.current = [];
+							break;
+
+						case "ice-candidate":
+							// ICE候補を追加
+							if (message.candidate) {
+								console.log("[WebRTC] Received ICE candidate");
+								const candidate = new RTCIceCandidate(message.candidate);
+
+								// remoteDescriptionが設定されていない場合はバッファに追加
+								if (!peerConnection.remoteDescription) {
+									console.log("[WebRTC] Buffering ICE candidate (no remote description yet)");
+									iceCandidatesQueueRef.current.push(candidate);
+								} else {
+									console.log("[WebRTC] Adding ICE candidate");
+									await peerConnection.addIceCandidate(candidate);
+								}
+							}
+							break;
+
+						case "user-left":
+							// 相手が退出
+							console.log("[WebRTC] Remote user left");
+							setConnectionStatus("disconnected");
+							break;
+					}
+				} catch (error) {
+					console.error("[WebRTC] Error handling message:", error);
 				}
 			};
 
