@@ -46,8 +46,9 @@ export default function SessionRoomPage() {
 	>("connecting");
 	const [callDuration, setCallDuration] = useState(0);
 	const [userRole, setUserRole] = useState<"user" | "partner" | null>(null);
+	const [userId, setUserId] = useState<string>("");
 
-	// URLパラメータからroleを取得
+	// URLパラメータからroleを取得し、userIdを初期化
 	useEffect(() => {
 		if (typeof window !== "undefined") {
 			const params = new URLSearchParams(window.location.search);
@@ -56,10 +57,15 @@ export default function SessionRoomPage() {
 		} else {
 			setUserRole("user");
 		}
-	}, []);
 
-	const userId =
-		session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
+		// userIdを一度だけ生成（sessionがない場合）
+		if (!userId) {
+			const id = session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
+			setUserId(id);
+			console.log("[WebRTC] Generated userId:", id);
+		}
+	}, [session?.user?.id, userId]);
+
 	const role = userRole || "user";
 
 	// カメラとマイクの初期化
@@ -108,12 +114,23 @@ export default function SessionRoomPage() {
 
 	// WebRTC接続の初期化
 	useEffect(() => {
-		if (!localStream) return;
+		if (!localStream || !userId || !role) {
+			console.log("[WebRTC] Waiting for localStream, userId, and role...", {
+				localStream: !!localStream,
+				userId,
+				role
+			});
+			return;
+		}
 
 		console.log("[WebRTC] Initializing WebRTC connection...");
 		console.log("[WebRTC] User ID:", userId);
 		console.log("[WebRTC] Role:", role);
 		console.log("[WebRTC] Session ID:", sessionId);
+
+		const currentSessionId = sessionId;
+		const currentRole = role;
+		const currentUserId = userId;
 
 		const initWebRTC = async () => {
 			// RTCPeerConnection作成
@@ -189,7 +206,7 @@ export default function SessionRoomPage() {
 			};
 
 			// WebSocketシグナリングサーバーに接続
-			const wsUrl = `${SIGNALING_SERVER_URL.replace("http", "ws")}/ws/signal/${sessionId}?userId=${userId}&role=${role}`;
+			const wsUrl = `${SIGNALING_SERVER_URL.replace("http", "ws")}/ws/signal/${currentSessionId}?userId=${currentUserId}&role=${currentRole}`;
 			console.log("[WebRTC] Connecting to signaling server:", wsUrl);
 			const ws = new WebSocket(wsUrl);
 			wsRef.current = ws;
@@ -207,7 +224,7 @@ export default function SessionRoomPage() {
 						case "ready":
 							// 既に相手がいる場合、partnerならofferを送信
 							console.log("[WebRTC] Room is ready, participants:", message.participantCount);
-							if (role === "partner") {
+							if (currentRole === "partner") {
 								console.log("[WebRTC] Creating offer as partner...");
 								const offer = await peerConnection.createOffer();
 								await peerConnection.setLocalDescription(offer);
@@ -224,7 +241,7 @@ export default function SessionRoomPage() {
 						case "user-joined":
 							// 相手が参加したらofferを送信（partnerの場合のみ）
 							console.log("[WebRTC] User joined, role:", message.role);
-							if (role === "partner") {
+							if (currentRole === "partner") {
 								console.log("[WebRTC] Creating offer...");
 								const offer = await peerConnection.createOffer();
 								await peerConnection.setLocalDescription(offer);
@@ -321,6 +338,7 @@ export default function SessionRoomPage() {
 
 		return () => {
 			// クリーンアップ
+			console.log("[WebRTC] Cleaning up WebRTC connection");
 			if (wsRef.current) {
 				wsRef.current.close();
 			}
@@ -328,7 +346,7 @@ export default function SessionRoomPage() {
 				peerConnectionRef.current.close();
 			}
 		};
-	}, [localStream, sessionId, userId, role]);
+	}, [localStream, userId, role, sessionId]);
 
 	// 通話時間のカウント
 	useEffect(() => {
