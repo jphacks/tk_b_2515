@@ -8,6 +8,11 @@ generator client {
   output   = "../frontend/src/generated/prisma"
 }
 
+generator backend_client {
+  provider = "prisma-client-js"
+  output   = "../backend/src/generated/prisma"
+}
+
 model Conversation {
   id        String          @id @default(uuid())
   userId    String?         @map("user_id")

@@ -1,5 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import type { Prisma, Feedback as PrismaFeedback } from "@prisma/client";
+import type { Prisma, Feedback as PrismaFeedback } from "../../generated/prisma";
 import { prisma } from "../../lib/prisma";
 import {
   generateConversationFeedback,
