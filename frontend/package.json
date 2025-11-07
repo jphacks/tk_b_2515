@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",
