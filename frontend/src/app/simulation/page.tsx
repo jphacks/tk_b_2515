@@ -175,6 +175,7 @@ export default function SimulationPage() {
 		onLipSyncUpdate: handleLipSyncUpdate,
 		ttsVoiceId: selectedVoiceId || undefined,
 		onEmotionUpdate: setAvatarEmotion,
+		avatarId: selectedAvatar === "female" ? "maki" : selectedAvatar === "male" ? "rento" : "kouta",
 	});
 
 	// Timer management
