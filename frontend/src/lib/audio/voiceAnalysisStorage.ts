@@ -8,6 +8,7 @@ type StoredResult = {
 	strengthScore: number;
 	trembleScore: number;
 	emotionScore: number;
+	tempoScore: number;
 };
 
 type StorageShape = Record<string, StoredResult[]>;
@@ -45,6 +46,7 @@ export function appendVoiceAnalysis(
 		strengthScore: result.strengthScore,
 		trembleScore: result.trembleScore,
 		emotionScore: result.emotionScore,
+		tempoScore: result.tempoScore ?? 0,
 	};
 	if (!storage[sessionId]) {
 		storage[sessionId] = [];
@@ -67,6 +69,7 @@ export function getVoiceAnalysisSummary(sessionId: string): {
 	averageStrength: number;
 	averageTremble: number;
 	averageEmotion: number;
+	averageTempo: number;
 } | null {
 	if (typeof window === "undefined") return null;
 	const storage = readStorage();
@@ -78,8 +81,9 @@ export function getVoiceAnalysisSummary(sessionId: string): {
 			strength: acc.strength + item.strengthScore,
 			tremble: acc.tremble + item.trembleScore,
 			emotion: acc.emotion + item.emotionScore,
+			tempo: acc.tempo + (item.tempoScore ?? 0),
 		}),
-		{ strength: 0, tremble: 0, emotion: 0 },
+		{ strength: 0, tremble: 0, emotion: 0, tempo: 0 },
 	);
 
 	return {
@@ -87,5 +91,6 @@ export function getVoiceAnalysisSummary(sessionId: string): {
 		averageStrength: Number((total.strength / results.length).toFixed(2)),
 		averageTremble: Number((total.tremble / results.length).toFixed(2)),
 		averageEmotion: Number((total.emotion / results.length).toFixed(2)),
+		averageTempo: Number((total.tempo / results.length).toFixed(2)),
 	};
 }
