@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd frontend && pnpm install && pnpx prisma generate --schema=../prisma/schema.prisma && pnpm run build",
+  "buildCommand": "pnpx prisma generate --schema=./prisma/schema.prisma && cd frontend && pnpm run build",
   "outputDirectory": "frontend/.next",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
