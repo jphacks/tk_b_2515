@@ -622,7 +622,7 @@ const BACKGROUND_CONTEXT: Record<
     scenario:
       "静かな図書館。声は控えめに、落ち着いたトーンで趣味や勉強の話から始めると自然です。",
     guidelines: [
-      "落ち着いた声量・トーンで話す（静かな場に配慮）",
+      "図書館で何をしていたか、よく来るのかを尋ねる",
       "勉強・読書・授業などの話題を出す",
       "オープンな質問で相手の話を引き出す",
     ],
@@ -875,14 +875,14 @@ ${
     { id: string; label: string }[]
   > = {
     library: [
-      { id: "quiet_tone", label: "落ち着いた声量・トーン" },
+      { id: "library_visit_question", label: "図書館で何してたか、よく来るのかを尋ねる" },
       { id: "study_topic", label: "勉強・読書・授業などの話題" },
       { id: "open_question", label: "理由・好みなどを尋ねるオープン質問" },
     ],
     classroom: [
-      { id: "class_topic", label: "授業/課題/サークル話題" },
-      { id: "weekend_plan", label: "週末や放課後の軽い予定提案" },
-      { id: "follow_up_question", label: "具体的に掘るフォロー質問" },
+      { id: "class_topic", label: "授業・課題・サークルなど身近な話題を出す" },
+      { id: "weekend_plan", label: "週末や放課後の軽い予定提案/質問をする" },
+      { id: "follow_up_question", label: "相手発言に具体的な掘り下げ質問（いつ/どこ/どれくらい 等）" },
     ],
     xmas: [
       { id: "xmas_topic", label: "冬/クリスマス関連話題" },
@@ -906,8 +906,8 @@ ${
       adviceFulfilledDetails.push({ id: item.id, label: item.label, points: allocate });
       remaining -= allocate;
     }
-    const bonus = adviceFulfilledDetails.reduce((sum, i) => sum + i.points, 0);
-    adviceScoreAdded = Math.min(bonus, maxBonus);
+  const bonus = adviceFulfilledDetails.reduce((sum, i) => sum + i.points, 0);
+  adviceScoreAdded = Math.min(bonus, maxBonus);
     const unfulfilled = candidates.filter((c) => !adviceIdsCompleted.has(c.id));
     if (unfulfilled.length) {
       adviceUnfulfilled = unfulfilled.map((u) => u.label).join("\n");
@@ -922,33 +922,9 @@ ${
         improvementPointsStr = lines.join("\n");
       }
     }
-    if (conversationScore !== null && hasAnyScore && bonus > 0) {
-      const convWithBonus = clamp(conversationScore + bonus, 0, 40);
-      overallScore = clamp(
-        (convWithBonus ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0),
-        0,
-        100
-      );
-      // 返却時にスコア上書き
-      // 注意: 下のreturnで conversationScore は convWithBonus を返却する
-      return {
-        goodPoints: toText(feedback.conversation?.goodPoints ?? feedback.goodPoints),
-        improvementPoints: improvementPointsStr,
-        overallScore,
-        conversationScore: convWithBonus,
-        gestureScore,
-        voiceScore,
-        gestureGoodPoints: toText(
-          feedback.gestures?.goodPoints ?? feedback.gestureGoodPoints
-        ),
-        gestureImprovementPoints: toText(
-          feedback.gestures?.improvementPoints ?? feedback.gestureImprovementPoints
-        ),
-        voiceMetrics,
-        adviceScoreAdded,
-        adviceUnfulfilled,
-        adviceFulfilledDetails,
-      };
+    if (hasAnyScore && bonus > 0) {
+      const baseSum = (conversationScore ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0);
+      overallScore = clamp(baseSum + bonus, 0, 100); // 総合=会話+仕草+声+アドバイス
     }
   }
 

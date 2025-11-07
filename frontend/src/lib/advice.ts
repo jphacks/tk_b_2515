@@ -9,10 +9,15 @@ export type AdviceItem = {
 
 export const BACKGROUND_ADVICE: Record<BackgroundKey, AdviceItem[]> = {
   library: [
+    // 図書館らしい質問（来館頻度/何をしていたか）に変更
     {
-      id: "quiet_tone",
-      label: "落ち着いた声量・トーンで話す",
-      patterns: [/(落ち着|静か|小さめ|ひそひそ|図書館|シー)/i],
+      id: "library_visit_question",
+      label: "図書館で何してたか、よく来るのかを尋ねる",
+      patterns: [
+        /図書館.*(何して|何をして|勉強|レポート|本|調べ)/i,
+        /(よく|どのくらい|どれくらい).*図書館.*(来る|行く)/i,
+        /図書館来(た|てた|てる)/i,
+      ],
     },
     {
       id: "study_topic",
@@ -33,13 +38,13 @@ export const BACKGROUND_ADVICE: Record<BackgroundKey, AdviceItem[]> = {
     },
     {
       id: "weekend_plan",
-      label: "週末や放課後の予定を提案/質問する",
+      label: "週末や放課後の軽い予定提案/質問をする",
       patterns: [/週末|土日|放課後|今度|行かない|行こう|空いてる|予定/i],
     },
     {
       id: "follow_up_question",
-      label: "相手の発言に対して具体的に掘る質問を返す",
-      patterns: [/それって|例えば|具体的に|どれくらい|いつから|なんの|どこで/i],
+      label: "相手発言に具体的な掘り下げ質問（いつ/どこ/どれくらい 等）",
+      patterns: [/それって|例えば|具体的に|どれくらい|いつ(から|頃)|なんの|どこで|どこに/i],
     },
   ],
   xmas: [

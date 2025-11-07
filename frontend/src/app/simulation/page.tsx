@@ -187,25 +187,27 @@ export default function SimulationPage() {
 		onEmotionUpdate: setAvatarEmotion,
 		avatarId: selectedAvatar === "female" ? "maki" : selectedAvatar === "male" ? "rento" : "kouta",
 	});
-	// 最新ユーザー発話でアドバイス達成判定
+	// 最新ユーザー発話でアドバイス達成判定（state反映遅延による未達表示不安定性を解消）
 	useEffect(() => {
 		if (!messages.length) return;
 		const lastUser = [...messages].reverse().find(m => m.role === 'user');
 		if (!lastUser) return;
 		const text = lastUser.content;
 		const adviceList = BACKGROUND_ADVICE[selectedBackground];
+		const next = { ...adviceCompleted };
 		let changed = false;
-		adviceList.forEach(item => {
-			if (adviceCompleted[item.id]) return; // 既に達成
+		for (const item of adviceList) {
+			if (next[item.id]) continue;
 			if (item.patterns.some(re => re.test(text))) {
+				next[item.id] = true;
 				changed = true;
-				setAdviceCompleted(prev => ({ ...prev, [item.id]: true }));
 			}
-		});
+		}
 		if (changed) {
+			setAdviceCompleted(next);
 			try {
 				if (session?.id) {
-					localStorage.setItem(`adviceCompleted:${session.id}`, JSON.stringify({ ...adviceCompleted }));
+					localStorage.setItem(`adviceCompleted:${session.id}`, JSON.stringify(next));
 				}
 			} catch {}
 		}
@@ -595,7 +597,7 @@ export default function SimulationPage() {
 											className="h-4 w-4"
 											aria-label="アシストモードを有効化"
 										/>
-										<span className="text-foreground text-xs">アシストモード</span>
+										<span className="text-foreground text-xs whitespace-nowrap">アシストモード</span>
 									</label>
 								</div>
 							</div>
