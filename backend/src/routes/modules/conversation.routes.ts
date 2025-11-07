@@ -6,6 +6,7 @@ import {
   generateConversationResponse,
 } from "../../services/conversation";
 import { createApiRoute } from "../utils";
+import type { AvatarPersona } from "../../services/conversation";
 
 const conversation = createApiRoute();
 
@@ -112,7 +113,14 @@ conversation.openapi(generateResponseRoute, async (c) => {
       return c.json({ error: "Gemini API key not configured" }, 500);
     }
 
-  const { sessionId, userMessage, systemPrompt, avatarId, relationshipStage } = c.req.valid("json");
+    type GenerateReq = {
+      sessionId: string;
+      userMessage: string;
+      systemPrompt?: string;
+      avatarId?: string;
+      relationshipStage?: "shy" | "friendly" | "open";
+    };
+    const { sessionId, userMessage, systemPrompt, avatarId, relationshipStage } = c.req.valid("json") as GenerateReq;
 
     // Check if session exists
     const session = await prisma.conversation.findUnique({
@@ -151,10 +159,13 @@ conversation.openapi(generateResponseRoute, async (c) => {
     ];
 
     // Load avatar persona (Supabase or local fallback)
-    let avatarConfig = undefined as import("../../services/conversation").AvatarPersona | undefined;
+    let avatarConfig = undefined as AvatarPersona | undefined;
     try {
       // Local JSON fallback for now
-      const personas: import("../../services/conversation").AvatarPersona[] = (await import("../../config/avatar-personas.json", { assert: { type: "json" } }) as any).default ?? [];
+      const personasModule = (await import("../../config/avatar-personas.json", {
+        assert: { type: "json" },
+      })) as { default: AvatarPersona[] };
+      const personas: AvatarPersona[] = personasModule.default ?? [];
       const chosenId = avatarId ?? "maki";
       avatarConfig = personas.find((p) => p.id === chosenId) ?? personas[0];
     } catch (e) {
@@ -165,7 +176,7 @@ conversation.openapi(generateResponseRoute, async (c) => {
     const aiResult = await generateConversationResponse(apiKey, {
       messages: conversationHistory,
       systemPrompt,
-      relationshipStage: (relationshipStage as any) ?? undefined,
+  relationshipStage: relationshipStage ?? undefined,
       avatarConfig,
       gestureSummary: session.gestures
         ? {

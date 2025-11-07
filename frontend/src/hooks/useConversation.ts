@@ -230,7 +230,7 @@ export function useConversation(options: UseConversationOptions) {
 				return null;
 			}
 		},
-		[state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate, avatarId],
+    		[state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate, avatarId, state.messages.length],
 	);
 
 	// クリーンアップ
