@@ -1,3 +1,17 @@
+/**
+ * WebRTCビデオ通話セッションページ
+ *
+ * 1対1のビデオ通話機能を提供します。
+ * WebRTC（getUserMedia + RTCPeerConnection）を使用して、
+ * ブラウザ間で直接ビデオ・音声通信を行います。
+ *
+ * 主な機能：
+ * - カメラとマイクへのアクセス
+ * - WebSocketシグナリングサーバーを介した接続確立
+ * - ビデオ・オーディオのオン/オフ切り替え
+ * - 通話時間のカウント
+ * - 通話終了後のフィードバックページへの遷移
+ */
 "use client";
 
 import { Heart, Mic, MicOff, PhoneOff, Video, VideoOff } from "lucide-react";

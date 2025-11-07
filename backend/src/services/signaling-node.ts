@@ -1,6 +1,12 @@
 /**
  * Node.js用のWebRTCシグナリングサーバー
- * WebSocketを使用してクライアント間のシグナリングメッセージを中継
+ *
+ * WebSocketを使用してクライアント間のシグナリングメッセージを中継します。
+ * WebRTC接続を確立するために必要なoffer/answer/ICE候補の交換を管理します。
+ *
+ * @example
+ * // クライアント接続URL
+ * ws://localhost:8787/ws/signal/:sessionId?userId=user123&role=user
  */
 import type { Server } from "node:http";
 import type { IncomingMessage } from "node:http";
@@ -8,17 +14,27 @@ import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
 import type WebSocket from "ws";
 
+/**
+ * WebSocket接続のクライアント情報
+ */
 interface ClientInfo {
 	userId: string;
 	role: "partner" | "user";
 	sessionId: string;
 }
 
+/**
+ * シグナリングメッセージの型定義
+ */
 interface SignalingMessage {
 	type: string;
 	[key: string]: unknown;
 }
 
+/**
+ * WebSocketシグナリングサーバー
+ * セッションごとにクライアントを管理し、メッセージを中継します
+ */
 export class SignalingServer {
 	private wss: WebSocketServer;
 	private sessions: Map<string, Map<WebSocket, ClientInfo>>;

@@ -5,7 +5,6 @@ import {
 	AlertCircle,
 	ArrowLeft,
 	Gauge,
-	Heart,
 	Lightbulb,
 	Loader2,
 	Mic,
@@ -54,12 +53,6 @@ function describeStrength(score: number): string {
 	if (score >= 0.7) return "声が堂々としている";
 	if (score >= 0.45) return "十分な声量";
 	return "穏やかで控えめな声量";
-}
-
-function describeTremble(score: number): string {
-	if (score >= 0.65) return "やや震えが感じられる";
-	if (score <= 0.3) return "声は安定している";
-	return "わずかに揺らぎがある";
 }
 
 function describeEmotion(score: number): string {
