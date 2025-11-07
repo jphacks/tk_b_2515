@@ -68,6 +68,10 @@ export default function VRMAvatar({
 	const lastEmotionRef = useRef<
 		"neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
 	>("neutral");
+	// 直近の切替時刻と保留中の切替タイマー（短時間での連続切替によるガクつきを防止）
+	const lastSwitchTimeRef = useRef<number>(0);
+	const switchTimeoutRef = useRef<number | null>(null);
+	const latestDesiredKeyRef = useRef<string>(`${emotion}|${gesture}`);
 
 	const gestureToVrmaPath = useMemo<Record<GestureType, string>>(
 		() => ({
@@ -137,23 +141,36 @@ export default function VRMAvatar({
 			if (!mixerRef.current) return;
 			const mixer = mixerRef.current;
 			const nextAction = mixer.clipAction(clip);
-			nextAction.reset();
-			nextAction.enabled = true;
-			nextAction.clampWhenFinished = false;
-			nextAction.setLoop(THREE.LoopRepeat, Infinity);
 
 			const prev = currentActionRef.current;
 			if (prev && prev !== nextAction) {
+				// 新しいクリップに切り替え（ここでのみ reset/設定）
+				nextAction.reset();
+				nextAction.enabled = true;
+				nextAction.clampWhenFinished = false;
+				nextAction.setLoop(THREE.LoopRepeat, Infinity);
 				prev.crossFadeTo(nextAction, fadeSec, false);
 				nextAction.play();
 				currentActionRef.current = nextAction;
 			} else if (!prev) {
+				// はじめての再生
+				nextAction.reset();
+				nextAction.enabled = true;
+				nextAction.clampWhenFinished = false;
+				nextAction.setLoop(THREE.LoopRepeat, Infinity);
 				nextAction.play();
 				currentActionRef.current = nextAction;
+			} else {
+				// prev === nextAction の場合は何もしない（リセットによるガクつき防止）
 			}
 		},
 		[],
 	);
+
+	// 最新の希望状態キーを追従
+	useEffect(() => {
+		latestDesiredKeyRef.current = `${emotion}|${gesture}`;
+	}, [emotion, gesture]);
 
 	// Update VRM every frame
 	useFrame((_state, delta) => {
@@ -320,26 +337,32 @@ export default function VRMAvatar({
 		setIsReady(true);
 	}, [vrm]);
 
-	// ジェスチャーや特定感情（bashful/angry/sad）に応じた VRMA を再生
+
+	// アニメーション切替ロジック（短時間の連続切替をスロットル）
 	useEffect(() => {
 		if (!vrm || !isReady) return;
 
-		let cancelled = false;
+		// 実際の切替処理
+		const performSwitch = async (
+			emo: typeof emotion,
+			ges: typeof gesture,
+		) => {
+			// 最新の希望状態とズレていたら破棄（古い予約実行の回避）
+			if (latestDesiredKeyRef.current !== `${emo}|${ges}`) return;
 
-		(async () => {
 			// 感情優先のURL候補を作る
 			const preferredUrls: string[] = (() => {
-				if (emotion === "bashful") {
+				if (emo === "bashful") {
 					return ["/animations/bashful.vrma", gestureToVrmaPath.idle];
 				}
-				if (emotion === "angry") {
+				if (emo === "angry") {
 					return [
 						"/animations/angry.vrma",
 						"/animations/explaining.vrma",
 						gestureToVrmaPath.idle,
 					];
 				}
-				if (emotion === "sad") {
+				if (emo === "sad") {
 					return [
 						"/animations/sad.vrma",
 						gestureToVrmaPath.thinking,
@@ -348,7 +371,7 @@ export default function VRMAvatar({
 				}
 				// 通常はジェスチャーに従う
 				return [
-					gestureToVrmaPath[gesture] ?? gestureToVrmaPath.idle,
+					gestureToVrmaPath[ges] ?? gestureToVrmaPath.idle,
 					gestureToVrmaPath.idle,
 				];
 			})();
@@ -357,15 +380,10 @@ export default function VRMAvatar({
 			let chosenUrl: string | null = null;
 			let finalClip: THREE.AnimationClip | null = null;
 			for (const u of preferredUrls) {
-				if (cancelled) return;
 				// 同じURL・同じ感情なら更新不要
-				if (
-					lastPlayedUrlRef.current === u &&
-					lastEmotionRef.current === emotion
-				) {
+				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emo) {
 					return;
 				}
-				// 読み込み
 				// eslint-disable-next-line no-await-in-loop
 				const clip = await loadVrmaClip(u);
 				if (clip) {
@@ -377,9 +395,8 @@ export default function VRMAvatar({
 
 			if (!finalClip || !chosenUrl) return;
 
-			// 感情ごとにクロスフェード時間を微調整
 			const fadeSec = (() => {
-				switch (emotion) {
+				switch (emo) {
 					case "bashful":
 						return 0.4;
 					case "sad":
@@ -394,24 +411,31 @@ export default function VRMAvatar({
 						return 0.25;
 				}
 			})();
-			// すべてループ再生（継続的な動作のため）
+
 			playClip(finalClip, { fadeSec });
 			lastPlayedUrlRef.current = chosenUrl;
-			lastEmotionRef.current = emotion;
-		})();
-
-		return () => {
-			cancelled = true;
+			lastEmotionRef.current = emo;
+			lastSwitchTimeRef.current = performance.now();
 		};
-	}, [
-		gesture,
-		emotion,
-		isReady,
-		vrm,
-		gestureToVrmaPath,
-		loadVrmaClip,
-		playClip,
-	]);
+
+		const SWITCH_MIN_INTERVAL_MS = 800; // 最低インターバル（ms）
+		const now = performance.now();
+		const elapsed = now - lastSwitchTimeRef.current;
+
+		// スロットル: 前回から短すぎる場合は予約して遅延実行
+		if (elapsed < SWITCH_MIN_INTERVAL_MS) {
+			if (switchTimeoutRef.current) {
+				window.clearTimeout(switchTimeoutRef.current);
+			}
+			switchTimeoutRef.current = window.setTimeout(() => {
+				performSwitch(emotion, gesture);
+			}, SWITCH_MIN_INTERVAL_MS - elapsed);
+			return;
+		}
+
+		// すぐに切替実行
+		performSwitch(emotion, gesture);
+	}, [emotion, gesture, gestureToVrmaPath, isReady, loadVrmaClip, playClip, vrm]);
 
 	if (error) {
 		console.error("VRM load error:", error);
