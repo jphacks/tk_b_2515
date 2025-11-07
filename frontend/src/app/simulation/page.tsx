@@ -313,7 +313,6 @@ export default function SimulationPage() {
 		sendAudio,
 		clearRecording,
 		analysisResult,
-		isProcessing,
 	]);
 
 	// When a new recording starts, ensure guard is cleared
