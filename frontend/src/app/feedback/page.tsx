@@ -35,30 +35,18 @@ import {
 import { config } from "@/lib/config";
 import { getFeedbackComment } from "@/lib/feedbackComments";
 import { romajiToHiragana } from "@/lib/romajiToHiragana";
-import type { Feedback, VoiceMetrics } from "@/types/api";
+import type { Feedback } from "@/types/api";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Modal } from "../../components/ui/modal";
 
-const volumeLevelLabels: Record<VoiceMetrics["volumeLevel"], string> = {
-	energetic: "大きくてハッキリ",
-	balanced: "ちょうど良い",
-	quiet: "やや控えめ",
-};
-
-const speedLevelLabels: Record<VoiceMetrics["speedLevel"], string> = {
-	ideal: "適度な速さ",
-	slow: "ゆっくり",
-	fast: "やや速い",
-};
-
 type VoiceMetricsSectionProps = {
-	metrics?: VoiceMetrics | null;
 	liveSummary?: {
 		sampleCount: number;
 		averageStrength: number;
 		averageTremble: number;
 		averageEmotion: number;
+		averageTempo: number;
 	} | null;
 };
 
@@ -80,10 +68,47 @@ function describeEmotion(score: number): string {
 	return "落ち着いたトーンが多い";
 }
 
+function describeStrengthDetail(score: number): string {
+	if (score >= 0.7) {
+		return "声量がしっかりしていて堂々とした印象です。";
+	}
+	if (score <= 0.3) {
+		return "もう少し声量を上げると伝わりやすくなります。";
+	}
+	return "声量はちょうど良いバランスで落ち着いています。";
+}
+
+function describeEmotionDetail(score: number): string {
+	if (score >= 0.7) {
+		return "感情表現が豊かで、抑揚のある話し方が好印象です。";
+	}
+	if (score <= 0.35) {
+		return "抑揚は控えめで、冷静さや落ち着きを感じました。";
+	}
+	return "感情の起伏は適度で、自然な聞きやすさがあります。";
+}
+
+function describeTempo(score: number): string {
+	if (score >= 0.7) return "テンポはやや速め";
+	if (score >= 0.35) return "ちょうど良いテンポ";
+	return "ゆったりとしたテンポ";
+}
+
+function describeTempoDetail(score: number): string {
+	if (score >= 0.7) {
+		return "勢いがありテンポ良く話せています。適度に間を取るとさらに伝わります。";
+	}
+	if (score <= 0.35) {
+		return "テンポを少し上げると会話がよりスムーズになります。";
+	}
+	return "落ち着いたテンポで聞き取りやすく、安心感があります。";
+}
+
 function buildLiveSummaryComment(summary: {
 	averageStrength: number;
 	averageTremble: number;
 	averageEmotion: number;
+	averageTempo: number;
 }): string {
 	const remarks: string[] = [];
 
@@ -114,10 +139,35 @@ function buildLiveSummaryComment(summary: {
 	return remarks.join(" ");
 }
 
-function VoiceMetricsSection({
-	metrics,
-	liveSummary,
-}: VoiceMetricsSectionProps) {
+function VoiceMetricsSection({ liveSummary }: VoiceMetricsSectionProps) {
+	if (!liveSummary) {
+		return (
+			<Card className="p-6 border-2 space-y-3">
+				<div className="flex items-center gap-2">
+					<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+						<Mic className="w-5 h-5 text-primary" />
+					</div>
+					<div>
+						<h2 className="text-xl font-semibold text-foreground">
+							声のフィードバック
+						</h2>
+						<p className="text-sm text-muted-foreground">
+							録音直後の音声分析結果はまだありません
+						</p>
+					</div>
+				</div>
+				<p className="text-sm text-muted-foreground">
+					最新の練習で音声記録を有効にすると、ここにリアルタイム解析が表示されます。
+				</p>
+			</Card>
+		);
+	}
+
+	const volumeScore = Math.round(liveSummary.averageStrength * 100);
+	const emotionScore = Math.round(liveSummary.averageEmotion * 100);
+	const tempoScoreRaw = liveSummary.averageTempo ?? 0;
+	const tempoScore = Math.round(tempoScoreRaw * 100);
+
 	return (
 		<Card className="p-6 border-2 space-y-6">
 			<div className="flex items-center gap-2">
@@ -129,182 +179,78 @@ function VoiceMetricsSection({
 						声のフィードバック
 					</h2>
 					<p className="text-sm text-muted-foreground">
-						ボリューム・滑舌・スピードを自動評価しました
+						録音直後の音声をリアルタイムに解析した結果です
 					</p>
 				</div>
 			</div>
 
-			{!metrics && !liveSummary ? (
-				<p className="text-sm text-muted-foreground">
-					音声データが不足しているため、声の分析結果を表示できませんでした。
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 space-y-3">
+					<div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+						<Volume2 className="w-4 h-4 text-primary" />
+						声のボリューム
+					</div>
+					<div className="text-3xl font-bold text-primary">
+						{volumeScore}
+						<span className="text-base font-medium text-muted-foreground ml-1">
+							/100
+						</span>
+					</div>
+					<span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+						{describeStrength(liveSummary.averageStrength)}
+					</span>
+					<p className="text-sm text-muted-foreground">
+						{describeStrengthDetail(liveSummary.averageStrength)}
+					</p>
+				</div>
+
+				<div className="rounded-2xl border border-accent/15 bg-accent/5 p-4 space-y-3">
+					<div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+						<Activity className="w-4 h-4 text-accent" />
+						感情の抑揚
+					</div>
+					<div className="text-3xl font-bold text-accent">
+						{emotionScore}
+						<span className="text-base font-medium text-muted-foreground ml-1">
+							/100
+						</span>
+					</div>
+					<span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent">
+						{describeEmotion(liveSummary.averageEmotion)}
+					</span>
+					<p className="text-sm text-muted-foreground">
+						{describeEmotionDetail(liveSummary.averageEmotion)}
+					</p>
+				</div>
+
+				<div className="rounded-2xl border border-blue-200/60 bg-blue-50/50 p-4 space-y-3">
+					<div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+						<Gauge className="w-4 h-4 text-blue-500" />
+						話すスピード
+					</div>
+					<div className="text-3xl font-bold text-blue-600">
+						{tempoScore}
+						<span className="text-base font-medium text-muted-foreground ml-1">
+							/100
+						</span>
+					</div>
+					<span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+						{describeTempo(tempoScoreRaw)}
+					</span>
+					<p className="text-sm text-muted-foreground">
+						{describeTempoDetail(tempoScoreRaw)}
+					</p>
+				</div>
+			</div>
+
+			<div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 space-y-2">
+				<p className="text-base sm:text-lg font-semibold text-foreground leading-relaxed">
+					{buildLiveSummaryComment(liveSummary)}
 				</p>
-			) : (
-				<>
-					{metrics ? (
-						<>
-							<p className="text-sm text-muted-foreground leading-relaxed">
-								{metrics.summary}
-							</p>
-
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-								<div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 space-y-3">
-									<div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-										<Volume2 className="w-4 h-4 text-primary" />
-										声のボリューム
-									</div>
-									<div className="text-3xl font-bold text-primary">
-										{metrics.volumeScore}
-										<span className="text-base font-medium text-muted-foreground ml-1">
-											/100
-										</span>
-									</div>
-									<span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-										{volumeLevelLabels[metrics.volumeLevel]}
-									</span>
-									<p className="text-sm text-muted-foreground">
-										{metrics.volumeComment}
-									</p>
-								</div>
-
-								<div className="rounded-2xl border border-accent/15 bg-accent/5 p-4 space-y-3">
-									<div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-										<Activity className="w-4 h-4 text-accent" />
-										滑舌
-									</div>
-									<div className="text-3xl font-bold text-accent">
-										{metrics.articulationScore}
-										<span className="text-base font-medium text-muted-foreground ml-1">
-											/100
-										</span>
-									</div>
-									<span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent">
-										{metrics.articulationScore >= 80
-											? "クリア"
-											: "改善の余地あり"}
-									</span>
-									<p className="text-sm text-muted-foreground">
-										{metrics.articulationComment}
-									</p>
-								</div>
-
-								<div className="rounded-2xl border border-blue-200/60 bg-blue-50/50 p-4 space-y-3">
-									<div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-										<Gauge className="w-4 h-4 text-blue-500" />
-										話すスピード
-									</div>
-									<div className="text-3xl font-bold text-blue-600">
-										{metrics.speedScore}
-										<span className="text-base font-medium text-muted-foreground ml-1">
-											/100
-										</span>
-									</div>
-									<span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
-										{speedLevelLabels[metrics.speedLevel]}
-									</span>
-									<p className="text-sm text-muted-foreground">
-										{metrics.speedComment}
-									</p>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="rounded-2xl border border-muted/40 bg-muted/10 p-4 space-y-2">
-									<p className="text-sm font-semibold text-foreground">
-										フィラーの回数
-									</p>
-									<div className="text-2xl font-bold text-foreground">
-										{metrics.fillerWords.totalCount}
-										<span className="text-base font-medium text-muted-foreground ml-1">
-											回
-										</span>
-									</div>
-									{metrics.fillerWords.breakdown.length > 0 ? (
-										<ul className="text-sm text-muted-foreground space-y-1">
-											{metrics.fillerWords.breakdown.slice(0, 4).map((item) => (
-												<li
-													key={item.word}
-													className="flex items-center justify-between"
-												>
-													<span>{item.word}</span>
-													<span className="font-medium text-foreground">
-														{item.count}
-														<span className="text-muted-foreground text-xs ml-1">
-															回
-														</span>
-													</span>
-												</li>
-											))}
-										</ul>
-									) : (
-										<p className="text-sm text-muted-foreground">
-											「えー」「えっと」などのフィラーはほとんど見られませんでした。
-										</p>
-									)}
-								</div>
-
-								<div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 space-y-2">
-									<p className="text-sm font-semibold text-foreground">
-										声の安定性
-									</p>
-									<div className="inline-flex items-center gap-2 text-base font-semibold">
-										{metrics.tremblingDetected ? (
-											<>
-												<AlertCircle className="w-4 h-4 text-destructive" />
-												<span className="text-destructive">震えを検知</span>
-											</>
-										) : (
-											<>
-												<Heart className="w-4 h-4 text-primary" />
-												<span className="text-primary">安定しています</span>
-											</>
-										)}
-									</div>
-									<p className="text-sm text-muted-foreground">
-										{metrics.tremblingComment}
-									</p>
-								</div>
-							</div>
-						</>
-					) : null}
-
-					{liveSummary ? (
-						<div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 space-y-4">
-							<p className="text-base sm:text-lg font-semibold text-foreground leading-relaxed">
-								{buildLiveSummaryComment(liveSummary)}
-							</p>
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-muted-foreground">
-								<div>
-									<p className="font-medium text-foreground">
-										{describeStrength(liveSummary.averageStrength)}
-									</p>
-									<p className="text-xs">
-										平均スコア {Math.round(liveSummary.averageStrength * 100)} /
-										100
-									</p>
-								</div>
-								<div>
-									<p className="font-medium text-foreground">
-										{describeTremble(liveSummary.averageTremble)}
-									</p>
-									<p className="text-xs">
-										揺らぎスコア {Math.round(liveSummary.averageTremble * 100)}{" "}
-										/ 100
-									</p>
-								</div>
-								<div>
-									<p className="font-medium text-foreground">
-										{describeEmotion(liveSummary.averageEmotion)}
-									</p>
-									<p className="text-xs">
-										感情スコア {Math.round(liveSummary.averageEmotion * 100)} /
-										100
-									</p>
-								</div>
-							</div>
-						</div>
-					) : null}
-				</>
-			)}
+				<p className="text-xs text-muted-foreground">
+					分析サンプル数: {liveSummary.sampleCount} 件
+				</p>
+			</div>
 		</Card>
 	);
 }
@@ -351,6 +297,7 @@ function FeedbackContent() {
 		averageStrength: number;
 		averageTremble: number;
 		averageEmotion: number;
+		averageTempo: number;
 	} | null>(null);
 
 	// Load selected avatar from localStorage to adjust visuals/voice
@@ -494,10 +441,9 @@ function FeedbackContent() {
 	}, []);
 
 	const [selectedCategory, setSelectedCategory] = useState<
-		"gesture" | "conversation"
+		"gesture" | "conversation" | "voice"
 	>("conversation");
 
-	const voiceMetrics = feedback?.voiceMetrics ?? null;
 	useEffect(() => {
 		if (!sessionId) return;
 		const summary = getVoiceAnalysisSummary(sessionId);
@@ -546,14 +492,23 @@ function FeedbackContent() {
 	const activeGoodPoints =
 		selectedCategory === "conversation"
 			? conversationGoodPointsList
-			: gestureGoodPointsList;
+			: selectedCategory === "gesture"
+				? gestureGoodPointsList
+				: [];
 
 	const activeImprovementPoints =
 		selectedCategory === "conversation"
 			? conversationImprovementPointsList
-			: gestureImprovementPointsList;
+			: selectedCategory === "gesture"
+				? gestureImprovementPointsList
+				: [];
 
-	const categoryLabel = selectedCategory === "conversation" ? "会話" : "仕草";
+	const categoryLabelMap = {
+		conversation: "会話",
+		gesture: "仕草",
+		voice: "声",
+	} as const;
+	const categoryLabel = categoryLabelMap[selectedCategory];
 
 	// まきの音声コメントを再生
 	const playVoiceComment = useCallback(async (score: number) => {
@@ -684,7 +639,6 @@ function FeedbackContent() {
 			.slice(0, 3);
 	}, [selectedFeedback]);
 
-	const selectedVoiceMetrics = selectedFeedback?.voiceMetrics ?? null;
 
 	const scoreChartMetrics = useMemo(() => {
 		if (scoreHistory.length === 0) {
@@ -934,7 +888,7 @@ function FeedbackContent() {
 							</Card>
 
 						{/* Category Toggle */}
-						<div className="flex justify-center gap-2 sm:gap-4">
+						<div className="flex justify-center gap-2 sm:gap-4 flex-wrap">
 							<Button
 								type="button"
 								variant={
@@ -948,91 +902,100 @@ function FeedbackContent() {
 							<Button
 								type="button"
 								variant={selectedCategory === "gesture" ? "default" : "outline"}
-								className="rounded-full px-6"
+								className="rounded-full px-6 text-xs sm:text-sm"
 								onClick={() => setSelectedCategory("gesture")}
 							>
 								仕草
 							</Button>
+							<Button
+								type="button"
+								variant={selectedCategory === "voice" ? "default" : "outline"}
+								className="rounded-full px-6 text-xs sm:text-sm"
+								onClick={() => setSelectedCategory("voice")}
+							>
+								声
+							</Button>
 						</div>
 
-						{selectedCategory === "conversation" && (
-							<VoiceMetricsSection
-								metrics={voiceMetrics}
-								liveSummary={voiceLiveSummary}
-							/>
+						{selectedCategory === "voice" && (
+							<VoiceMetricsSection liveSummary={voiceLiveSummary} />
 						)}
 
 						{/* Good Points */}
-						<Card className="p-6 border-2 space-y-4">
-							<div className="flex items-center gap-2">
-								<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-									<ThumbsUp className="w-5 h-5 text-primary" />
+						{selectedCategory !== "voice" && (
+							<Card className="p-6 border-2 space-y-4">
+								<div className="flex items-center gap-2">
+									<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+										<ThumbsUp className="w-5 h-5 text-primary" />
+									</div>
+									<h2 className="text-xl font-semibold text-foreground">
+										良かった点（{categoryLabel}）
+									</h2>
 								</div>
-								<h2 className="text-xl font-semibold text-foreground">
-									良かった点（{categoryLabel}）
-								</h2>
-							</div>
-							{activeGoodPoints.length > 0 ? (
-								<ul className="space-y-3">
-									{activeGoodPoints.map((point, index) => (
-										<li
-											key={`${selectedCategory}-good-${point.substring(
-												0,
-												30,
-											)}-${index}`}
-											className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
-										>
-											<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-												{index + 1}
-											</div>
-											<p className="font-semibold text-foreground">{point}</p>
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className="text-sm text-muted-foreground">
-									{selectedCategory === "gesture"
-										? "カメラ分析データがまだありません。カメラアクセスを許可して会話すると表示されます。"
-										: "良かった点が記録されていません。"}
-								</p>
-							)}
-						</Card>
+								{activeGoodPoints.length > 0 ? (
+									<ul className="space-y-3">
+										{activeGoodPoints.map((point, index) => (
+											<li
+												key={`${selectedCategory}-good-${point.substring(
+													0,
+													30,
+												)}-${index}`}
+												className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
+											>
+												<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+													{index + 1}
+												</div>
+												<p className="font-semibold text-foreground">{point}</p>
+											</li>
+										))}
+									</ul>
+								) : (
+									<p className="text-sm text-muted-foreground">
+										{selectedCategory === "gesture"
+											? "カメラ分析データがまだありません。カメラアクセスを許可して会話すると表示されます。"
+											: "良かった点が記録されていません。"}
+									</p>
+								)}
+							</Card>
+						)}
 
 						{/* Improvement Points */}
-						<Card className="p-6 border-2 space-y-4">
-							<div className="flex items-center gap-2">
-								<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-									<Lightbulb className="w-5 h-5 text-accent" />
+						{selectedCategory !== "voice" && (
+							<Card className="p-6 border-2 space-y-4">
+								<div className="flex items-center gap-2">
+									<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+										<Lightbulb className="w-5 h-5 text-accent" />
+									</div>
+									<h2 className="text-xl font-semibold text-foreground">
+										改善点（{categoryLabel}）
+									</h2>
 								</div>
-								<h2 className="text-xl font-semibold text-foreground">
-									改善点（{categoryLabel}）
-								</h2>
-							</div>
-							{activeImprovementPoints.length > 0 ? (
-								<ul className="space-y-3">
-									{activeImprovementPoints.map((point, index) => (
-										<li
-											key={`${selectedCategory}-improve-${point.substring(
-												0,
-												30,
-											)}-${index}`}
-											className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
-										>
-											<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
-												{index + 1}
-											</div>
-											<p className="font-semibold text-foreground">{point}</p>
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className="text-sm text-muted-foreground">
-									{selectedCategory === "gesture"
-										? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
-										: "改善点が記録されていません。"}
-								</p>
-							)}
-						</Card>
+								{activeImprovementPoints.length > 0 ? (
+									<ul className="space-y-3">
+										{activeImprovementPoints.map((point, index) => (
+											<li
+												key={`${selectedCategory}-improve-${point.substring(
+													0,
+													30,
+												)}-${index}`}
+												className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
+											>
+												<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
+													{index + 1}
+												</div>
+												<p className="font-semibold text-foreground">{point}</p>
+											</li>
+										))}
+									</ul>
+								) : (
+									<p className="text-sm text-muted-foreground">
+										{selectedCategory === "gesture"
+											? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
+											: "改善点が記録されていません。"}
+									</p>
+								)}
+							</Card>
+						)}
 
 						{/* Score History */}
 						<Card className="p-4 md:p-6 border-2 space-y-4">
@@ -1348,7 +1311,7 @@ function FeedbackContent() {
 							</Card>
 
 						{/* カテゴリ切り替え */}
-						<div className="flex justify-center gap-4">
+						<div className="flex justify-center gap-4 flex-wrap">
 							<Button
 								type="button"
 								variant={
@@ -1367,99 +1330,121 @@ function FeedbackContent() {
 							>
 								仕草
 							</Button>
+							<Button
+								type="button"
+								variant={selectedCategory === "voice" ? "default" : "outline"}
+								className="rounded-full px-6 text-sm"
+								onClick={() => setSelectedCategory("voice")}
+							>
+								声
+							</Button>
 						</div>
 
-						{selectedCategory === "conversation" && (
-							<VoiceMetricsSection metrics={selectedVoiceMetrics} />
+						{selectedCategory === "voice" && (
+							<VoiceMetricsSection
+								liveSummary={
+									selectedSessionId && selectedSessionId === sessionId
+										? voiceLiveSummary
+										: null
+								}
+							/>
 						)}
 
 						{/* 良かった点 */}
-						<div className="space-y-3">
-							<div className="flex items-center gap-2">
-								<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-									<ThumbsUp className="w-5 h-5 text-primary" />
+						{selectedCategory !== "voice" && (
+							<div className="space-y-3">
+								<div className="flex items-center gap-2">
+									<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+										<ThumbsUp className="w-5 h-5 text-primary" />
+									</div>
+									<h3 className="text-lg font-semibold text-foreground">
+										良かった点（{categoryLabel}）
+									</h3>
 								</div>
-								<h3 className="text-lg font-semibold text-foreground">
-									良かった点（{categoryLabel}）
-								</h3>
-							</div>
-							{(selectedCategory === "conversation"
-								? selectedConversationGoodPoints
-								: selectedGestureGoodPoints
-							).length > 0 ? (
-								<ul className="space-y-2">
-									{(selectedCategory === "conversation"
+								{(
+									selectedCategory === "conversation"
 										? selectedConversationGoodPoints
 										: selectedGestureGoodPoints
-									).map((point, index) => (
-										<li
-											key={`modal-${selectedCategory}-good-${point.substring(
-												0,
-												30,
-											)}-${index}`}
-											className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
-										>
-											<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-												{index + 1}
-											</div>
-											<p className="font-semibold text-foreground text-sm">
-												{point}
-											</p>
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className="text-sm text-muted-foreground">
-									{selectedCategory === "gesture"
-										? "カメラ分析データがまだありません。"
-										: "良かった点が記録されていません。"}
-								</p>
-							)}
-						</div>
+								).length > 0 ? (
+									<ul className="space-y-2">
+										{(
+											selectedCategory === "conversation"
+												? selectedConversationGoodPoints
+												: selectedGestureGoodPoints
+										).map((point, index) => (
+											<li
+												key={`modal-${selectedCategory}-good-${point.substring(
+													0,
+													30,
+												)}-${index}`}
+												className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
+											>
+												<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+													{index + 1}
+												</div>
+												<p className="font-semibold text-foreground text-sm">
+													{point}
+												</p>
+											</li>
+										))}
+									</ul>
+								) : (
+									<p className="text-sm text-muted-foreground">
+										{selectedCategory === "gesture"
+											? "カメラ分析データがまだありません。"
+											: "良かった点が記録されていません。"}
+									</p>
+								)}
+							</div>
+						)}
 
 						{/* 改善点 */}
-						<div className="space-y-3">
-							<div className="flex items-center gap-2">
-								<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-									<Lightbulb className="w-5 h-5 text-accent" />
+						{selectedCategory !== "voice" && (
+							<div className="space-y-3">
+								<div className="flex items-center gap-2">
+									<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+										<Lightbulb className="w-5 h-5 text-accent" />
+									</div>
+									<h3 className="text-lg font-semibold text-foreground">
+										改善点（{categoryLabel}）
+									</h3>
 								</div>
-								<h3 className="text-lg font-semibold text-foreground">
-									改善点（{categoryLabel}）
-								</h3>
-							</div>
-							{(selectedCategory === "conversation"
-								? selectedConversationImprovementPoints
-								: selectedGestureImprovementPoints
-							).length > 0 ? (
-								<ul className="space-y-2">
-									{(selectedCategory === "conversation"
+								{(
+									selectedCategory === "conversation"
 										? selectedConversationImprovementPoints
 										: selectedGestureImprovementPoints
-									).map((point, index) => (
-										<li
-											key={`modal-${selectedCategory}-improve-${point.substring(
-												0,
-												30,
-											)}-${index}`}
-											className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
-										>
-											<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
-												{index + 1}
-											</div>
-											<p className="font-semibold text-foreground text-sm">
-												{point}
-											</p>
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className="text-sm text-muted-foreground">
-									{selectedCategory === "gesture"
-										? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
-										: "改善点が記録されていません。"}
-								</p>
-							)}
-						</div>
+								).length > 0 ? (
+									<ul className="space-y-2">
+										{(
+											selectedCategory === "conversation"
+												? selectedConversationImprovementPoints
+												: selectedGestureImprovementPoints
+										).map((point, index) => (
+											<li
+												key={`modal-${selectedCategory}-improve-${point.substring(
+													0,
+													30,
+												)}-${index}`}
+												className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
+											>
+												<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
+													{index + 1}
+												</div>
+												<p className="font-semibold text-foreground text-sm">
+													{point}
+												</p>
+											</li>
+										))}
+									</ul>
+								) : (
+									<p className="text-sm text-muted-foreground">
+										{selectedCategory === "gesture"
+											? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
+											: "改善点が記録されていません。"}
+									</p>
+								)}
+							</div>
+						)}
 
 						{/* 詳細ページへのリンク */}
 						<div className="pt-4 border-t border-border">

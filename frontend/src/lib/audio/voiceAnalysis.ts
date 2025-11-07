@@ -19,6 +19,8 @@ export interface VoiceAnalysisResult {
 	trembleScore: number;
 	emotionLabel: string;
 	emotionScore: number;
+	tempoLabel: string;
+	tempoScore: number;
 	details: VoiceAnalysisDetails;
 }
 
@@ -191,6 +193,24 @@ function computeEmotionLabel(score: number): string {
 	return "やや平坦で落ち着いた印象";
 }
 
+function computeTempoLabel(score: number): string {
+	if (score >= 0.7) return "テンポはやや速め";
+	if (score >= 0.4) return "ちょうど良いテンポ";
+	return "ゆったりとしたテンポ";
+}
+
+function estimateTempoScore(
+	pitchSummary: PitchSummary,
+	durationSeconds: number,
+): number {
+	if (!durationSeconds || durationSeconds <= 0) return 0;
+	const voicedPerSecond =
+		(pitchSummary.pitchValues.length / durationSeconds) || 0;
+	const minRate = 1.5;
+	const maxRate = 5.5;
+	return clamp01((voicedPerSecond - minRate) / (maxRate - minRate));
+}
+
 export async function analyzeVoiceFromBlob(
 	blob: Blob,
 ): Promise<VoiceAnalysisResult> {
@@ -202,22 +222,24 @@ export async function analyzeVoiceFromBlob(
 		computeRmsStats(frames);
 	const pitchSummary = computePitchSummary(frames, buffer.sampleRate);
 
-	const loudnessScore = clamp01((rmsAverage - 0.035) / 0.12);
+	const loudnessScoreRaw = clamp01((rmsAverage - 0.035) / 0.12);
+	const strengthScore = Math.max(loudnessScoreRaw, 0.3);
 	const trembleScore = clamp01(
 		Math.sqrt(rmsVariance) * 18 +
 			Math.sqrt(pitchSummary.pitchVariance || 0) / 70,
 	);
-	const emotionScore = clamp01(
-		(pitchSummary.pitchRange / 160 || 0) * 0.45 + Math.sqrt(rmsVariance) * 6,
-	);
+	const emotionScore = clamp01(16.6666666667 * rmsVariance + 0.1333333333);
+	const tempoScore = estimateTempoScore(pitchSummary, buffer.duration);
 
 	return {
-		strengthLabel: computeStrengthLabel(loudnessScore),
-		strengthScore: Number(loudnessScore.toFixed(2)),
+		strengthLabel: computeStrengthLabel(strengthScore),
+		strengthScore: Number(strengthScore.toFixed(2)),
 		trembleLabel: computeTrembleLabel(trembleScore, rmsVariance),
 		trembleScore: Number(trembleScore.toFixed(2)),
 		emotionLabel: computeEmotionLabel(emotionScore),
 		emotionScore: Number(emotionScore.toFixed(2)),
+		tempoLabel: computeTempoLabel(tempoScore),
+		tempoScore: Number(tempoScore.toFixed(2)),
 		details: {
 			rmsAverage: Number(rmsAverage.toFixed(4)),
 			rmsVariance: Number(rmsVariance.toFixed(6)),
