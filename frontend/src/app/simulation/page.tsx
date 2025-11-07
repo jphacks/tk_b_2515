@@ -72,6 +72,7 @@ export default function SimulationPage() {
 		useState<BackgroundKey>("library");
 
 	const videoStreamRef = useRef<VideoStreamRef>(null);
+	const hasSentBatchRef = useRef(false);
 	const avatarModelUrl = useMemo(() => {
 		if (selectedAvatar === "male") return "/models/rento.vrm";
 		if (selectedAvatar === "neutral") return "/models/kouta.vrm";
@@ -280,10 +281,17 @@ export default function SimulationPage() {
 
 	// Send recorded audio when recording stops
 	useEffect(() => {
-		if (audioBlobs.length === 0 || isRecording || !session || !analysisResult)
+		if (
+			audioBlobs.length === 0 ||
+			isRecording ||
+			!session ||
+			!analysisResult ||
+			hasSentBatchRef.current
+		)
 			return;
 
 		const sendRecordedAudio = async () => {
+			hasSentBatchRef.current = true; // guard duplicate sends for this batch
 			console.log("Sending recorded audio...");
 			const audioBlob = new Blob(audioBlobs, {
 				type: audioBlobs[0]?.type || "audio/webm",
@@ -291,6 +299,10 @@ export default function SimulationPage() {
 			appendVoiceAnalysis(session.id, analysisResult);
 			await sendAudio(audioBlob, analysisResult);
 			clearRecording();
+			// reset guard for next recording batch after clearing
+			setTimeout(() => {
+				hasSentBatchRef.current = false;
+			}, 0);
 		};
 
 		sendRecordedAudio();
@@ -302,6 +314,13 @@ export default function SimulationPage() {
 		clearRecording,
 		analysisResult,
 	]);
+
+	// When a new recording starts, ensure guard is cleared
+	useEffect(() => {
+		if (isRecording) {
+			hasSentBatchRef.current = false;
+		}
+	}, [isRecording]);
 
 	// 会話内容に基づくemotion更新は useConversation の onEmotionUpdate から反映
 
