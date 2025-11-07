@@ -8,7 +8,7 @@
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",
-    "postinstall": "pnpx prisma generate"
+    "postinstall": "pnpx prisma generate --schema=../prisma/schema.prisma"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.18.0",
