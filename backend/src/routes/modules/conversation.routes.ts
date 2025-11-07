@@ -6,6 +6,7 @@ import {
   generateConversationResponse,
 } from "../../services/conversation";
 import { createApiRoute } from "../utils";
+import type { AvatarPersona } from "../../services/conversation";
 
 const conversation = createApiRoute();
 
@@ -29,6 +30,12 @@ const generateResponseRoute = createRoute({
             }),
             systemPrompt: z.string().optional().openapi({
               description: "システムプロンプト（オプション）",
+            }),
+            avatarId: z.string().optional().openapi({
+              description: "使用するアバターID（maki|rento|koutaなど）",
+            }),
+            relationshipStage: z.enum(["shy", "friendly", "open"]).optional().openapi({
+              description: "親密度レベル（省略時はshy）",
             }),
           }),
         },
@@ -106,7 +113,14 @@ conversation.openapi(generateResponseRoute, async (c) => {
       return c.json({ error: "Gemini API key not configured" }, 500);
     }
 
-    const { sessionId, userMessage, systemPrompt } = c.req.valid("json");
+    type GenerateReq = {
+      sessionId: string;
+      userMessage: string;
+      systemPrompt?: string;
+      avatarId?: string;
+      relationshipStage?: "shy" | "friendly" | "open";
+    };
+    const { sessionId, userMessage, systemPrompt, avatarId, relationshipStage } = c.req.valid("json") as GenerateReq;
 
     // Check if session exists
     const session = await prisma.conversation.findUnique({
@@ -144,10 +158,26 @@ conversation.openapi(generateResponseRoute, async (c) => {
       },
     ];
 
-    // Generate AI response
+    // Load avatar persona (Supabase or local fallback)
+    let avatarConfig = undefined as AvatarPersona | undefined;
+    try {
+      // Local JSON fallback for now
+      const personasModule = (await import("../../config/avatar-personas.json", {
+        assert: { type: "json" },
+      })) as { default: AvatarPersona[] };
+      const personas: AvatarPersona[] = personasModule.default ?? [];
+      const chosenId = avatarId ?? "maki";
+      avatarConfig = personas.find((p) => p.id === chosenId) ?? personas[0];
+    } catch (e) {
+      console.warn("Failed to load avatar personas JSON:", e);
+    }
+
+    // Generate AI response with persona-aware meta prompt
     const aiResult = await generateConversationResponse(apiKey, {
       messages: conversationHistory,
       systemPrompt,
+  relationshipStage: relationshipStage ?? undefined,
+      avatarConfig,
       gestureSummary: session.gestures
         ? {
             totalSamples: session.gestures.totalSamples,

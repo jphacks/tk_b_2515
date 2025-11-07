@@ -12,6 +12,7 @@ export interface ConversationContext {
   messages: ConversationMessage[];
   systemPrompt?: string;
   relationshipStage?: "shy" | "friendly" | "open";
+  avatarConfig?: AvatarPersona; // 動的に差し込むアバター設定
   gestureSummary?: {
     totalSamples: number;
     smilingSamples: number;
@@ -25,6 +26,18 @@ export interface ConversationContext {
 }
 
 type RelationshipStage = NonNullable<ConversationContext["relationshipStage"]>;
+
+// Avatar persona schema
+export interface AvatarPersona {
+  id: string;
+  name: string;
+  persona: string;
+  hobbies: string[];
+  speakingStyle: string;
+  firstImpression: string;
+  relationshipStages: Record<"shy" | "friendly" | "open", string>;
+  fallbackEmotionBias?: Partial<Record<EmotionLabel, number>>;
+}
 
 const BASE_PROMPT_HEADER = [
   "あなたは20歳の女子大学生です。",
@@ -77,15 +90,38 @@ const RELATIONSHIP_PROMPTS: Record<RelationshipStage, string> = {
 `,
 };
 
-const buildSystemPrompt = (stage: RelationshipStage): string =>
-  [
+const buildSystemPrompt = (
+  stage: RelationshipStage,
+  avatar?: AvatarPersona,
+  relationshipStageOverride?: string
+): string => {
+  const personaBlock = avatar
+    ? [
+        "**あなたの設定**:",
+        `名前: ${avatar.name}`,
+        `性格: ${avatar.persona}`,
+        `趣味: ${avatar.hobbies.join("、")}`,
+        `話し方: ${avatar.speakingStyle}`,
+        `第一印象: ${avatar.firstImpression}`,
+        "",
+        `親密度レベル: ${relationshipStageOverride || stage}`,
+      ].join("\n")
+    : "";
+
+  const stageExpansion = avatar?.relationshipStages?.[stage]
+    ? `【アバター距離感(${stage})】\n${avatar.relationshipStages[stage]}`
+    : RELATIONSHIP_PROMPTS[stage].trim();
+
+  return [
     ...BASE_PROMPT_HEADER,
-    `あなたは ${stage} モードで話します。`,
-    "",
+    personaBlock,
     "【共通ルール】",
     COMMON_RULES,
-    RELATIONSHIP_PROMPTS[stage].trim(),
-  ].join("\n");
+    stageExpansion,
+  ]
+    .filter(Boolean)
+    .join("\n");
+};
 
 /**
  * 会話の履歴に基づいてAIの応答を生成します
@@ -180,7 +216,11 @@ export async function generateConversationResponse(
   // relationshipStage を使ったシステムプロンプト設定
   const relationshipStage: RelationshipStage =
     context.relationshipStage ?? "shy";
-  let systemPrompt = buildSystemPrompt(relationshipStage);
+  let systemPrompt = buildSystemPrompt(
+    relationshipStage,
+    context.avatarConfig,
+    context.relationshipStage
+  );
 
   // context.systemPrompt が明示的に与えられている場合はそれを優先
   if (context.systemPrompt) {
@@ -210,9 +250,16 @@ export async function generateConversationResponse(
     : "表情/視線メトリクス: データなし";
 
   // LLMへのシステム誘導: JSONで {text, emotion}
-  const instruction = `以下の入力をもとに、会話の次の応答を日本語で1-3文で生成し、同時に感情ラベルを付与してください。必ず次のJSON形式のみを出力してください（前後に解説やマークダウンを付けない）：\n{\n  "text": string,\n  "emotion": one of ["neutral", "happy", "sad", "surprised", "angry", "bashful"]\n}\n\n付与方針（重み付け）:\n- 【最重視】会話内容（特に直近のユーザー発話）: 最新>1つ前>それ以前\n- 【重視】視線(gaze)の傾向: 安定=neutral/happy寄り, 下向き多い=sad/不安寄り, 上向き多い=surprised寄り\n- 【弱め】表情(smile): 補助的なシグナルとしてのみ考慮（会話内容と視線に劣後）\n- 対立・否定・苛立ち・罵倒（例: 「ふざけんな」「最悪」「違うだろ」「やめろ」「は？」など）が含まれる場合は、sadやsurprisedではなくangryを優先して選ぶ。曖昧な時はangry寄りに判断する\n- 全体文脈も考慮しつつ、過度に感情が揺れないよう連続ターンでの急変は避ける`;
+  const emotionBiasLine = context.avatarConfig?.fallbackEmotionBias
+    ? `参考バイアス: ${Object.entries(
+        context.avatarConfig.fallbackEmotionBias
+      )
+        .map(([k, v]) => `${k}:${v}`)
+        .join(" ")}`
+    : "";
+  const instruction = `以下の入力をもとに、会話の次の応答を日本語で1-3文で生成し、同時に感情ラベルを付与してください。必ず次のJSON形式のみを出力してください（前後に解説やマークダウンを付けない）：\n{\n  "text": string,\n  "emotion": one of ["neutral", "happy", "sad", "surprised", "angry", "bashful"]\n}\n\n応答ポリシー（重要度順）:\n1) まず最初に、【直近のユーザー発話】の問い/意図に対して直接の回答を1-2文で示す（古い話題に引きずられない）\n2) 余力があれば、会話継続のための短い問いかけを「1つだけ」添える（不要なら省略可）\n3) {speakingStyle} と 親密度 {relationshipStage} に厳密に従い、自然な日本語で\n\n付与方針（感情ラベル）:\n- 【最重視】直近のユーザー発話の内容\n- 【重視】視線(gaze)傾向（補助）\n- 【弱め】表情(smile)（補助）\n- 対立・否定・苛立ち・罵倒（例: 「ふざけんな」「最悪」「違うだろ」「やめろ」「は？」など）が含まれる場合は、sad/surprisedよりangryを優先\n- 連続ターンでの急変は避ける\n${emotionBiasLine}`;
 
-  const compiledInput = `【最近のユーザー発話（新しい順）】\n${recentUserTexts
+  const compiledInput = `【直近のユーザー発話】\n${recentUserTexts.slice(-1)[0] ?? "(なし)"}\n\n【最近のユーザー発話（新しい順）】\n${recentUserTexts
     .slice()
     .reverse()
     .map((t, i) => `(${i + 1}) ${t}`)
@@ -223,8 +270,9 @@ export async function generateConversationResponse(
     .join("\n")}\n\n${gestureInfo}`;
 
   // LLMへは role/user と systemInstruction を併用
+  // LLMには「直近のユーザー発話」を明示的に入力し、会話サマリはsystemInstructionに含める
   const contents = [
-    { role: "user" as const, parts: [{ text: compiledInput }] },
+    { role: "user" as const, parts: [{ text: recentUserTexts.slice(-1)[0] ?? "" }] },
   ];
 
   // 最後のユーザーメッセージで応答を生成
@@ -240,7 +288,7 @@ export async function generateConversationResponse(
     config: {
       temperature: options?.temperature ?? 0.9,
       maxOutputTokens: options?.maxTokens ?? 150,
-      systemInstruction: `${systemPrompt}\n\n${instruction}`,
+      systemInstruction: `${systemPrompt}\n\n${instruction}\n\n【会話サマリ】\n${compiledInput}`,
     },
   });
 
