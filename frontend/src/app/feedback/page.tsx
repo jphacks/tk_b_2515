@@ -915,11 +915,10 @@ function FeedbackContent() {
 												<ThumbsUp className="w-4 h-4 text-green-600" />
 												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
 											</div>
-											<ul className="space-y-1">
+											<ul className="space-y-1 list-disc pl-5">
 												{adviceFulfilledDetails.map((d) => (
-													<li key={`advice-fulfilled-${d.id}`} className="flex justify-between text-sm">
-														<span className="text-green-900">{d.label}</span>
-														<span className="font-medium text-green-700">+{d.points}点</span>
+													<li key={`advice-fulfilled-${d.id}`} className="text-sm text-green-900">
+														{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
 													</li>
 												))}
 											</ul>
@@ -1397,11 +1396,10 @@ function FeedbackContent() {
 												<ThumbsUp className="w-4 h-4 text-green-600" />
 												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
 											</div>
-											<ul className="space-y-1">
+											<ul className="space-y-1 list-disc pl-5">
 												{selectedFeedback.adviceFulfilledDetails!.map((d) => (
-													<li key={`modal-advice-fulfilled-${d.id}`} className="flex justify-between text-sm">
-														<span className="text-green-900">{d.label}</span>
-														<span className="font-medium text-green-700">+{d.points}点</span>
+													<li key={`modal-advice-fulfilled-${d.id}`} className="text-sm text-green-900">
+														{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
 													</li>
 												))}
 											</ul>
