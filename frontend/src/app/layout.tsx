@@ -17,11 +17,11 @@ export const metadata: Metadata = {
 	title: "恋AI",
 	description:
 		"バーチャル女子大生「まき」とのリアルタイム会話で、きみのコミュ力爆上げしちゃおう!",
-	icons: {
-		icon: "/2.png",
-		shortcut: "/2.png",
-		apple: "/2.png",
-	},
+	// icons: {
+	// 	icon: "/2.png",
+	// 	shortcut: "/2.png",	//テストに引っかかってるらしい
+	// 	apple: "/2.png",
+	// },
 };
 
 export default function RootLayout({
@@ -33,6 +33,8 @@ export default function RootLayout({
 		<html lang="ja" suppressHydrationWarning>
 			<head>
 				{/* Preload VRM asset to shorten first render time */}
+				<link rel="icon" href="/renai_icon.png" />
+				<link rel="apple-touch-icon" href="/renai_icon.png" />
 				<link
 					rel="preload"
 					href="/models/maki.vrm"

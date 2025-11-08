@@ -28,7 +28,7 @@ export default function Header() {
 					aria-label="ページを更新"
 				>
 					<Image
-						src="/2.png"
+						src="/renai_icon.png"
 						alt="恋AIのアイコン"
 						fill
 						className="object-contain"

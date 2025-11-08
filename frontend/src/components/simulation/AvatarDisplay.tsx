@@ -26,6 +26,7 @@ interface AvatarDisplayProps {
 	gesture: GestureType;
 	avatarName?: string;
 	backgroundSrc?: string;
+	disableGreeting?: boolean;
 }
 
 export function AvatarDisplay({
@@ -35,6 +36,7 @@ export function AvatarDisplay({
 	gesture,
 	avatarName = "まき",
 	backgroundSrc,
+	disableGreeting,
 }: AvatarDisplayProps) {
 	return (
 		<div className="flex-1 relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl overflow-hidden border border-primary/20 shadow-2xl min-h-[480px] md:min-h-[640px] lg:min-h-[720px]">
@@ -57,6 +59,7 @@ export function AvatarDisplay({
 						emotion={emotion}
 						gesture={gesture}
 						backgroundSrc={backgroundSrc}
+						disableGreeting={disableGreeting}
 						className="w-full h-full"
 					/>
 				</Suspense>

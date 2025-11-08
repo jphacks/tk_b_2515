@@ -65,7 +65,7 @@ export default function SimulationPage() {
 	const [showControls, setShowControls] = useState(true);
 	const [avatarEmotion, setAvatarEmotion] = useState<
 		"neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"
-	>("happy");
+	>("bashful");
 	const [avatarGesture, setAvatarGesture] = useState<GestureType>("idle");
 	const [selectedAvatar, setSelectedAvatar] = useState<
 		"female" | "male" | "neutral"
@@ -654,6 +654,7 @@ useEffect(() => {
 									gesture={avatarGesture}
 									avatarName={avatarName}
 									backgroundSrc={BACKGROUNDS[selectedBackground].src}
+									disableGreeting={BACKGROUNDS[selectedBackground].label === "入学式"}
 								/>
 								{adviceAvailable && (
 									<div className="pointer-events-none absolute right-4 bottom-4 flex justify-end">
