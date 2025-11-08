@@ -2,8 +2,24 @@
 
 import { createAuthClient } from "better-auth/react";
 
+// ブラウザ環境でのbaseURLを取得
+function getBaseURL(): string {
+	// 環境変数が設定されている場合はそれを使用
+	if (process.env.NEXT_PUBLIC_APP_URL) {
+		return process.env.NEXT_PUBLIC_APP_URL;
+	}
+
+	// ブラウザ環境の場合、現在のオリジンを使用
+	if (typeof window !== "undefined") {
+		return window.location.origin;
+	}
+
+	// サーバー環境またはビルド時のフォールバック
+	return "http://localhost:3000";
+}
+
 export const authClient = createAuthClient({
-	baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+	baseURL: getBaseURL(),
 	hooks: {
 		after: [
 			{
