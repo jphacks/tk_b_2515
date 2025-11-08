@@ -40,6 +40,22 @@ export function ErrorDisplay({
 }: ErrorDisplayProps) {
 	const error = mediaError || recorderError || facialError || conversationError;
 
+	// STT関連: Unsupported language メッセージをより親しみやすく表示
+	let friendlyMessage = error?.message;
+	if (friendlyMessage) {
+		if (friendlyMessage.includes("UNSUPPORTED_LANGUAGE") || friendlyMessage.includes("日本語または英語で話してください")) {
+			friendlyMessage = "日本語か英語で話してみましょう。方言や特殊記号は認識できない場合があります。";
+		}
+		// APIキー未設定
+		if (friendlyMessage.includes("API key not configured") || friendlyMessage.includes("API_KEY_NOT_CONFIGURED")) {
+			friendlyMessage = "音声認識設定が未構成です。管理者に連絡してください。";
+		}
+		// 接続失敗
+		if (friendlyMessage.includes("バックエンドサーバーに接続できません") || friendlyMessage.includes("Failed to connect")) {
+			friendlyMessage = "サーバーに接続できません。バックエンドが起動しているか、ネットワーク/プロキシ設定を確認してください。";
+		}
+	}
+
 	if (!error) return null;
 
 	return (
@@ -49,7 +65,7 @@ export function ErrorDisplay({
 					<span className="text-lg">⚠️</span>
 					エラーが発生しました
 				</p>
-				<p className="text-sm text-center">{error.message}</p>
+				<p className="text-sm text-center">{friendlyMessage}</p>
 				{mediaError?.message.includes("拒否") && (
 					<div className="pt-2 border-t border-destructive-foreground/20">
 						<p className="text-xs text-center text-destructive-foreground/90">

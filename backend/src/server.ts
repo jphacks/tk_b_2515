@@ -24,38 +24,57 @@ const port = Number(process.env.PORT) || 8787;
  */
 const server = createServer(async (req, res) => {
 	// GET/HEAD 以外では Node.js のリクエストストリームをそのまま Fetch API に渡す
-	const hasBody = req.method
+	const isBodyAllowed = req.method
 		? !["GET", "HEAD"].includes(req.method.toUpperCase())
 		: false;
-	const request = new Request(`http://${req.headers.host}${req.url}`, {
-		method: req.method,
-		headers: req.headers as HeadersInit,
-		body: hasBody ? (req as unknown as BodyInit) : undefined,
-		// Node.js でストリームボディを送る場合は duplex の指定が必要
-		...(hasBody ? { duplex: "half" as const } : {}),
-	});
 
-	// HonoアプリケーションにリクエストをFetch APIリクエストに変換して渡す
-	const response = await app.fetch(request);
+	const handleRequest = async (bodyStream: any | undefined) => {
+		try {
+			// NodeのIncomingMessageをそのままReadableとして渡す（multipart FormData対応）
+			const requestInit: any = {
+				method: req.method,
+				headers: req.headers as HeadersInit,
+				body: isBodyAllowed ? bodyStream : undefined,
+				// Node.js固有: Readableをfetchに渡す際のduplex指定
+				...(isBodyAllowed ? { duplex: "half" as const } : {}),
+			};
 
-	// レスポンスヘッダーを設定
-	res.writeHead(response.status, Object.fromEntries(response.headers));
+			const request = new Request(
+				`http://${req.headers.host}${req.url}`,
+				requestInit,
+			);
 
-	// レスポンスボディをストリーミング
-	if (response.body) {
-		const reader = response.body.getReader();
-		const pump = async (): Promise<void> => {
-			const { done, value } = await reader.read();
-			if (done) {
+			const response = await app.fetch(request);
+
+			res.writeHead(response.status, Object.fromEntries(response.headers));
+
+			if (response.body) {
+				const reader = response.body.getReader();
+				const pump = async (): Promise<void> => {
+					const { done, value } = await reader.read();
+					if (done) {
+						res.end();
+						return;
+					}
+					res.write(value);
+					return pump();
+				};
+				await pump();
+			} else {
 				res.end();
-				return;
 			}
-			res.write(value);
-			return pump();
-		};
-		await pump();
+		} catch (e) {
+			console.error("Server request handling error:", e);
+			res.writeHead(500, { "Content-Type": "application/json" });
+			res.end(JSON.stringify({ error: "Server request handling error" }));
+		}
+	};
+
+	if (isBodyAllowed) {
+		// 直接IncomingMessageを渡せばストリーミング扱いになるため分岐なしでOK
+		handleRequest(req);
 	} else {
-		res.end();
+		handleRequest(undefined);
 	}
 });
 

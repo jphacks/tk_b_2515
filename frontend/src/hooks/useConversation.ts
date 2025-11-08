@@ -142,6 +142,15 @@ export function useConversation(options: UseConversationOptions) {
 
 				console.log("STT Result:", sttResult.text);
 
+				// Unsupported language プレースホルダーを検出したらAI呼び出しをスキップ
+				if (sttResult.text === "[UNSUPPORTED_LANGUAGE]") {
+					const unsupportedErr = new Error(
+						"日本語または英語で話してください (Detected unsupported language).",
+					);
+					setState((prev) => ({ ...prev, error: unsupportedErr, isProcessing: false }));
+					return null;
+				}
+
 				// 2. AI: テキストから応答を生成
 				const relationshipStage = state.messages.length < 7
 					? "shy"

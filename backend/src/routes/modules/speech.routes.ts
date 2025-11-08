@@ -184,65 +184,105 @@ speech.openapi(getVoiceByIdRoute, async (c) => {
 });
 
 // Speech-to-text endpoint
+// 統一されたエラー応答ヘルパー
+function sttError(c: any, status: number, code: string, message: string, details?: string) {
+	return c.json(
+		{
+			error: message,
+			code,
+			details: process.env.NODE_ENV === "development" ? details : undefined,
+		},
+		status,
+	);
+}
+
 speech.post("/stt", async (c) => {
 	try {
 		const apiKey = process.env.ELEVENLABS_API_KEY;
 		if (!apiKey) {
 			console.error("STT Error: ELEVENLABS_API_KEY is not configured");
-			return c.json({ error: "API key not configured" }, 500);
+			return sttError(c, 500, "API_KEY_NOT_CONFIGURED", "API key not configured");
 		}
 
-		const body = await c.req.parseBody();
-		const audioFile = body.audio;
-		const voiceId = body.voiceId as string | undefined;
+		let audioFile: File | undefined;
+		let voiceId: string | undefined;
+
+		// まずFormDataとしての解析を試みる（multipart対応）
+		try {
+			const formData = await c.req.formData();
+			const audioEntry = formData.get("audio");
+			// Node環境ではFile型が無いことがあるため duck-typing で判定
+			if (
+				audioEntry &&
+				typeof (audioEntry as any) === "object" &&
+				typeof (audioEntry as any).arrayBuffer === "function"
+			) {
+				audioFile = audioEntry as unknown as File; // Blob互換として利用
+			}
+			const voiceIdEntry = formData.get("voiceId");
+			if (typeof voiceIdEntry === "string") {
+				voiceId = voiceIdEntry;
+			}
+		} catch (formErr) {
+			console.warn("FormData parse failed, fallback to parseBody", formErr);
+			try {
+				const body = await c.req.parseBody();
+				if (
+					body &&
+					typeof body.audio === "object" &&
+					body.audio !== null &&
+					typeof (body.audio as any).arrayBuffer === "function"
+				) {
+					audioFile = body.audio as unknown as File;
+				}
+				if (typeof body.voiceId === "string") {
+					voiceId = body.voiceId as string;
+				}
+			} catch (bodyErr) {
+				console.error("Both FormData and parseBody failed", bodyErr);
+				return sttError(c, 400, "BODY_PARSE_FAILED", "Failed to parse request body", bodyErr instanceof Error ? bodyErr.message : String(bodyErr));
+			}
+		}
 
 		console.log("STT Request received:", {
 			hasAudio: !!audioFile,
-			audioType: audioFile instanceof File ? audioFile.type : typeof audioFile,
-			audioSize: audioFile instanceof File ? audioFile.size : 0,
+			audioType: audioFile?.type,
+			audioSize: audioFile?.size,
 			voiceId: voiceId || "none",
 		});
 
-		if (!audioFile || !(audioFile instanceof File)) {
-			console.error("STT Error: Invalid audio file", {
-				audioFile: typeof audioFile,
-			});
-			return c.json({ error: "Audio file is required" }, 400);
+		if (!audioFile) {
+			return sttError(c, 400, "AUDIO_FILE_MISSING", "Audio file is required");
 		}
 
 		if (voiceId) {
-			// Get voice info along with transcription
 			console.log("Calling speechToTextWithVoice with voiceId:", voiceId);
 			const result = await speechToTextWithVoice(apiKey, audioFile, voiceId);
 			console.log("STT Success:", {
 				textLength: result.text.length,
 				hasVoice: !!result.voice,
 			});
+			if (result.text === "[UNSUPPORTED_LANGUAGE]") {
+				return sttError(c, 422, "UNSUPPORTED_LANGUAGE", "日本語か英語で話してください。", "Detected unsupported language");
+			}
 			return c.json(result);
 		}
-		// Simple STT without voiceId
+
 		console.log("Calling speechToText without voiceId");
 		const text = await speechToText(apiKey, audioFile);
 		console.log("STT Success:", { textLength: text.length });
+		if (text === "[UNSUPPORTED_LANGUAGE]") {
+			return sttError(c, 422, "UNSUPPORTED_LANGUAGE", "日本語か英語で話してください。", "Detected unsupported language");
+		}
 		return c.json({ text });
 	} catch (error) {
-		// Detailed error logging
 		console.error("Error in STT - Full details:", {
 			error: error instanceof Error ? error.message : String(error),
 			stack: error instanceof Error ? error.stack : undefined,
 			type: error instanceof Error ? error.constructor.name : typeof error,
 		});
-
-		const errorMessage =
-			error instanceof Error ? error.message : "Unknown error";
-		return c.json(
-			{
-				error: "Failed to process speech-to-text",
-				details:
-					process.env.NODE_ENV === "development" ? errorMessage : undefined,
-			},
-			500,
-		);
+		const errorMessage = error instanceof Error ? error.message : "Unknown error";
+		return sttError(c, 500, "STT_INTERNAL_ERROR", "Failed to process speech-to-text", errorMessage);
 	}
 });
 
