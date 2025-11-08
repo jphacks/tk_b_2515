@@ -44,6 +44,7 @@ interface VRMAvatarProps {
 	lipSyncValue?: number; // 0.0 to 1.0
 	emotion?: "neutral" | "happy" | "sad" | "surprised" | "angry" | "bashful"; // 感情
 	gesture?: GestureType; // ジェスチャー
+	disableGreeting?: boolean; // 入学式などで挨拶アニメを再生しない
 }
 
 export default function VRMAvatar({
@@ -51,6 +52,7 @@ export default function VRMAvatar({
 	lipSyncValue = 0,
 	emotion = "neutral",
 	gesture = "idle",
+	disableGreeting = false,
 }: VRMAvatarProps) {
 	const { vrm, loading, error } = useVRM(modelUrl);
 	const groupRef = useRef<THREE.Group>(null);
@@ -133,6 +135,9 @@ export default function VRMAvatar({
 
 	// happy 時一度だけ peace を再生するフラグ
 	const peacePlayedThisHappyRef = useRef(false);
+	// 会話開始（このコンポーネントの初期表示）時に greet を一度だけ再生するフラグ（入学式以外）
+	const greetPlayedRef = useRef(false);
+	// 入学式（library）では挨拶アニメを再生しないため背景キーを受け取れるようにする
 
 	// 指定クリップをクロスフェードで再生
 	const playClip = useCallback(
@@ -204,9 +209,18 @@ export default function VRMAvatar({
 	useEffect(() => {
 		if (!vrm || !vrm.expressionManager) return;
 		// isBlinkingがtrueの時だけまばたき、falseの時は目を完全に開ける
-		vrm.expressionManager.setValue("blink", isBlinking ? 1.0 : 0.0);
-		vrm.expressionManager.setValue("blinkLeft", isBlinking ? 1.0 : 0.0);
-		vrm.expressionManager.setValue("blinkRight", isBlinking ? 1.0 : 0.0);
+		// わずかに開眼を保つため blink を低めに設定（薄目防止）
+		const blinkValue = isBlinking ? 1.0 : 0.0;
+		vrm.expressionManager.setValue("blink", blinkValue);
+		vrm.expressionManager.setValue("blinkLeft", blinkValue);
+		vrm.expressionManager.setValue("blinkRight", blinkValue);
+		// 目が細くなる表情が初期状態で残りにくいよう補助的に eyeClosed 系があれば 0 に（存在しないモデルもある）
+		try {
+			vrm.expressionManager.setValue("eyeClosed", 0);
+			vrm.expressionManager.setValue("eyeSquint", 0);
+		} catch {
+			// オプショナル
+		}
 	}, [vrm, isBlinking]);
 
 	// Apply lip sync（ベース開きを抑え、リップシンク値のみ反映）
@@ -252,8 +266,8 @@ export default function VRMAvatar({
 				vrm.expressionManager.setValue("angry", 0.7);
 				break;
 			case "bashful":
-				// 恥ずかしがりのときは控えめな笑顔に
-				vrm.expressionManager.setValue("happy", 0.6);
+				// 恥ずかしがりのときは控えめな笑顔に（目が細くなりすぎない程度）
+				vrm.expressionManager.setValue("happy", 0.4);
 				break;
 			default:
 				// neutral: relaxed を入れない
@@ -361,15 +375,37 @@ export default function VRMAvatar({
 	useEffect(() => {
 		if (!vrm || !isReady) return;
 
-		// 実際の切替処理
-		const performSwitch = async (
-			emo: typeof emotion,
-			ges: typeof gesture,
-		) => {
-			// 最新の希望状態とズレていたら破棄（古い予約実行の回避）
+		const performSwitch = async (emo: typeof emotion, ges: typeof gesture) => {
 			if (latestDesiredKeyRef.current !== `${emo}|${ges}`) return;
 
-			// happy になった直後は peace を一度だけ再生
+			// greet（挨拶）: 入学式以外で最初の一度だけ
+			if (!disableGreeting && !greetPlayedRef.current) {
+				const greetUrl = "/animations/greet.vrma";
+				const greetClip = await loadVrmaClip(greetUrl);
+				if (greetClip && mixerRef.current) {
+					const mixer = mixerRef.current;
+					if (currentActionRef.current) currentActionRef.current.stop();
+					const action = mixer.clipAction(greetClip);
+					action.reset();
+					action.enabled = true;
+					action.clampWhenFinished = true;
+					action.setLoop(THREE.LoopOnce, 1);
+					action.play();
+					currentActionRef.current = action;
+					lastPlayedUrlRef.current = greetUrl;
+					lastEmotionRef.current = emo;
+					lastSwitchTimeRef.current = performance.now();
+					greetPlayedRef.current = true;
+					const onFinished = () => {
+						mixer.removeEventListener("finished", onFinished);
+						void performSwitch(emo, ges);
+					};
+					mixer.addEventListener("finished", onFinished);
+					return;
+				}
+			}
+
+			// happy 直後の peace 一度再生
 			if (emo === "happy" && !peacePlayedThisHappyRef.current) {
 				const peaceClip = await loadVrmaClip(gestureToVrmaPath.peace);
 				if (peaceClip && mixerRef.current) {
@@ -386,10 +422,8 @@ export default function VRMAvatar({
 					lastEmotionRef.current = emo;
 					lastSwitchTimeRef.current = performance.now();
 					peacePlayedThisHappyRef.current = true;
-
 					const onFinished = () => {
 						mixer.removeEventListener("finished", onFinished);
-						// 再度通常の切り替えに戻る
 						void performSwitch(emo, ges);
 					};
 					mixer.addEventListener("finished", onFinished);
@@ -397,65 +431,32 @@ export default function VRMAvatar({
 				}
 			}
 
-			// 感情優先のURL候補を作る
+			// URL候補
 			const preferredUrls: string[] = (() => {
-				if (emo === "bashful") {
-					return ["/animations/bashful.vrma", gestureToVrmaPath.idle];
-				}
-				if (emo === "angry") {
-					return [
-						"/animations/angry.vrma",
-						gestureToVrmaPath.nodding,
-						gestureToVrmaPath.idle,
-					];
-				}
-				if (emo === "sad") {
-					return [
-						"/animations/sad.vrma",
-						gestureToVrmaPath.thinking,
-						gestureToVrmaPath.idle,
-					];
-				}
-				// 通常はジェスチャーに従う
-				return [
-					gestureToVrmaPath[ges] ?? gestureToVrmaPath.idle,
-					gestureToVrmaPath.idle,
-				];
+				if (emo === "bashful") return ["/animations/bashful.vrma", gestureToVrmaPath.idle];
+				if (emo === "angry") return ["/animations/angry.vrma", gestureToVrmaPath.nodding, gestureToVrmaPath.idle];
+				if (emo === "sad") return ["/animations/sad.vrma", gestureToVrmaPath.thinking, gestureToVrmaPath.idle];
+				return [gestureToVrmaPath[ges] ?? gestureToVrmaPath.idle, gestureToVrmaPath.idle];
 			})();
 
-			// 候補を順番に試す
 			let chosenUrl: string | null = null;
 			let finalClip: THREE.AnimationClip | null = null;
 			for (const u of preferredUrls) {
-				// 同じURL・同じ感情なら更新不要
-				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emo) {
-					return;
-				}
+				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emo) return; // 変更不要
 				// eslint-disable-next-line no-await-in-loop
 				const clip = await loadVrmaClip(u);
-				if (clip) {
-					chosenUrl = u;
-					finalClip = clip;
-					break;
-				}
+				if (clip) { chosenUrl = u; finalClip = clip; break; }
 			}
-
 			if (!finalClip || !chosenUrl) return;
 
 			const fadeSec = (() => {
 				switch (emo) {
-					case "bashful":
-						return 0.4;
-					case "sad":
-						return 0.35;
-					case "happy":
-						return 0.3;
-					case "angry":
-						return 0.2;
-					case "surprised":
-						return 0.15;
-					default:
-						return 0.25;
+					case "bashful": return 0.4;
+					case "sad": return 0.35;
+					case "happy": return 0.3;
+					case "angry": return 0.2;
+					case "surprised": return 0.15;
+					default: return 0.25;
 				}
 			})();
 
@@ -482,7 +483,7 @@ export default function VRMAvatar({
 
 		// すぐに切替実行
 		performSwitch(emotion, gesture);
-	}, [emotion, gesture, gestureToVrmaPath, isReady, loadVrmaClip, playClip, vrm]);
+	}, [emotion, gesture, gestureToVrmaPath, isReady, loadVrmaClip, playClip, vrm, disableGreeting]);
 
 	if (error) {
 		console.error("VRM load error:", error);

@@ -15,6 +15,7 @@ interface ConversationAvatarProps {
 	gesture?: GestureType;
 	className?: string;
 	backgroundSrc?: string;
+	disableGreeting?: boolean;
 }
 
 /**
@@ -43,7 +44,8 @@ export default function ConversationAvatar({
 	emotion = "neutral",
 	gesture = "idle",
 	className = "",
- 	backgroundSrc = "/uec_library.jpg",
+	backgroundSrc = "/uec_library.jpg",
+	disableGreeting = false,
 }: ConversationAvatarProps) {
 	return (
 		<div className={`relative ${className}`}>
@@ -64,6 +66,7 @@ export default function ConversationAvatar({
 						lipSyncValue={lipSyncValue}
 						emotion={emotion}
 						gesture={gesture}
+						disableGreeting={disableGreeting || backgroundSrc?.includes("springschool")}
 					/>
 				</Suspense>
 				<OrbitControls
