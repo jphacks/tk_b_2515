@@ -133,14 +133,23 @@ export default function TestCallPage() {
 						</div>
 					</div>
 
-					<div className="flex flex-col gap-2 pt-2">
-						<Button onClick={joinAsUser} size="lg" className="w-full">
-							<Video className="w-5 h-5 mr-2" />ユーザーとして参加
-						</Button>
-						<Button onClick={joinAsPartner} variant="outline" size="lg" className="w-full">
-							<Video className="w-5 h-5 mr-2" />パートナーとして参加（新しいウィンドウ）
-						</Button>
-					</div>
+						<div className="space-y-3 pt-4">
+							<h3 className="font-semibold text-foreground">テスト方法:</h3>
+
+							<div className="space-y-2">
+								<p className="text-sm text-muted-foreground">
+									<strong>推奨方法:</strong>
+								</p>
+								<ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1 ml-2">
+									<li>「ユーザーとして参加」をクリック</li>
+									<li>
+										「パートナーとして参加」をクリック（新しいウィンドウが開く）
+									</li>
+									<li>両方のウィンドウでカメラ・マイクを許可</li>
+									<li>パートナー側がofferを送信し、接続が確立されます</li>
+								</ol>
+							</div>
+						</div>
 
 					<Card className="p-4 border border-primary/30 bg-primary/5 space-y-3">
 						<h4 className="text-sm font-semibold flex items-center gap-2">

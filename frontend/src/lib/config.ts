@@ -3,7 +3,9 @@
 export const config = {
 	// API設定
 	api: {
-		baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787",
+		baseUrl:
+			process.env.NEXT_PUBLIC_API_URL ||
+			"https://renai-backend.renai-back.workers.dev",
 	},
 
 	// TTS設定

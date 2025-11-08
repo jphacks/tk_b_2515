@@ -30,13 +30,19 @@ sessions.post("/", async (c) => {
 			try {
 				const { data, error } = await supabase.auth.signInAnonymously();
 				if (error) {
-					console.warn("[Session] Anonymous sign-in failed, proceeding without userId:", error.message);
+					console.warn(
+						"[Session] Anonymous sign-in failed, proceeding without userId:",
+						error.message,
+					);
 				} else {
 					userId = data.user?.id || undefined;
 					console.log("[Session] Created anonymous user:", userId);
 				}
 			} catch (authErr) {
-				console.warn("[Session] Anonymous auth threw exception, proceeding without userId:", authErr);
+				console.warn(
+					"[Session] Anonymous auth threw exception, proceeding without userId:",
+					authErr,
+				);
 			}
 		}
 
@@ -47,7 +53,11 @@ sessions.post("/", async (c) => {
 
 		return c.json({ session }, 201);
 	} catch (error) {
-		console.error("Failed to create session:", error);
+		console.error("[Session] Failed to create session:", error);
+		console.error("[Session] Error details:", {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		});
 		return c.json({ error: "Failed to create session" }, 500);
 	}
 });
@@ -67,7 +77,11 @@ sessions.get("/", async (c) => {
 		});
 		return c.json({ sessions });
 	} catch (error) {
-		console.error("Failed to fetch sessions:", error);
+		console.error("[Session] Failed to fetch sessions:", error);
+		console.error("[Session] Error details:", {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		});
 		return c.json({ error: "Failed to fetch sessions" }, 500);
 	}
 });
@@ -92,7 +106,11 @@ sessions.get("/:sessionId", async (c) => {
 
 		return c.json({ session });
 	} catch (error) {
-		console.error("Failed to fetch session:", error);
+		console.error("[Session] Failed to fetch session:", error);
+		console.error("[Session] Error details:", {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		});
 		return c.json({ error: "Failed to fetch session" }, 500);
 	}
 });
@@ -110,7 +128,11 @@ sessions.patch("/:sessionId/finish", async (c) => {
 		});
 		return c.json({ session });
 	} catch (error) {
-		console.error("Failed to finish session:", error);
+		console.error("[Session] Failed to finish session:", error);
+		console.error("[Session] Error details:", {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		});
 		return c.json({ error: "Failed to finish session" }, 500);
 	}
 });
@@ -162,7 +184,11 @@ sessions.post("/:sessionId/gestures", async (c) => {
 
 		return c.json({ metrics });
 	} catch (error) {
-		console.error("Failed to save gesture metrics:", error);
+		console.error("[Session] Failed to save gesture metrics:", error);
+		console.error("[Session] Error details:", {
+			message: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+		});
 		return c.json({ error: "Failed to save gesture metrics" }, 500);
 	}
 });

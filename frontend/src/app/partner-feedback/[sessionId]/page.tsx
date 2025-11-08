@@ -56,9 +56,9 @@ export default function PartnerFeedbackPage() {
 	const [session, setSession] = useState<PartnerSession | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [selectedCategory, setSelectedCategory] = useState<
-		"ai" | "partner"
-	>("ai");
+	const [selectedCategory, setSelectedCategory] = useState<"ai" | "partner">(
+		"ai",
+	);
 
 	useEffect(() => {
 		const fetchFeedback = async () => {
@@ -147,9 +147,7 @@ export default function PartnerFeedbackPage() {
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center space-y-4">
 					<Loader2 className="w-16 h-16 text-primary animate-spin mx-auto" />
-					<p className="text-muted-foreground">
-						フィードバックを読み込み中...
-					</p>
+					<p className="text-muted-foreground">フィードバックを読み込み中...</p>
 				</div>
 			</div>
 		);
@@ -265,8 +263,7 @@ export default function PartnerFeedbackPage() {
 									{feedback.aiOverallScore >= 60 &&
 										feedback.aiOverallScore < 80 &&
 										"良い会話ができました！"}
-									{feedback.aiOverallScore < 60 &&
-										"次回はもっと良くなります！"}
+									{feedback.aiOverallScore < 60 && "次回はもっと良くなります！"}
 								</p>
 							</div>
 						</Card>
@@ -285,9 +282,7 @@ export default function PartnerFeedbackPage() {
 						{feedback?.partnerRating && (
 							<Button
 								type="button"
-								variant={
-									selectedCategory === "partner" ? "default" : "outline"
-								}
+								variant={selectedCategory === "partner" ? "default" : "outline"}
 								className="rounded-full px-4 sm:px-6 text-xs sm:text-sm"
 								onClick={() => setSelectedCategory("partner")}
 							>

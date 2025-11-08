@@ -72,7 +72,9 @@ export interface Feedback {
 	voiceScore?: number | null;
 	adviceScoreAdded?: number | null; // アドバイス達成による加点
 	adviceUnfulfilled?: string | null; // 未達成アドバイス一覧（改行区切り）
-	adviceFulfilledDetails?: { id: string; label: string; points: number }[] | null; // 達成アドバイス詳細（実際に加点されたポイント）
+	adviceFulfilledDetails?:
+		| { id: string; label: string; points: number }[]
+		| null; // 達成アドバイス詳細（実際に加点されたポイント）
 	conversationId: string;
 	createdAt: string;
 	updatedAt: string;

@@ -370,12 +370,13 @@ export default function VRMAvatar({
 		setIsReady(true);
 	}, [vrm]);
 
-
 	// アニメーション切替ロジック（短時間の連続切替をスロットル）
 	useEffect(() => {
 		if (!vrm || !isReady) return;
 
+		// 実際の切替処理
 		const performSwitch = async (emo: typeof emotion, ges: typeof gesture) => {
+			// 最新の希望状態とズレていたら破棄（古い予約実行の回避）
 			if (latestDesiredKeyRef.current !== `${emo}|${ges}`) return;
 
 			// greet（挨拶）: 入学式以外で最初の一度だけ
@@ -483,7 +484,15 @@ export default function VRMAvatar({
 
 		// すぐに切替実行
 		performSwitch(emotion, gesture);
-	}, [emotion, gesture, gestureToVrmaPath, isReady, loadVrmaClip, playClip, vrm, disableGreeting]);
+	}, [
+		emotion,
+		gesture,
+		gestureToVrmaPath,
+		isReady,
+		loadVrmaClip,
+		playClip,
+		vrm,
+	]);
 
 	if (error) {
 		console.error("VRM load error:", error);

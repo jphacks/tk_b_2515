@@ -73,7 +73,9 @@ export default function SimulationPage() {
 	const [selectedBackground, setSelectedBackground] =
 		useState<BackgroundKey>("library");
 	const [assistMode, setAssistMode] = useState<boolean>(true);
-	const [adviceCompleted, setAdviceCompleted] = useState<Record<string, boolean>>({});
+	const [adviceCompleted, setAdviceCompleted] = useState<
+		Record<string, boolean>
+	>({});
 	const [showAdvicePanel, setShowAdvicePanel] = useState(false);
 
 	const videoStreamRef = useRef<VideoStreamRef>(null);
@@ -197,12 +199,17 @@ export default function SimulationPage() {
 		onLipSyncUpdate: handleLipSyncUpdate,
 		ttsVoiceId: selectedVoiceId || undefined,
 		onEmotionUpdate: setAvatarEmotion,
-		avatarId: selectedAvatar === "female" ? "maki" : selectedAvatar === "male" ? "rento" : "kouta",
+		avatarId:
+			selectedAvatar === "female"
+				? "maki"
+				: selectedAvatar === "male"
+					? "rento"
+					: "kouta",
 	});
 	// 最新ユーザー発話でアドバイス達成判定（state反映遅延による未達表示不安定性を解消）
 	useEffect(() => {
 		if (!messages.length) return;
-		const lastUser = [...messages].reverse().find(m => m.role === 'user');
+		const lastUser = [...messages].reverse().find((m) => m.role === "user");
 		if (!lastUser) return;
 		const text = lastUser.content;
 		const adviceList = BACKGROUND_ADVICE[selectedBackground];
@@ -210,7 +217,7 @@ export default function SimulationPage() {
 		let changed = false;
 		for (const item of adviceList) {
 			if (next[item.id]) continue;
-			if (item.patterns.some(re => re.test(text))) {
+			if (item.patterns.some((re) => re.test(text))) {
 				next[item.id] = true;
 				changed = true;
 			}
@@ -219,7 +226,10 @@ export default function SimulationPage() {
 			setAdviceCompleted(next);
 			try {
 				if (session?.id) {
-					localStorage.setItem(`adviceCompleted:${session.id}`, JSON.stringify(next));
+					localStorage.setItem(
+						`adviceCompleted:${session.id}`,
+						JSON.stringify(next),
+					);
 				}
 			} catch {}
 		}
@@ -238,10 +248,10 @@ export default function SimulationPage() {
 	}, [session?.id]);
 
 	// 背景変更時にアドバイス進捗リセット
-useEffect(() => {
-	setAdviceCompleted({});
-	void selectedBackground;
-}, [selectedBackground]);
+	useEffect(() => {
+		setAdviceCompleted({});
+		void selectedBackground;
+	}, [selectedBackground]);
 
 	useEffect(() => {
 		if (!adviceAvailable) {
@@ -404,7 +414,8 @@ useEffect(() => {
 			setAvatarGesture("talking");
 		} else {
 			const gestures: GestureType[] = ["idle", "idle", "idle"];
-			const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+			const randomGesture =
+				gestures[Math.floor(Math.random() * gestures.length)];
 			setAvatarGesture(randomGesture);
 		}
 	}, [isRecording, isProcessing, lipSyncValue]);
@@ -601,8 +612,12 @@ useEffect(() => {
 								</div>
 								{/* Assist Mode Toggle (下段表示) */}
 								<div className="mt-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-lg p-3">
-									<p className="font-semibold text-foreground mb-1">モード選択</p>
-									<p className="mb-2 leading-relaxed">アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。</p>
+									<p className="font-semibold text-foreground mb-1">
+										モード選択
+									</p>
+									<p className="mb-2 leading-relaxed">
+										アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。
+									</p>
 									<div className="flex items-center gap-2">
 										<label className="inline-flex items-center gap-2 cursor-pointer select-none">
 											<input
@@ -612,7 +627,9 @@ useEffect(() => {
 												className="h-4 w-4"
 												aria-label="アシストモードを有効化"
 											/>
-											<span className="text-foreground text-xs sm:text-sm font-medium whitespace-nowrap">アシストモード</span>
+											<span className="text-foreground text-xs sm:text-sm font-medium whitespace-nowrap">
+												アシストモード
+											</span>
 										</label>
 									</div>
 								</div>
