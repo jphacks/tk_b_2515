@@ -29,7 +29,7 @@ import { config } from "@/lib/config";
 import { logMediaRecorderSupport } from "@/lib/mediaRecorderSupport";
 import { romajiToHiragana } from "@/lib/romajiToHiragana";
 
-type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
+type GestureType = "idle" | "thinking" | "talking" | "peace" | "nodding";
 
 type BackgroundKey = "library" | "classroom" | "xmas";
 
@@ -403,9 +403,8 @@ useEffect(() => {
 		} else if (lipSyncValue > 0.1) {
 			setAvatarGesture("talking");
 		} else {
-			const gestures: GestureType[] = ["idle", "idle", "idle", "explaining"];
-			const randomGesture =
-				gestures[Math.floor(Math.random() * gestures.length)];
+			const gestures: GestureType[] = ["idle", "idle", "idle"];
+			const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
 			setAvatarGesture(randomGesture);
 		}
 	}, [isRecording, isProcessing, lipSyncValue]);

@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import * as THREE from "three";
 import VRMAvatar from "./VRMAvatar";
 
-type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
+type GestureType = "idle" | "thinking" | "talking" | "peace" | "nodding";
 
 interface ConversationAvatarProps {
 	modelUrl: string;
