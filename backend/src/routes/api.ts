@@ -7,10 +7,8 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
 // ルートモジュールのインポート
-import agoraRoutes from "./modules/agora.routes";
 import authRoutes from "./modules/auth.routes";
 import conversationRoutes from "./modules/conversation.routes";
-import debugRoutes from "./modules/debug.routes";
 import feedbackRoutes from "./modules/feedback.routes";
 import messagesRoutes from "./modules/messages.routes";
 import partnersRoutes from "./modules/partners.routes";
@@ -57,10 +55,8 @@ api.openapi(healthRoute, (c) => {
  * - /conversation: AI会話生成とフィードバック
  * - /speech: STT/TTS機能
  * - /partners: パートナー管理
- * - /agora: Agora RTC token generation
  */
 [
-	{ basePath: "/agora", router: agoraRoutes },
 	{ basePath: "/auth", router: authRoutes },
 	{ basePath: "/sessions", router: sessionsRoutes },
 	{ basePath: "/sessions", router: messagesRoutes },
@@ -68,7 +64,6 @@ api.openapi(healthRoute, (c) => {
 	{ basePath: "/conversation", router: conversationRoutes },
 	{ basePath: "/", router: speechRoutes },
 	{ basePath: "/partners", router: partnersRoutes },
-	{ basePath: "/", router: debugRoutes },
 ].forEach(({ basePath, router }) => {
 	api.route(basePath, router);
 });

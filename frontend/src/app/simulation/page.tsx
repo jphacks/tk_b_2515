@@ -714,6 +714,7 @@ useEffect(() => {
 							messages={messages}
 							showHistory={showHistory}
 							onToggleHistory={setShowHistory}
+							assistantName={avatarName}
 						/>
 					</div>
 
