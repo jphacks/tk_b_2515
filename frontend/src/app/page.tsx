@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, MessageCircle, Sparkles, TrendingUp } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, TrendingUp, Users } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,19 @@ import { Card } from "@/components/ui/card";
 // auth handled in shared Header
 
 export default function HomePage() {
+	const [showPracticeButton, setShowPracticeButton] = useState(false);
+	const [practiceCount, setPracticeCount] = useState(0);
+
+	useEffect(() => {
+		try {
+			const unlocked = localStorage.getItem("practiceUnlocked") === "true";
+			const countRaw = localStorage.getItem("practiceSessionCount");
+			const count = countRaw ? parseInt(countRaw, 10) || 0 : 0;
+			setPracticeCount(count);
+			setShowPracticeButton(unlocked && count < 10);
+		} catch {/* ignore */}
+	}, []);
+
 	// auth handled by Header; no local auth here
 
 	return (
@@ -59,6 +73,18 @@ export default function HomePage() {
 										今すぐはなしかける
 									</Button>
 								</Link>
+								{showPracticeButton && (
+									<Link href="/test-call" className="w-full sm:w-auto">
+										<Button
+											size="lg"
+											variant="outline"
+											className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/30 transition-all font-bold"
+										>
+											<Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
+											実践練習へ進む ({practiceCount}/10)
+										</Button>
+									</Link>
+								)}
 							</div>
 
 							{/* Features */}
