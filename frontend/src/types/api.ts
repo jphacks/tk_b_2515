@@ -30,6 +30,8 @@ export interface SpeechToTextResponse {
 
 export interface ErrorResponse {
 	error: string;
+	code?: string;
+	details?: string;
 }
 
 // API リクエスト型定義

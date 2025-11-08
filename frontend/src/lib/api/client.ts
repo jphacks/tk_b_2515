@@ -107,8 +107,17 @@ class ApiClient {
 			let errorMessage = `HTTP error! status: ${response.status}`;
 
 			try {
-				const errorData = (await response.json()) as ErrorResponse;
-				errorMessage = errorData.error || errorMessage;
+				const errorData = (await response.json()) as ErrorResponse | any;
+				// 統一されたエラーフォーマットを優先
+				if (errorData && typeof errorData === "object") {
+					const parts: string[] = [];
+					if (errorData.error) parts.push(errorData.error);
+					if (errorData.code) parts.push(`(${errorData.code})`);
+					if (errorData.details) parts.push(`- ${errorData.details}`);
+					if (parts.length > 0) {
+						errorMessage = parts.join(" ");
+					}
+				}
 			} catch {
 				// JSONのパースに失敗した場合はデフォルトのエラーメッセージを使用
 			}
