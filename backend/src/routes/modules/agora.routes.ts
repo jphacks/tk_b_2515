@@ -48,7 +48,7 @@ agora.post("/token", async (c) => {
 			return c.json(
 				{
 					error: "Invalid request body",
-					details: parsed.error.errors,
+					details: parsed.error.issues,
 				},
 				400,
 			);
@@ -87,7 +87,8 @@ agora.post("/token", async (c) => {
 			channelName,
 			uid,
 			RtcRole.PUBLISHER,
-			privilegeExpiredTs,
+			expirationTimeInSeconds, // tokenExpire
+			privilegeExpiredTs, // privilegeExpire
 		);
 
 		console.log(`[Agora] Generated token for user ${userId} (uid: ${uid}) in channel ${channelName}`);

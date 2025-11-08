@@ -15,12 +15,12 @@ const dbCheckRoute = createRoute({
 			content: {
 				"application/json": {
 					schema: z.object({
-						ok: z.boolean(),
+						ok: z.literal(true),
 						message: z.string(),
 						details: z.object({
 							isAccelerateUrl: z.boolean(),
-							canConnect: z.boolean(),
-							version: z.string().optional(),
+							canConnect: z.literal(true),
+							version: z.string(),
 						}),
 					}),
 				},
@@ -31,7 +31,7 @@ const dbCheckRoute = createRoute({
 			content: {
 				"application/json": {
 					schema: z.object({
-						ok: z.boolean(),
+						ok: z.literal(false),
 						error: z.string(),
 						errorType: z.string(),
 						details: z.any(),
@@ -57,15 +57,18 @@ debug.openapi(dbCheckRoute, async (c) => {
 
 		const version = result[0]?.version || "unknown";
 
-		return c.json({
-			ok: true,
-			message: "Database connection successful",
-			details: {
-				isAccelerateUrl,
-				canConnect: true,
-				version,
+		return c.json(
+			{
+				ok: true,
+				message: "Database connection successful",
+				details: {
+					isAccelerateUrl,
+					canConnect: true,
+					version,
+				},
 			},
-		});
+			200,
+		);
 	} catch (error) {
 		console.error("[DB Check] Error:", error);
 
