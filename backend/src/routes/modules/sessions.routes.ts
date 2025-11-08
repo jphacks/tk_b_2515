@@ -25,7 +25,7 @@ sessions.post("/", async (c) => {
 
 		let userId: string | undefined = existingUserId;
 
-		if (!userId) {
+		if (!userId && supabase) {
 			// Try to create anonymous user (best-effort). If it fails, proceed without userId.
 			try {
 				const { data, error } = await supabase.auth.signInAnonymously();

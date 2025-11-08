@@ -53,10 +53,10 @@ importers:
         version: 15.5.5
       '@prisma/client':
         specifier: ^6.19.0
-        version: 6.19.0(prisma@6.17.0(typescript@5.9.3))(typescript@5.9.3)
+        version: 6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3)
       '@prisma/extension-accelerate':
         specifier: ^2.0.2
-        version: 2.0.2(@prisma/client@6.19.0(prisma@6.17.0(typescript@5.9.3))(typescript@5.9.3))
+        version: 2.0.2(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))
       '@supabase/supabase-js':
         specifier: ^2.75.0
         version: 2.75.0
@@ -89,8 +89,8 @@ importers:
         specifier: ^8.18.1
         version: 8.18.1
       prisma:
-        specifier: ^6.17.0
-        version: 6.17.0(typescript@5.9.3)
+        specifier: ^6.19.0
+        version: 6.19.0(typescript@5.9.3)
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
@@ -4828,11 +4828,6 @@ snapshots:
       prisma: 6.17.0(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@prisma/client@6.19.0(prisma@6.17.0(typescript@5.9.3))(typescript@5.9.3)':
-    optionalDependencies:
-      prisma: 6.17.0(typescript@5.9.3)
-      typescript: 5.9.3
-
   '@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3)':
     optionalDependencies:
       prisma: 6.19.0(typescript@5.9.3)
@@ -4878,9 +4873,9 @@ snapshots:
       '@prisma/fetch-engine': 6.19.0
       '@prisma/get-platform': 6.19.0
 
-  '@prisma/extension-accelerate@2.0.2(@prisma/client@6.19.0(prisma@6.17.0(typescript@5.9.3))(typescript@5.9.3))':
+  '@prisma/extension-accelerate@2.0.2(@prisma/client@6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3))':
     dependencies:
-      '@prisma/client': 6.19.0(prisma@6.17.0(typescript@5.9.3))(typescript@5.9.3)
+      '@prisma/client': 6.19.0(prisma@6.19.0(typescript@5.9.3))(typescript@5.9.3)
 
   '@prisma/fetch-engine@6.17.0':
     dependencies:
