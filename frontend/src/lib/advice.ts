@@ -9,24 +9,22 @@ export type AdviceItem = {
 
 export const BACKGROUND_ADVICE: Record<BackgroundKey, AdviceItem[]> = {
   library: [
-    // 図書館らしい質問（来館頻度/何をしていたか）に変更
     {
       id: "library_visit_question",
-      label: "図書館で何してたか、よく来るのかを尋ねる",
+      label: "初めましての挨拶をする",
       patterns: [
-        /図書館.*(何して|何をして|勉強|レポート|本|調べ)/i,
-        /(よく|どのくらい|どれくらい).*図書館.*(来る|行く)/i,
-        /図書館来(た|てた|てる)/i,
+        /はじめまして|初めまして|初めてまして/i,
+        /よろしく(お願いします|ね)?/i,
       ],
     },
     {
       id: "study_topic",
-      label: "勉強・読書・授業などの話題を出す",
-      patterns: [/勉強|読書|本|レポート|課題|授業|図書|図書館/i],
+      label: "勉強や授業の話題を出す",
+      patterns: [/勉強|授業|講義|単位|履修|ゼミ|レポート|課題|教科/i],
     },
     {
       id: "open_question",
-      label: "相手にオープンな質問を投げる（理由や好みなど）",
+      label: "女の子が答えやすいオープンな質問を投げる",
       patterns: [/なんで|どうして|どう思う|どんな|おすすめ|理由|きっかけ/i],
     },
   ],

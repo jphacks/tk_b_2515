@@ -186,6 +186,7 @@ conversation.openapi(generateResponseRoute, async (c) => {
       systemPrompt,
       relationshipStage: relationshipStage ?? undefined,
       avatarConfig,
+      backgroundKey: backgroundKey ?? undefined,
       gestureSummary: session.gestures
         ? {
             totalSamples: session.gestures.totalSamples,

@@ -8,11 +8,14 @@ export interface ConversationMessage {
   audioUrl?: string | null;
 }
 
+export type BackgroundKey = "library" | "classroom" | "xmas";
+
 export interface ConversationContext {
   messages: ConversationMessage[];
   systemPrompt?: string;
   relationshipStage?: "shy" | "friendly" | "open";
   avatarConfig?: AvatarPersona; // 動的に差し込むアバター設定
+  backgroundKey?: BackgroundKey;
   gestureSummary?: {
     totalSamples: number;
     smilingSamples: number;
@@ -90,10 +93,29 @@ const RELATIONSHIP_PROMPTS: Record<RelationshipStage, string> = {
 `,
 };
 
+const BACKGROUND_BEHAVIOR_PROMPTS: Record<BackgroundKey, string> = {
+  library: `
+【シチュエーション指針（入学式）】
+- 入学式で初めて会う男子学生と話している。
+- まだお互いをよく知らないので、丁寧さと少しの緊張感を保ちながら距離を縮める。
+- 新生活へのわくわく感をにじませつつ、礼儀正しく振る舞う。`,
+  classroom: `
+【シチュエーション指針（教室）】
+- 放課後の教室でクラスメイトと雑談している。
+- 砕けた口調でフランクに接し、日常の延長のような軽さを出す。
+- 相手を気遣いつつ、同級生らしい距離感でテンポよく応じる。`,
+  xmas: `
+【シチュエーション指針（クリスマス）】
+- 2人はすでに親しい関係（恋人に近い距離感）。
+- 冬デートの雰囲気を大切にし、甘めでロマンチックな空気を保つ。
+- さりげなく相手を気遣い、ポジティブで温かい言葉を選ぶ。`,
+};
+
 const buildSystemPrompt = (
   stage: RelationshipStage,
   avatar?: AvatarPersona,
-  relationshipStageOverride?: string
+  relationshipStageOverride?: string,
+  backgroundKey?: BackgroundKey
 ): string => {
   const personaBlock = avatar
     ? [
@@ -112,9 +134,14 @@ const buildSystemPrompt = (
     ? `【アバター距離感(${stage})】\n${avatar.relationshipStages[stage]}`
     : RELATIONSHIP_PROMPTS[stage].trim();
 
+  const backgroundFlavor = backgroundKey
+    ? BACKGROUND_BEHAVIOR_PROMPTS[backgroundKey]
+    : "";
+
   return [
     ...BASE_PROMPT_HEADER,
     personaBlock,
+    backgroundFlavor,
     "【共通ルール】",
     COMMON_RULES,
     stageExpansion,
@@ -219,7 +246,8 @@ export async function generateConversationResponse(
   let systemPrompt = buildSystemPrompt(
     relationshipStage,
     context.avatarConfig,
-    context.relationshipStage
+    context.relationshipStage,
+    context.backgroundKey
   );
 
   // context.systemPrompt が明示的に与えられている場合はそれを優先
@@ -251,15 +279,15 @@ export async function generateConversationResponse(
 
   // LLMへのシステム誘導: JSONで {text, emotion}
   const emotionBiasLine = context.avatarConfig?.fallbackEmotionBias
-    ? `参考バイアス: ${Object.entries(
-        context.avatarConfig.fallbackEmotionBias
-      )
+    ? `参考バイアス: ${Object.entries(context.avatarConfig.fallbackEmotionBias)
         .map(([k, v]) => `${k}:${v}`)
         .join(" ")}`
     : "";
   const instruction = `以下の入力をもとに、会話の次の応答を日本語で1-3文で生成し、同時に感情ラベルを付与してください。必ず次のJSON形式のみを出力してください（前後に解説やマークダウンを付けない）：\n{\n  "text": string,\n  "emotion": one of ["neutral", "happy", "sad", "surprised", "angry", "bashful"]\n}\n\n応答ポリシー（重要度順）:\n1) まず最初に、【直近のユーザー発話】の問い/意図に対して直接の回答を1-2文で示す（古い話題に引きずられない）\n2) 余力があれば、会話継続のための短い問いかけを「1つだけ」添える（不要なら省略可）\n3) {speakingStyle} と 親密度 {relationshipStage} に厳密に従い、自然な日本語で\n\n付与方針（感情ラベル）:\n- 【最重視】直近のユーザー発話の内容\n- 【重視】視線(gaze)傾向（補助）\n- 【弱め】表情(smile)（補助）\n- 対立・否定・苛立ち・罵倒（例: 「ふざけんな」「最悪」「違うだろ」「やめろ」「は？」など）が含まれる場合は、sad/surprisedよりangryを優先\n- 連続ターンでの急変は避ける\n${emotionBiasLine}`;
 
-  const compiledInput = `【直近のユーザー発話】\n${recentUserTexts.slice(-1)[0] ?? "(なし)"}\n\n【最近のユーザー発話（新しい順）】\n${recentUserTexts
+  const compiledInput = `【直近のユーザー発話】\n${
+    recentUserTexts.slice(-1)[0] ?? "(なし)"
+  }\n\n【最近のユーザー発話（新しい順）】\n${recentUserTexts
     .slice()
     .reverse()
     .map((t, i) => `(${i + 1}) ${t}`)
@@ -272,7 +300,10 @@ export async function generateConversationResponse(
   // LLMへは role/user と systemInstruction を併用
   // LLMには「直近のユーザー発話」を明示的に入力し、会話サマリはsystemInstructionに含める
   const contents = [
-    { role: "user" as const, parts: [{ text: recentUserTexts.slice(-1)[0] ?? "" }] },
+    {
+      role: "user" as const,
+      parts: [{ text: recentUserTexts.slice(-1)[0] ?? "" }],
+    },
   ];
 
   // 最後のユーザーメッセージで応答を生成
@@ -615,21 +646,21 @@ function calculateVoiceMetrics(messages: ConversationMessage[]): VoiceMetrics {
 }
 
 const BACKGROUND_CONTEXT: Record<
-  "library" | "classroom" | "xmas",
+  BackgroundKey,
   { scenario: string; guidelines: string[] }
 > = {
   library: {
     scenario:
-      "静かな図書館。声は控えめに、落ち着いたトーンで趣味や勉強の話から始めると自然です。",
+      "入学式の校庭。初対面らしく丁寧に挨拶しつつ、学校生活や授業の話題で自然に距離を縮めよう。",
     guidelines: [
-      "図書館で何をしていたか、よく来るのかを尋ねる",
-      "勉強・読書・授業などの話題を出す",
-      "オープンな質問で相手の話を引き出す",
+      "初めましての挨拶を交わし、場の空気を和らげる",
+      "勉強や授業の話題を出して学校トークにつなげる",
+      "相手が答えやすいオープンな質問を投げる",
     ],
   },
   classroom: {
     scenario:
-      "放課後の教室。授業や課題、サークル、週末の予定など身近な話題が話しやすい雰囲気です。",
+      "放課後の教室。AIはクラスメイト。授業や課題、サークル、週末の予定など身近な話題を話そう。",
     guidelines: [
       "授業・課題・サークルなど身近な話題を出す",
       "週末や放課後の軽い予定提案/質問をする",
@@ -638,7 +669,7 @@ const BACKGROUND_CONTEXT: Record<
   },
   xmas: {
     scenario:
-      "イルミネーションの前。最近の出来事やプレゼント、冬の予定など明るい話題で盛り上がりやすいです。",
+      "最近の出来事やプレゼント、冬の予定など明るい話題で盛り上がりやすいです。いいムードを維持しよう。",
     guidelines: [
       "明るく前向きなリアクションを返す",
       "冬/クリスマス関連の話題（イルミ・プレゼント・予定）",
@@ -651,7 +682,7 @@ export async function generateConversationFeedback(
   apiKey: string,
   messages: ConversationMessage[],
   gestureSummary?: GestureSummary,
-  backgroundKey?: "library" | "classroom" | "xmas",
+  backgroundKey?: BackgroundKey,
   adviceCompletedIds?: string[]
 ): Promise<{
   goodPoints: string;
@@ -697,9 +728,11 @@ export async function generateConversationFeedback(
 - サマリー: ${voiceMetrics.summary}`;
 
   const backgroundBlock = backgroundKey
-    ? `\n【背景シチュエーション】\n${BACKGROUND_CONTEXT[backgroundKey].scenario}\n\n【背景に応じた評価観点（加点対象）】\n- ${BACKGROUND_CONTEXT[backgroundKey].guidelines.join(
-        "\n- "
-      )}`
+    ? `\n【背景シチュエーション】\n${
+        BACKGROUND_CONTEXT[backgroundKey].scenario
+      }\n\n【背景に応じた評価観点（加点対象）】\n- ${BACKGROUND_CONTEXT[
+        backgroundKey
+      ].guidelines.join("\n- ")}`
     : "";
 
   const prompt = `以下の会話と仕草・音声データ${
@@ -748,7 +781,7 @@ ${backgroundBlock}
 【背景適合に関する加点方針】
 ${
   backgroundKey
-    ? `- 上記「背景に応じた評価観点」に該当する発話や行動が確認できた場合、会話スコア内で適切に加点する（無理に満点化はしない）\n- 背景に明確にそぐわない配慮不足（例: 図書館での過度に騒がしい印象）が続く場合は、会話スコア内で軽度の減点を検討する（他の観点も加味して総合的に判断）`
+    ? `- 上記「背景に応じた評価観点」に該当する発話や行動が確認できた場合、会話スコア内で適切に加点する（無理に満点化はしない）\n- 背景に明確にそぐわない配慮不足（例: 入学式で場違いにふるまうなど）が続く場合は、会話スコア内で軽度の減点を検討する（他の観点も加味して総合的に判断）`
     : "- 背景情報がない場合は通常の評価基準を適用する"
 }
 
@@ -865,24 +898,32 @@ ${
   // ---- アドバイス加点・未達算出（DB保存はせずレスポンスへ含める） ----
   let adviceScoreAdded: number | undefined;
   let adviceUnfulfilled: string | undefined;
-  let adviceFulfilledDetails: { id: string; label: string; points: number }[] | undefined;
+  let adviceFulfilledDetails:
+    | { id: string; label: string; points: number }[]
+    | undefined;
 
   let improvementPointsStr = toText(
-    (feedback.conversation?.improvementPoints ?? feedback.improvementPoints)
+    feedback.conversation?.improvementPoints ?? feedback.improvementPoints
   );
   const backgroundAdviceMap: Record<
-    "library" | "classroom" | "xmas",
+    BackgroundKey,
     { id: string; label: string }[]
   > = {
     library: [
-      { id: "library_visit_question", label: "図書館で何してたか、よく来るのかを尋ねる" },
-      { id: "study_topic", label: "勉強・読書・授業などの話題" },
-      { id: "open_question", label: "理由・好みなどを尋ねるオープン質問" },
+      { id: "library_visit_question", label: "初めましての挨拶をする" },
+      { id: "study_topic", label: "勉強や授業の話題を出す" },
+      {
+        id: "open_question",
+        label: "女の子が答えやすいオープンな質問を投げる",
+      },
     ],
     classroom: [
       { id: "class_topic", label: "授業・課題・サークルなど身近な話題を出す" },
       { id: "weekend_plan", label: "週末や放課後の軽い予定提案/質問をする" },
-      { id: "follow_up_question", label: "相手発言に具体的な掘り下げ質問（いつ/どこ/どれくらい 等）" },
+      {
+        id: "follow_up_question",
+        label: "相手発言に具体的な掘り下げ質問（いつ/どこ/どれくらい 等）",
+      },
     ],
     xmas: [
       { id: "xmas_topic", label: "冬/クリスマス関連話題" },
@@ -890,7 +931,11 @@ ${
       { id: "suggest_plan", label: "軽い提案（観に行く/写真/カフェ等）" },
     ],
   };
-  if (backgroundKey && adviceCompletedIds && Array.isArray(adviceCompletedIds)) {
+  if (
+    backgroundKey &&
+    adviceCompletedIds &&
+    Array.isArray(adviceCompletedIds)
+  ) {
     const adviceIdsCompleted = new Set(adviceCompletedIds);
     const weightPer = 3;
     const maxBonus = 8;
@@ -902,7 +947,11 @@ ${
     for (const item of completed) {
       if (remaining <= 0) break;
       const allocate = Math.min(weightPer, remaining);
-      adviceFulfilledDetails.push({ id: item.id, label: item.label, points: allocate });
+      adviceFulfilledDetails.push({
+        id: item.id,
+        label: item.label,
+        points: allocate,
+      });
       remaining -= allocate;
     }
 
@@ -925,7 +974,8 @@ ${
     }
 
     if (hasAnyScore && bonus > 0) {
-      const baseSum = (conversationScore ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0);
+      const baseSum =
+        (conversationScore ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0);
       overallScore = clamp(baseSum + bonus, 0, 100); // 総合=会話+仕草+声+アドバイス
     }
   }

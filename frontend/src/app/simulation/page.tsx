@@ -38,22 +38,22 @@ const BACKGROUNDS: Record<
 	{ src: string; label: string; scenario: string }
 > = {
 	library: {
-		src: "/uec_library.jpg",
-		label: "図書館",
+		src: "/springschool.jpg",
+		label: "入学式",
 		scenario:
-			"静かな図書館。声は控えめに、落ち着いたトーンで趣味や勉強の話から始めると自然です。",
+			"入学式の校庭。初対面らしく丁寧に挨拶しつつ、学校生活や授業の話題で盛り上げよう。",
 	},
 	classroom: {
 		src: "/kokuban.png",
 		label: "教室",
 		scenario:
-			"放課後の教室。授業や課題、サークル、週末の予定など身近な話題が話しやすい雰囲気です。",
+			"放課後の教室。AIはクラスメイト。授業や課題、サークル、週末の予定など身近な話題を話そう。",
 	},
 	xmas: {
-		src: "/xmas.png",
+		src: "/christmas-back033.jpg",
 		label: "クリスマス",
 		scenario:
-			"イルミネーションの前。最近の出来事やプレゼント、冬の予定など明るい話題で盛り上がりやすいです。",
+			"最近の出来事やプレゼント、冬の予定など明るい話題で盛り上がりやすいです。いいムードを維持しよう。",
 	},
 };
 
