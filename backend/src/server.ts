@@ -23,13 +23,20 @@ const port = Number(process.env.PORT) || 8787;
  * HonoアプリケーションをNode.js HTTPサーバーと統合します
  */
 const server = createServer(async (req, res) => {
+	// GET/HEAD 以外では Node.js のリクエストストリームをそのまま Fetch API に渡す
+	const hasBody = req.method
+		? !["GET", "HEAD"].includes(req.method.toUpperCase())
+		: false;
+	const request = new Request(`http://${req.headers.host}${req.url}`, {
+		method: req.method,
+		headers: req.headers as HeadersInit,
+		body: hasBody ? req : undefined,
+		// Node.js でストリームボディを送る場合は duplex の指定が必要
+		...(hasBody ? { duplex: "half" as const } : {}),
+	});
+
 	// HonoアプリケーションにリクエストをFetch APIリクエストに変換して渡す
-	const response = await app.fetch(
-		new Request(`http://${req.headers.host}${req.url}`, {
-			method: req.method,
-			headers: req.headers as HeadersInit,
-		}),
-	);
+	const response = await app.fetch(request);
 
 	// レスポンスヘッダーを設定
 	res.writeHead(response.status, Object.fromEntries(response.headers));
