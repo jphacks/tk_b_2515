@@ -606,7 +606,7 @@ function FeedbackContent() {
 			console.error("音声コメントの生成に失敗しました:", error);
 			setIsPlayingVoice(false);
 		}
-	}, [setIsPlayingVoice]);
+	}, []);
 
 	// フィードバック取得後に自動で音声コメントを再生
 	useEffect(() => {

@@ -14,7 +14,7 @@
 
 import { Heart, Video, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -26,6 +26,15 @@ export default function TestCallPage() {
 	const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 	const [timerStarted, setTimerStarted] = useState(false);
+
+	const endCall = useCallback(() => {
+		// 接続終了を他ウィンドウへ通知
+		try {
+			localStorage.setItem(`webrtc_end_${sessionId}`, String(Date.now()));
+		} catch {/* ignore */}
+		// 接続終了時はホームへ戻る（フィードバック生成は行わない）
+		router.push("/");
+	}, [router, sessionId]);
 
 	// 他ウィンドウの接続状態（localStorage経由）を監視
 	useEffect(() => {
@@ -59,20 +68,20 @@ export default function TestCallPage() {
 	}, [userConnected, partnerConnected, timerStarted]);
 
 	// カウントダウン進行
-	useEffect(() => {
-		if (secondsRemaining === null) return;
-		if (secondsRemaining <= 0) {
-			endCall();
-			return;
-		}
-		timerRef.current && clearTimeout(timerRef.current);
-		timerRef.current = setTimeout(() => {
-			setSecondsRemaining((prev) => (prev !== null ? prev - 1 : prev));
-		}, 1000);
-		return () => {
-			if (timerRef.current) clearTimeout(timerRef.current);
-		};
-	}, [secondsRemaining]);
+		useEffect(() => {
+			if (secondsRemaining === null) return;
+			if (secondsRemaining <= 0) {
+				endCall();
+				return;
+			}
+			timerRef.current && clearTimeout(timerRef.current);
+			timerRef.current = setTimeout(() => {
+				setSecondsRemaining((prev) => (prev !== null ? prev - 1 : prev));
+			}, 1000);
+			return () => {
+				if (timerRef.current) clearTimeout(timerRef.current);
+			};
+		}, [secondsRemaining, endCall]);
 
 	const formatTime = (sec: number) => {
 		const m = Math.floor(sec / 60);
@@ -89,14 +98,6 @@ export default function TestCallPage() {
 		window.open(`/session/${sessionId}?role=partner`, "_blank");
 	};
 
-		const endCall = () => {
-			// 接続終了を他ウィンドウへ通知
-			try {
-				localStorage.setItem(`webrtc_end_${sessionId}`, String(Date.now()));
-			} catch {/* ignore */}
-			// 接続終了時はホームへ戻る（フィードバック生成は行わない）
-			router.push("/");
-		};
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
