@@ -3,11 +3,11 @@ import { createApiRoute } from "../utils";
 
 // CJS export; TS may not have types available
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error
 // "agora-access-token" は CJS 形式で公開されており、環境によっては名前付きエクスポートが解決できない場合がある
 // そのためデフォルトインポートしてからプロパティを参照する方式に変更
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-expect-error
 import AgoraAccessToken from "agora-access-token";
 
 const agora = createApiRoute();
