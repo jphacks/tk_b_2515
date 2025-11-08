@@ -15,6 +15,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { config } from "@/lib/config";
 
 export default function PartnerCallPage() {
 	const params = useParams();
@@ -33,7 +34,63 @@ export default function PartnerCallPage() {
 		"connecting" | "connected" | "disconnected"
 	>("connecting");
 	const [callDuration, setCallDuration] = useState(0);
+	const [timeRemaining, setTimeRemaining] = useState(5 * 60); // 5分 = 300秒
 	const [partnerName, setPartnerName] = useState("パートナー");
+
+	// 通話終了
+	const endCall = useCallback(async () => {
+		if (localStream) {
+			for (const track of localStream.getTracks()) {
+				track.stop();
+			}
+		}
+		setConnectionStatus("disconnected");
+
+		try {
+			// セッション終了APIを呼び出す
+			const endResponse = await fetch(
+				`${config.api.baseUrl}/api/partners/sessions/${sessionId}/end`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				},
+			);
+
+			if (endResponse.ok) {
+				console.log("Session ended successfully");
+			} else {
+				console.error("Failed to end session");
+			}
+
+			// フィードバック生成APIを呼び出す
+			const feedbackResponse = await fetch(
+				`${config.api.baseUrl}/api/partners/sessions/${sessionId}/feedback/generate`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						messages: [],
+						gestureMetrics: undefined,
+					}),
+				},
+			);
+
+			if (feedbackResponse.ok) {
+				console.log("Feedback generated successfully");
+			} else {
+				console.error("Failed to generate feedback");
+			}
+		} catch (error) {
+			console.error("Error ending call:", error);
+		}
+
+		// フィードバックページへ遷移
+		router.push(`/partner-feedback/${sessionId}`);
+	}, [localStream, sessionId, router]);
 
 	// TODO: 実際のセッション情報をAPIから取得
 	useEffect(() => {
@@ -106,15 +163,30 @@ export default function PartnerCallPage() {
 		};
 	}, []);
 
-	// 通話時間のカウント
+	// 通話時間のカウントと残り時間のカウントダウン
 	useEffect(() => {
 		if (connectionStatus === "connected") {
 			const interval = setInterval(() => {
 				setCallDuration((prev) => prev + 1);
+				setTimeRemaining((prev) => {
+					const next = prev - 1;
+					if (next <= 0) {
+						return 0;
+					}
+					return next;
+				});
 			}, 1000);
 			return () => clearInterval(interval);
 		}
 	}, [connectionStatus]);
+
+	// 時間切れで自動的にフィードバックページへ遷移
+	useEffect(() => {
+		if (timeRemaining === 0 && connectionStatus === "connected") {
+			console.log("Time is up! Ending call and redirecting to feedback...");
+			endCall();
+		}
+	}, [timeRemaining, connectionStatus, endCall]);
 
 	// ビデオのオン/オフ
 	const toggleVideo = useCallback(() => {
@@ -146,24 +218,15 @@ export default function PartnerCallPage() {
 		}
 	}, []);
 
-	// 通話終了
-	const endCall = useCallback(async () => {
-		if (localStream) {
-			for (const track of localStream.getTracks()) {
-				track.stop();
-			}
-		}
-		setConnectionStatus("disconnected");
-
-		// TODO: セッション終了APIを呼び出す
-		// await fetch(`/api/sessions/${sessionId}/end`, { method: 'POST' });
-
-		// フィードバックページへ遷移
-		router.push(`/partner-feedback/${sessionId}`);
-	}, [localStream, sessionId, router]);
-
 	// 通話時間のフォーマット
 	const formatDuration = (seconds: number) => {
+		const mins = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+	};
+
+	// 残り時間のフォーマット
+	const formatTimeRemaining = (seconds: number) => {
 		const mins = Math.floor(seconds / 60);
 		const secs = seconds % 60;
 		return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -186,21 +249,34 @@ export default function PartnerCallPage() {
 							</p>
 						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<div
-							className={`w-3 h-3 rounded-full ${
-								connectionStatus === "connected"
-									? "bg-green-500"
-									: connectionStatus === "connecting"
-										? "bg-yellow-500 animate-pulse"
-										: "bg-red-500"
-							}`}
-						/>
-						<span className="text-sm text-muted-foreground">
-							{connectionStatus === "connecting" && "接続中"}
-							{connectionStatus === "connected" && "接続済み"}
-							{connectionStatus === "disconnected" && "切断"}
-						</span>
+					<div className="flex items-center gap-4">
+						{/* 残り時間表示 */}
+						{connectionStatus === "connected" && (
+							<div className="flex items-center gap-2">
+								<span className="text-sm text-muted-foreground">残り時間:</span>
+								<span className={`text-lg font-bold ${
+									timeRemaining <= 60 ? "text-red-500 animate-pulse" : "text-foreground"
+								}`}>
+									{formatTimeRemaining(timeRemaining)}
+								</span>
+							</div>
+						)}
+						<div className="flex items-center gap-2">
+							<div
+								className={`w-3 h-3 rounded-full ${
+									connectionStatus === "connected"
+										? "bg-green-500"
+										: connectionStatus === "connecting"
+											? "bg-yellow-500 animate-pulse"
+											: "bg-red-500"
+								}`}
+							/>
+							<span className="text-sm text-muted-foreground">
+								{connectionStatus === "connecting" && "接続中"}
+								{connectionStatus === "connected" && "接続済み"}
+								{connectionStatus === "disconnected" && "切断"}
+							</span>
+						</div>
 					</div>
 				</div>
 			</header>
