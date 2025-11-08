@@ -30,7 +30,7 @@ const server = createServer(async (req, res) => {
 	const request = new Request(`http://${req.headers.host}${req.url}`, {
 		method: req.method,
 		headers: req.headers as HeadersInit,
-		body: hasBody ? req : undefined,
+		body: hasBody ? (req as unknown as BodyInit) : undefined,
 		// Node.js でストリームボディを送る場合は duplex の指定が必要
 		...(hasBody ? { duplex: "half" as const } : {}),
 	});
