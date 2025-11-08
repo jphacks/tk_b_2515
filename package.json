@@ -10,6 +10,7 @@
 		"dev:backend": "pnpm --filter backend dev",
 		"build:frontend": "pnpm --filter frontend build",
 		"build:backend": "pnpm --filter backend deploy",
+		"test": "pnpm --filter frontend test",
 		"lint": "biome lint --write .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
