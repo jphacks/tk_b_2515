@@ -25,6 +25,21 @@ const port = Number(process.env.PORT) || 8787;
 const server = createServer((req, res) => {
 	// リクエスト本文を必要に応じて取得（GET/HEAD以外）
 	const isBodyAllowed = req.method && !["GET", "HEAD"].includes(req.method);
+const server = createServer(async (req, res) => {
+	// GET/HEAD 以外では Node.js のリクエストストリームをそのまま Fetch API に渡す
+	const hasBody = req.method
+		? !["GET", "HEAD"].includes(req.method.toUpperCase())
+		: false;
+	const request = new Request(`http://${req.headers.host}${req.url}`, {
+		method: req.method,
+		headers: req.headers as HeadersInit,
+		body: hasBody ? (req as unknown as BodyInit) : undefined,
+		// Node.js でストリームボディを送る場合は duplex の指定が必要
+		...(hasBody ? { duplex: "half" as const } : {}),
+	});
+
+	// HonoアプリケーションにリクエストをFetch APIリクエストに変換して渡す
+	const response = await app.fetch(request);
 
 	const handleRequest = async (bodyStream: any | undefined) => {
 		try {
