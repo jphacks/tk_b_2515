@@ -21,11 +21,10 @@ export default function Header() {
 	return (
 		<header className="h-16 sm:h-20 px-3 sm:px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
 			<div className="w-32 sm:w-40 flex items-center justify-start">
-				<button
-					type="button"
-					onClick={() => window.location.reload()}
+				<Link
+					href="/"
 					className="relative h-10 w-10 sm:h-12 sm:w-12 cursor-pointer hover:opacity-80 transition-opacity"
-					aria-label="ページを更新"
+					aria-label="ホームへ"
 				>
 					<Image
 						src="/renai_icon.png"
@@ -33,7 +32,7 @@ export default function Header() {
 						fill
 						className="object-contain"
 					/>
-				</button>
+				</Link>
 			</div>
 
 			<div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2">
