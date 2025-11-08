@@ -1,15 +1,3 @@
-/**
- * WebRTCテストページ
- *
- * ビデオ通話機能をテストするためのページです。
- * ユーザーとパートナーの2つの役割で同時に接続してテストできます。
- *
- * 使い方：
- * 1. 「ユーザーとして参加」をクリック
- * 2. 「パートナーとして参加」をクリック（新しいウィンドウが開く）
- * 3. 両方のウィンドウでカメラ・マイクを許可
- * 4. 自動的にWebRTC接続が確立されます
- */
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -37,7 +25,7 @@ function VideoTile({ track, label }: { track: any; label: string }) {
   );
 }
 
-export default function TestCallPage() {
+export default function AgoraTestPage() {
   const { joined, channelName, localVideoTrack, remoteUsers, join, leave } = useAgoraRtc();
   const [channel, setChannel] = useState("test123");
   const [joining, setJoining] = useState(false);

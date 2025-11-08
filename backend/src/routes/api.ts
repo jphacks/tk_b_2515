@@ -14,6 +14,7 @@ import messagesRoutes from "./modules/messages.routes";
 import partnersRoutes from "./modules/partners.routes";
 import sessionsRoutes from "./modules/sessions.routes";
 import speechRoutes from "./modules/speech.routes";
+import agoraRoutes from "./modules/agora.routes";
 import { createApiRoute } from "./utils";
 
 // APIルーターを作成
@@ -64,6 +65,7 @@ api.openapi(healthRoute, (c) => {
 	{ basePath: "/conversation", router: conversationRoutes },
 	{ basePath: "/", router: speechRoutes },
 	{ basePath: "/partners", router: partnersRoutes },
+	{ basePath: "/agora", router: agoraRoutes },
 ].forEach(({ basePath, router }) => {
 	api.route(basePath, router);
 });

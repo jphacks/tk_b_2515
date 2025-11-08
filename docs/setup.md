@@ -12,9 +12,6 @@
 # 依存関係のインストール
 pnpm install
 
-# 環境変数の設定
-# ルートディレクトリで .env ファイルを作成
-cp .env.example .env
 
 # .env ファイルを編集して以下を設定:
 # - DATABASE_URL (Supabase接続URL)
@@ -39,3 +36,25 @@ cd ..
 1. [Supabase](https://supabase.com/)でプロジェクトを作成
 2. SQL Editor で[docs/database-schema.md](docs/database-schema.md)の SQL を実行
 3. フロントエンドの`.env`に認証情報を追加
+
+### Agora (WebRTC代替) の設定
+
+1. [Agora Console](https://console.agora.io/) でプロジェクト作成
+2. App ID と App Certificate を取得
+3. `.env` または Workers Secrets に設定:
+	- `AGORA_APP_ID`
+	- `AGORA_APP_CERTIFICATE` (バックエンドのみ使用)
+4. フロントエンドは `/api/agora/token` に POST して取得したトークンで `agora-rtc-sdk-ng` クライアントに参加
+
+最小テスト:
+
+```
+POST /api/agora/token {"channel":"test123"}
+→ { appId, channel, uid, token }
+```
+
+その後フロントで:
+
+```ts
+client.join(appId, channel, token, uid);
+```

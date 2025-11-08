@@ -11,6 +11,7 @@
     "postinstall": ""
   },
   "dependencies": {
+    "agora-rtc-sdk-ng": "^4.20.0",
     "@elevenlabs/elevenlabs-js": "^2.18.0",
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
     "@pixiv/three-vrm": "^3.4.3",
