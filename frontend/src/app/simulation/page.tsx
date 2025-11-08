@@ -614,8 +614,8 @@ export default function SimulationPage() {
 				</main>
 			) : (
 				/* Conversation State - Split Screen Layout */
-				<main className="flex-1 flex flex-col overflow-hidden">
-					<div className="flex-1 relative">
+				<main className="flex-1 flex flex-col overflow-hidden h-screen">
+					<div className="flex-1 relative overflow-hidden">
 						{/* Background image + overlay */}
 						<div className="absolute inset-0 -z-10">
 							<Image
@@ -628,7 +628,7 @@ export default function SimulationPage() {
 							/>
 							<div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/40 to-black/80" />
 						</div>
-						<div className="w-full h-full flex flex-col md:flex-row gap-2 p-2">
+						<div className="w-full h-full flex flex-col md:flex-row gap-2 p-2 overflow-hidden">
 							{/* AI Avatar */}
 							<AvatarDisplay
 								modelUrl={avatarModelUrl}
