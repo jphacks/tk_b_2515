@@ -60,21 +60,7 @@ export default function PartnerMatchingPage() {
 	};
 	return (
 		<div className="min-h-screen flex flex-col">
-			{/* Header */}
-			<header className="p-4 flex items-center justify-between bg-card/50 backdrop-blur-sm border-b border-border">
-				<Link href="/feedback">
-					<Button variant="ghost" size="sm" className="rounded-full">
-						<ArrowLeft className="w-4 h-4 mr-2" />
-						戻る
-					</Button>
-				</Link>
-				<div className="flex items-center gap-2">
-					<Heart className="w-6 h-6 text-primary fill-primary" />
-					<span className="font-semibold text-foreground">恋ai</span>
-				</div>
-				<div className="w-20" />
-			</header>
-
+			
 			{/* Main Content */}
 			<main className="flex-1 flex items-center justify-center p-4 sm:p-6">
 				<div className="max-w-4xl w-full space-y-6">
