@@ -1,5 +1,6 @@
 import type { Voice } from "@elevenlabs/elevenlabs-js/api";
 import { createRoute, z } from "@hono/zod-openapi";
+import type { Context } from "hono";
 import {
 	getVoiceById,
 	getVoices,
@@ -183,9 +184,26 @@ speech.openapi(getVoiceByIdRoute, async (c) => {
 	}
 });
 
+type FileLike = Blob & { arrayBuffer: () => Promise<ArrayBuffer> };
+
+const isFileLike = (value: unknown): value is FileLike => {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"arrayBuffer" in (value as Record<string, unknown>) &&
+		typeof (value as { arrayBuffer?: unknown }).arrayBuffer === "function"
+	);
+};
+
 // Speech-to-text endpoint
 // 統一されたエラー応答ヘルパー
-function sttError(c: any, status: number, code: string, message: string, details?: string) {
+function sttError(
+	c: Context,
+	status: number,
+	code: string,
+	message: string,
+	details?: string,
+) {
 	return c.json(
 		{
 			error: message,
@@ -204,7 +222,7 @@ speech.post("/stt", async (c) => {
 			return sttError(c, 500, "API_KEY_NOT_CONFIGURED", "API key not configured");
 		}
 
-		let audioFile: File | undefined;
+		let audioFile: FileLike | undefined;
 		let voiceId: string | undefined;
 
 		// まずFormDataとしての解析を試みる（multipart対応）
@@ -212,12 +230,8 @@ speech.post("/stt", async (c) => {
 			const formData = await c.req.formData();
 			const audioEntry = formData.get("audio");
 			// Node環境ではFile型が無いことがあるため duck-typing で判定
-			if (
-				audioEntry &&
-				typeof (audioEntry as any) === "object" &&
-				typeof (audioEntry as any).arrayBuffer === "function"
-			) {
-				audioFile = audioEntry as unknown as File; // Blob互換として利用
+			if (audioEntry && isFileLike(audioEntry)) {
+				audioFile = audioEntry;
 			}
 			const voiceIdEntry = formData.get("voiceId");
 			if (typeof voiceIdEntry === "string") {
@@ -226,17 +240,13 @@ speech.post("/stt", async (c) => {
 		} catch (formErr) {
 			console.warn("FormData parse failed, fallback to parseBody", formErr);
 			try {
-				const body = await c.req.parseBody();
-				if (
-					body &&
-					typeof body.audio === "object" &&
-					body.audio !== null &&
-					typeof (body.audio as any).arrayBuffer === "function"
-				) {
-					audioFile = body.audio as unknown as File;
+				const body = (await c.req.parseBody()) as Record<string, unknown>;
+				const potentialAudio = body?.audio;
+				if (isFileLike(potentialAudio)) {
+					audioFile = potentialAudio;
 				}
-				if (typeof body.voiceId === "string") {
-					voiceId = body.voiceId as string;
+				if (typeof body?.voiceId === "string") {
+					voiceId = body.voiceId;
 				}
 			} catch (bodyErr) {
 				console.error("Both FormData and parseBody failed", bodyErr);

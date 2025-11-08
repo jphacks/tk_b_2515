@@ -904,7 +904,7 @@ function FeedbackContent() {
 										</div>
 									</div>
 									{typeof feedback.adviceScoreAdded === "number" && feedback.adviceScoreAdded > 0 && (
-										<div className="mt-2 text-sm font-medium inline-flex items-center justify-center gap-1 text-green-600">
+										<div className="mt-2 text-sm font-medium flex items-center justify-center gap-1 text-green-600">
 											<TrendingUp className="w-4 h-4" />
 											シチュエーション達成ボーナス +{feedback.adviceScoreAdded}点
 										</div>
@@ -1385,7 +1385,7 @@ function FeedbackContent() {
 										</div>
 									</div>
 									{typeof selectedFeedback.adviceScoreAdded === "number" && selectedFeedback.adviceScoreAdded > 0 && (
-										<div className="mt-2 text-sm font-medium inline-flex items-center justify-center gap-1 text-green-600">
+										<div className="mt-2 text-sm font-medium flex items-center justify-center gap-1 text-green-600">
 											<TrendingUp className="w-4 h-4" />
 											シチュエーション達成ボーナス +{selectedFeedback.adviceScoreAdded}点
 										</div>
@@ -1397,7 +1397,7 @@ function FeedbackContent() {
 												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
 											</div>
 											<ul className="space-y-1 list-disc pl-5">
-												{selectedFeedback.adviceFulfilledDetails!.map((d) => (
+												{selectedFeedback.adviceFulfilledDetails?.map((d) => (
 													<li key={`modal-advice-fulfilled-${d.id}`} className="text-sm text-green-900">
 														{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
 													</li>
