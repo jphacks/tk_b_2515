@@ -20,7 +20,7 @@
 		"@hono/swagger-ui": "^0.5.2",
 		"@hono/zod-openapi": "^1.1.3",
 		"@next/env": "^15.5.5",
-		"@prisma/client": "^6.17.0",
+		"@prisma/client": "^6.19.0",
 		"@prisma/extension-accelerate": "^2.0.2",
 		"@supabase/supabase-js": "^2.75.0",
 		"better-auth": "^1.3.33",
@@ -36,6 +36,6 @@
 		"@types/ws": "^8.18.1",
 		"prisma": "^6.17.0",
 		"tsx": "^4.20.6",
-		"wrangler": "^4.4.0"
+		"wrangler": "^4.46.0"
 	}
 }
