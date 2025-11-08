@@ -17,6 +17,11 @@ export const metadata: Metadata = {
 	title: "恋AI",
 	description:
 		"バーチャル女子大生「まき」とのリアルタイム会話で、きみのコミュ力爆上げしちゃおう!",
+	icons: {
+		icon: "/2.png",
+		shortcut: "/2.png",
+		apple: "/2.png",
+	},
 };
 
 export default function RootLayout({

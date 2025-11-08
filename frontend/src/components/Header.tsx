@@ -20,7 +20,7 @@ export default function Header() {
 
 	return (
 		<header className="h-16 sm:h-20 px-3 sm:px-4 flex items-center justify-between bg-card/80 backdrop-blur-md border-b border-border/50 shadow-sm">
-			<div className="w-12 sm:w-16 md:w-20 flex items-center justify-center">
+			<div className="w-32 sm:w-40 flex items-center justify-start">
 				<button
 					type="button"
 					onClick={() => window.location.reload()}
@@ -28,7 +28,7 @@ export default function Header() {
 					aria-label="ページを更新"
 				>
 					<Image
-						src="/a.png"
+						src="/2.png"
 						alt="恋AIのアイコン"
 						fill
 						className="object-contain"
@@ -36,7 +36,7 @@ export default function Header() {
 				</button>
 			</div>
 
-			<div className="flex items-center gap-1.5 sm:gap-2">
+			<div className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2">
 				<Heart className="w-5 h-5 sm:w-6 sm:h-6 text-primary fill-primary animate-pulse" />
 				<span className="font-bold text-foreground text-base sm:text-lg">
 					恋AI
