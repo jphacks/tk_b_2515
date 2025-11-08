@@ -17,7 +17,7 @@ const ConversationAvatar = dynamic(
 	},
 );
 
-type GestureType = "idle" | "thinking" | "talking" | "explaining" | "nodding";
+type GestureType = "idle" | "thinking" | "talking" | "peace" | "nodding";
 
 interface AvatarDisplayProps {
 	modelUrl: string;
