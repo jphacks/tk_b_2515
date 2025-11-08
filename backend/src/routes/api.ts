@@ -5,6 +5,8 @@
  * 各機能ごとにルートモジュールを分割し、/api 配下にマウントします。
  */
 import { createRoute, z } from "@hono/zod-openapi";
+import { prisma } from "../lib/prisma";
+import { supabase } from "../lib/supabase";
 
 // ルートモジュールのインポート
 import authRoutes from "./modules/auth.routes";
@@ -44,6 +46,62 @@ const healthRoute = createRoute({
 
 api.openapi(healthRoute, (c) => {
 	return c.json({ status: "ok" });
+});
+
+// 依存性の健全性チェック
+const healthFullRoute = createRoute({
+	method: "get",
+	path: "/health/full",
+	tags: ["Health"],
+	responses: {
+		200: {
+			description: "Dependency health details",
+			content: {
+				"application/json": {
+					schema: z.object({
+						status: z.string(),
+						dbConnected: z.boolean(),
+						supabaseConfigured: z.boolean(),
+						env: z.object({
+							DATABASE_URL: z.boolean(),
+							SUPABASE_URL: z.boolean(),
+							SUPABASE_ANON_KEY: z.boolean(),
+						}),
+						error: z.string().optional(),
+					}),
+				},
+			},
+		},
+	},
+});
+
+api.openapi(healthFullRoute, async (c) => {
+	let dbConnected = false;
+	let error: string | undefined;
+	try {
+		await prisma.$queryRaw`SELECT 1`;
+		dbConnected = true;
+	} catch (e) {
+		error = e instanceof Error ? e.message : String(e);
+	}
+
+	const supabaseConfigured = Boolean(
+		process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+	) && Boolean(
+		process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+	);
+
+	return c.json({
+		status: dbConnected ? "ok" : "degraded",
+		dbConnected,
+		supabaseConfigured,
+		env: {
+			DATABASE_URL: Boolean(process.env.DATABASE_URL),
+			SUPABASE_URL: Boolean(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
+			SUPABASE_ANON_KEY: Boolean(process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+		},
+		error,
+	});
 });
 
 /**
