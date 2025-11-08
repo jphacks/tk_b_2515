@@ -997,115 +997,100 @@ function FeedbackContent() {
 							<VoiceMetricsSection liveSummary={voiceLiveSummary} />
 						)}
 
-						{/* Good Points */}
-						{selectedCategory !== "voice" && (
-							<Card className="p-6 border-2 space-y-4">
-								<div className="flex items-center gap-2">
-									<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-										<ThumbsUp className="w-5 h-5 text-primary" />
-									</div>
-									<h2 className="text-xl font-semibold text-foreground">
-										良かった点（{categoryLabel}）
-									</h2>
-								</div>
-								{activeGoodPoints.length > 0 ? (
-									<ul className="space-y-3">
-										{activeGoodPoints.map((point, index) => (
-											<li
-												key={`${selectedCategory}-good-${point.substring(
-													0,
-													30,
-												)}-${index}`}
-												className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
-											>
-												<div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-													{index + 1}
-												</div>
-												<p className="font-semibold text-foreground">{point}</p>
-											</li>
-										))}
-									</ul>
-								) : (
-									<p className="text-sm text-muted-foreground">
-										{selectedCategory === "gesture"
-											? "カメラ分析データがまだありません。カメラアクセスを許可して会話すると表示されます。"
-											: "良かった点が記録されていません。"}
-									</p>
-								)}
-							</Card>
-						)}
+{/* ✅ Good Points */}
+{selectedCategory !== "voice" && (
+  <Card className="p-6 border-2 space-y-4">
+    <div className="flex items-center gap-2">
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <ThumbsUp className="w-5 h-5 text-primary" />
+      </div>
+      <h2 className="text-xl font-semibold text-foreground">
+        良かった点（{categoryLabel}）
+      </h2>
+    </div>
 
-						{/* Improvement Points */}
-						{selectedCategory !== "voice" && (
-							<div className="flex flex-col gap-4">
-								<div className="flex flex-col lg:flex-row gap-4">
-									{/* Advice column moved to left edge (horizontal shift only) */}
-									{selectedCategory === "conversation" && (
-										<div className="lg:w-72 space-y-4">
-											{adviceFulfilledDetails.length > 0 && (
-												<Card className="p-4 border-2 border-green-200 bg-green-50 space-y-3">
-													<div className="flex items-center gap-2">
-														<ThumbsUp className="w-4 h-4 text-green-600" />
-														<p className="text-sm font-semibold text-green-800">背景適合で加点</p>
-													</div>
-													<ul className="space-y-1 list-disc pl-5">
-														{adviceFulfilledDetails.map((d) => (
-															<li key={`advice-left-${d.id}`} className="text-xs text-green-900">
-																{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
-															</li>
-														))}
-													</ul>
-												</Card>
-											)}
-											{adviceUnfulfilledList.length > 0 && (
-												<Card className="p-4 border-2 border-amber-200 bg-amber-50 space-y-2">
-													<div className="flex items-center gap-2">
-														<Lightbulb className="w-4 h-4 text-amber-600" />
-														<p className="font-semibold text-amber-800 text-sm">未達成アドバイス</p>
-													</div>
-													<ul className="list-disc pl-5 space-y-1">
-														{adviceUnfulfilledList.map((line, idx) => (
-															<li key={`unfulfilled-left-${idx}`} className="text-xs text-amber-900">
-																{line}
-															</li>
-														))}
-													</ul>
-												</Card>
-											)}
-										</div>
-									)}
-									<Card className="flex-1 p-6 border-2 space-y-4">
-										<div className="flex items-center gap-2">
-											<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-												<Lightbulb className="w-5 h-5 text-accent" />
-											</div>
-											<h2 className="text-xl font-semibold text-foreground">
-												改善点（{categoryLabel}）
-											</h2>
-										</div>
-										{activeImprovementPoints.length > 0 ? (
-											<ul className="space-y-3">
-												{activeImprovementPoints.map((point, index) => (
-													<li
-														key={`${selectedCategory}-improve-${point.substring(0,30)}-${index}`}
-														className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
-													>
-														<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
-															{index + 1}
-														</div>
-														<p className="font-semibold text-foreground">{point}</p>
-													</li>
-												))}
-											</ul>
-										) : (
-											<p className="text-sm text-muted-foreground">
-												{selectedCategory === "gesture" ? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。" : "改善点が記録されていません。"}
-											</p>
-										)}
-									</Card>
-								</div>
-							</div>
-						)}
+    {activeGoodPoints.length > 0 ? (
+      <ul className="space-y-3">
+        {activeGoodPoints.map((point, index) => (
+          <li
+            key={`${selectedCategory}-good-${point.substring(0, 30)}-${index}`}
+            className="flex gap-3 items-start rounded-xl border border-primary/20 bg-primary/5 p-4"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+              {index + 1}
+            </div>
+            <p className="font-semibold text-foreground">{point}</p>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p className="text-sm text-muted-foreground">
+        {selectedCategory === "gesture"
+          ? "カメラ分析データがまだありません。カメラアクセスを許可して会話すると表示されます。"
+          : "良かった点が記録されていません。"}
+      </p>
+    )}
+  </Card>
+)}
+
+{/* ✅ Improvement Points */}
+{selectedCategory !== "voice" && (
+  <Card className="p-6 border-2 space-y-4">
+    <div className="flex items-center gap-2">
+      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+        <Lightbulb className="w-5 h-5 text-accent" />
+      </div>
+      <h2 className="text-xl font-semibold text-foreground">
+        改善点（{categoryLabel}）
+      </h2>
+    </div>
+
+    {activeImprovementPoints.length > 0 ? (
+      <ul className="space-y-3">
+        {activeImprovementPoints.map((point, index) => (
+          <li
+            key={`${selectedCategory}-improve-${point.substring(0, 30)}-${index}`}
+            className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
+          >
+            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
+              {index + 1}
+            </div>
+            <p className="font-semibold text-foreground">{point}</p>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p className="text-sm text-muted-foreground">
+        {selectedCategory === "gesture"
+          ? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
+          : "改善点が記録されていません。"}
+      </p>
+    )}
+  </Card>
+)}
+
+{/* ✅ 未達成のアドバイス（会話限定） */}
+{selectedCategory === "conversation" && adviceUnfulfilledList.length > 0 && (
+  <Card className="p-6 border-2 space-y-4">
+    <div className="flex items-center gap-2">
+      <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+        <Lightbulb className="w-5 h-5 text-amber-600" />
+      </div>
+      <h2 className="text-xl font-semibold text-amber-800">
+        未達成のアドバイス
+      </h2>
+    </div>
+
+    <ul className="list-disc pl-5 space-y-2">
+      {adviceUnfulfilledList.map((line, idx) => (
+        <li key={`unfulfilled-${idx}`} className="text-sm text-amber-900">
+          {line}
+        </li>
+      ))}
+    </ul>
+  </Card>
+)}
+
 
 						{/* Score History */}
 						<Card className="p-4 md:p-6 border-2 space-y-4">
