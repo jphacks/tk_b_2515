@@ -59,11 +59,11 @@ debug.openapi(dbCheckRoute, async (c) => {
 
 		return c.json(
 			{
-				ok: true,
+				ok: true as const,
 				message: "Database connection successful",
 				details: {
 					isAccelerateUrl,
-					canConnect: true,
+					canConnect: true as const,
 					version,
 				},
 			},
@@ -88,7 +88,7 @@ debug.openapi(dbCheckRoute, async (c) => {
 
 		return c.json(
 			{
-				ok: false,
+				ok: false as const,
 				error: error instanceof Error ? error.message : "Unknown error",
 				errorType,
 				details: error,
