@@ -10,7 +10,6 @@
   "vars": {
     "NODE_ENV": "production"
   },
-
   "observability": {
     "logs": {
       "enabled": false,
