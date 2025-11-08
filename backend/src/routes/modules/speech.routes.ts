@@ -1,5 +1,6 @@
 import type { Voice } from "@elevenlabs/elevenlabs-js/api";
 import { createRoute, z } from "@hono/zod-openapi";
+import type { StatusCode } from "hono/utils/http-status";
 import type { Context } from "hono";
 import {
 	getVoiceById,
@@ -199,7 +200,7 @@ const isFileLike = (value: unknown): value is FileLike => {
 // 統一されたエラー応答ヘルパー
 function sttError(
 	c: Context,
-	status: number,
+	status: StatusCode,
 	code: string,
 	message: string,
 	details?: string,
