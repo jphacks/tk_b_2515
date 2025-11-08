@@ -1324,7 +1324,7 @@ function FeedbackContent() {
 												<br />
 												実際の女性とのビデオ通話で、本物の会話練習に挑戦しましょう。
 											</p>
-											<Link href="/test-call" className="block">
+											<Link href="/practice/waiting" className="block">
 												<Button
 													size="lg"
 													className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white"
