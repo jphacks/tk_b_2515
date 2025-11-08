@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, MessageCircle, Sparkles, TrendingUp } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, TrendingUp, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,15 +9,40 @@ import { Card } from "@/components/ui/card";
 // auth handled in shared Header
 
 export default function HomePage() {
+	const [showPracticeButton, setShowPracticeButton] = useState(false);
+	const [practiceCount, setPracticeCount] = useState(0);
+	const [centerAvatar, setCenterAvatar] = useState<"maki" | "rento" | "kouta">("maki");
+
+	useEffect(() => {
+		try {
+			const unlocked = localStorage.getItem("practiceUnlocked") === "true";
+			const countRaw = localStorage.getItem("practiceSessionCount");
+			const count = countRaw ? parseInt(countRaw, 10) || 0 : 0;
+			setPracticeCount(count);
+			setShowPracticeButton(unlocked && count < 10);
+		} catch { /* ignore */ }
+	}, []);
+
+	// Avatar ordering helpers
+	const seq: Array<"rento" | "maki" | "kouta"> = ["rento", "maki", "kouta"];
+	const info: Record<string, { src: string; alt: string; label: string }> = {
+		rento: { src: "/rento.png", alt: "れんと アバター", label: "れんと" },
+		maki: { src: "/maki.webp", alt: "まき アバター", label: "まき" },
+		kouta: { src: "/kouta.png", alt: "こうた アバター", label: "こうた" },
+	};
+	const ci = seq.indexOf(centerAvatar);
+	const left = seq[(ci + seq.length - 1) % seq.length];
+	const right = seq[(ci + 1) % seq.length];
+
+	const handleChoose = (key: "rento" | "maki" | "kouta") => {
+		setCenterAvatar(key);
+	};
+
 	// auth handled by Header; no local auth here
 
 	return (
 		<div className="min-h-screen flex flex-col relative">
-			{/* Content with higher z-index */}
 			<div className="relative z-10 flex flex-col min-h-screen">
-				{/* Header is provided by shared Header component in layout */}
-
-				{/* Hero Section */}
 				<main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
 					<div className="max-w-6xl w-full text-center space-y-6 sm:space-y-8">
 						{/* Title */}
@@ -26,28 +52,58 @@ export default function HomePage() {
 								AIコミュニケーション・コーチング
 							</div>
 							<h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-balance drop-shadow-lg sparkle-text px-2">
-								<span style={{ color: "#ef5784ff" }}>
-									異性と話せるようになろう!!
-								</span>
+								<span style={{ color: "#ef5784ff" }}>異性と話せるようになろう!!</span>
 							</h2>
 							<p className="text-sm sm:text-base md:text-lg lg:text-xl text-foreground text-pretty max-w-2xl mx-auto drop-shadow px-4">
-								バーチャル女子大生"まき"との会話で、きみのコミュ力爆上げしちゃおう!
+								バーチャル大学生「まき」「れんと」「こうた」との会話で、あなたのコミュニケーション力を楽しく伸ばそう！
 							</p>
-						</div>
-
-						{/* Avatar & Button */}
-						<div className="relative mt-6 sm:mt-8 md:mt-12">
-							<div className="flex justify-center mb-6 sm:mb-8">
-								<div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96">
-									<Image
-										src="/maki.webp"
-										alt="恋AI アバター"
-										fill
-										className="object-cover rounded-full drop-shadow-2xl border-2 sm:border-4 border-primary/20"
-										priority
-									/>
+							{/* Avatar Row */}
+							<div className="relative mt-6 sm:mt-8 md:mt-12">
+								<div className="flex justify-center items-center gap-4 sm:gap-8 mb-6 sm:mb-8 relative">
+									<button
+										type="button"
+										onClick={() => handleChoose(left)}
+										className="relative w-28 h-28 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-56 lg:h-56 focus:outline-none"
+										aria-label={`${info[left].label} を中央に表示`}
+									>
+										<Image
+											src={info[left].src}
+											alt={info[left].alt}
+											fill
+											className="object-cover rounded-full drop-shadow-xl border-2 sm:border-4 border-primary/10 hover:scale-[1.02] transition-transform"
+										/>
+									</button>
+									<div className="flex flex-col items-center">
+										<div className="relative w-40 h-40 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96">
+											<Image
+												src={info[centerAvatar].src}
+												alt={info[centerAvatar].alt}
+												fill
+												priority
+												className="object-cover rounded-full drop-shadow-2xl border-2 sm:border-4 border-primary/20"
+											/>
+										</div>
+										<div className="mt-3 inline-flex items-center px-3 py-1.5 rounded-full bg-primary/15 text-primary font-bold text-lg sm:text-xl md:text-2xl shadow-sm border border-primary/20">
+											{info[centerAvatar].label}
+										</div>
+									</div>
+									<button
+										type="button"
+										onClick={() => handleChoose(right)}
+										className="relative w-28 h-28 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-56 lg:h-56 focus:outline-none"
+										aria-label={`${info[right].label} を中央に表示`}
+									>
+										<Image
+											src={info[right].src}
+											alt={info[right].alt}
+											fill
+											className="object-cover rounded-full drop-shadow-xl border-2 sm:border-4 border-primary/10 hover:scale-[1.02] transition-transform"
+										/>
+									</button>
+									{/* idle arrows removed */}
 								</div>
 							</div>
+						</div>
 
 							<div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12">
 								<Link href="/simulation" className="w-full sm:w-auto">
@@ -59,6 +115,18 @@ export default function HomePage() {
 										今すぐはなしかける
 									</Button>
 								</Link>
+								{showPracticeButton && (
+									<Link href="/test-call" className="w-full sm:w-auto">
+										<Button
+											size="lg"
+											variant="outline"
+											className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/30 transition-all font-bold"
+										>
+											<Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
+											実践練習へ進む （残り {10 - practiceCount} 回）
+										</Button>
+									</Link>
+								)}
 							</div>
 
 							{/* Features */}
@@ -106,10 +174,8 @@ export default function HomePage() {
 								</Card>
 							</div>
 						</div>
-					</div>
-				</main>
-
-				{/* Footer */}
+					</main>
+								{/* removed arrow styles */}
 				<footer className="h-14 sm:h-16 flex items-center justify-center text-muted-foreground text-xs sm:text-sm border-t border-border/50 bg-card/50 backdrop-blur-md px-4">
 					<p className="text-center">
 						© 2025

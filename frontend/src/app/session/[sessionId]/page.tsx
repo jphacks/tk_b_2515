@@ -379,6 +379,20 @@ export default function SessionRoomPage() {
 		}
 	}, [connectionStatus]);
 
+	// 接続状態を test-call ページが監視できるよう localStorage に反映
+	useEffect(() => {
+		if (!sessionId || !role) return;
+		try {
+			const key = `webrtc_connected_${sessionId}_${role}`;
+			if (connectionStatus === "connected") {
+				localStorage.setItem(key, "true");
+			} else if (connectionStatus === "disconnected") {
+				localStorage.removeItem(key);
+			}
+		} catch {/* ignore */}
+	}, [connectionStatus, sessionId, role]);
+
+
 	// ビデオのオン/オフ
 	const toggleVideo = useCallback(() => {
 		if (localStream) {
@@ -401,7 +415,7 @@ export default function SessionRoomPage() {
 		}
 	}, [localStream]);
 
-	// 通話終了
+	// 通話終了（ホームへ戻る: 要件によりフィードバック遷移を廃止）
 	const endCall = useCallback(async () => {
 		if (localStream) {
 			for (const track of localStream.getTracks()) {
@@ -415,10 +429,26 @@ export default function SessionRoomPage() {
 			peerConnectionRef.current.close();
 		}
 		setConnectionStatus("disconnected");
+		try {
+			localStorage.setItem(`webrtc_end_${sessionId}`, String(Date.now()));
+		} catch {/* ignore */}
+		router.push("/");
+	}, [localStream, router, sessionId]);
 
-		// フィードバックページへ遷移
-		router.push(`/partner-feedback/${sessionId}`);
-	}, [localStream, sessionId, router]);
+	// test-call ページからの終了通知を監視（endCall 定義後に設置）
+	useEffect(() => {
+		if (!sessionId) return;
+		const key = `webrtc_end_${sessionId}`;
+		const onStorage = (e: StorageEvent) => {
+			if (e.key === key) {
+				if (connectionStatus !== "disconnected") {
+					void endCall();
+				}
+			}
+		};
+		window.addEventListener("storage", onStorage);
+		return () => window.removeEventListener("storage", onStorage);
+	}, [sessionId, connectionStatus, endCall]);
 
 	// 通話時間のフォーマット
 	const formatDuration = (seconds: number) => {
