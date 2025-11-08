@@ -5,13 +5,13 @@ import type { Message } from "@/types/api";
 interface ConversationHistoryProps {
 	messages: Message[];
 	className?: string;
-	assistantName?: string;
+	partnerName?: string;
 }
 
 export function ConversationHistory({
 	messages,
 	className = "",
- 	assistantName = "まき",
+	partnerName = "まき",
 }: ConversationHistoryProps) {
 	if (messages.length === 0) {
 		return (
@@ -70,7 +70,7 @@ export function ConversationHistory({
 										isUser ? "text-primary" : "text-accent"
 									}`}
 								>
-									{isUser ? "あなた" : assistantName}
+									{isUser ? "あなた" : partnerName}
 								</span>
 								<span className="text-xs text-muted-foreground">
 									{new Date(message.createdAt).toLocaleTimeString("ja-JP", {
