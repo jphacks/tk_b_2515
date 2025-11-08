@@ -292,6 +292,16 @@ function FeedbackContent() {
 		averageEmotion: number;
 		averageTempo: number;
 	} | null>(null);
+	// 実践練習回数表示用
+	const [practiceCount, setPracticeCount] = useState(0);
+
+	useEffect(() => {
+		try {
+			const countRaw = localStorage.getItem("practiceSessionCount");
+			const count = countRaw ? parseInt(countRaw, 10) || 0 : 0;
+			setPracticeCount(count);
+		} catch {/* ignore */}
+	}, []);
 
 	// Load selected avatar from localStorage to adjust visuals/voice
 	useEffect(() => {
@@ -485,6 +495,15 @@ function FeedbackContent() {
 			.slice(0, 3); // 改善すべき優先度が高い順に最大3個まで
 	}, [feedback]);
 
+	// 70点以上取得で実践練習解禁フラグを保存
+	useEffect(() => {
+		if (feedback?.overallScore !== null && feedback?.overallScore !== undefined && feedback.overallScore >= 30) {	//testで30点にした
+			try {
+				localStorage.setItem("practiceUnlocked", "true");
+			} catch {/* ignore */}
+		}
+	}, [feedback?.overallScore]);
+
 	// 達成済みアドバイスの詳細（項目ごとの加点）
 	const adviceFulfilledDetails = useMemo(
 		() => feedback?.adviceFulfilledDetails ?? [],
@@ -519,6 +538,7 @@ function FeedbackContent() {
 			.slice(0, 3); // 改善すべき優先度が高い順に最大3個まで
 	}, [feedback]);
 
+	// アクティブな表示対象リスト（選択カテゴリに応じて切替）
 	const activeGoodPoints =
 		selectedCategory === "conversation"
 			? conversationGoodPointsList
@@ -553,33 +573,29 @@ function FeedbackContent() {
 			}
 
 			// 話者（アバター）選択を取得し、ボイスIDを決定
-			let selectedAvatar: "female" | "male" | "neutral" = "female";
+			let avatarForVoice: "female" | "male" | "neutral" = "female";
 			try {
 				const saved = localStorage.getItem("selectedAvatar");
-				if (saved === "male" || saved === "female" || saved === "neutral")
-					selectedAvatar = saved;
-			} catch {
-				// ignore
-			}
+				if (saved === "male" || saved === "female" || saved === "neutral") {
+					avatarForVoice = saved;
+				}
+			} catch { /* ignore */ }
 			const voiceId =
-				selectedAvatar === "male"
+				avatarForVoice === "male"
 					? config.tts.voices?.male || config.tts.voiceId || undefined
-					: selectedAvatar === "neutral"
+					: avatarForVoice === "neutral"
 						? config.tts.voices?.neutral ||
 							config.tts.voices?.female ||
 							config.tts.voiceId ||
 							undefined
 						: config.tts.voices?.female || config.tts.voiceId || undefined;
 
-			// 音声を生成して再生
+			// 音声生成 & 再生
 			const audioUrl = await textToSpeechUrl({ text: comment, voiceId });
 			const audio = new Audio(audioUrl);
 			audioRef.current = audio;
 
-			audio.onended = () => {
-				setIsPlayingVoice(false);
-			};
-
+			audio.onended = () => setIsPlayingVoice(false);
 			audio.onerror = () => {
 				setIsPlayingVoice(false);
 				console.error("音声の再生に失敗しました");
@@ -1021,57 +1037,74 @@ function FeedbackContent() {
 
 						{/* Improvement Points */}
 						{selectedCategory !== "voice" && (
-							<Card className="p-6 border-2 space-y-4">
-								<div className="flex items-center gap-2">
-									<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-										<Lightbulb className="w-5 h-5 text-accent" />
-									</div>
-									<h2 className="text-xl font-semibold text-foreground">
-										改善点（{categoryLabel}）
-									</h2>
-								</div>
-								{activeImprovementPoints.length > 0 ? (
-									<ul className="space-y-3">
-										{activeImprovementPoints.map((point, index) => (
-											<li
-												key={`${selectedCategory}-improve-${point.substring(
-													0,
-													30,
-												)}-${index}`}
-												className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
-											>
-												<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
-													{index + 1}
-												</div>
-												<p className="font-semibold text-foreground">{point}</p>
-											</li>
-										))}
-									</ul>
-								) : (
-									<p className="text-sm text-muted-foreground">
-										{selectedCategory === "gesture"
-											? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。"
-											: "改善点が記録されていません。"}
-									</p>
-								)}
-
-								{/* 未達成のアドバイス（会話のみ） */}
-								{selectedCategory === "conversation" && adviceUnfulfilledList.length > 0 && (
-									<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
-										<div className="flex items-center gap-2 mb-2">
-											<Lightbulb className="w-4 h-4 text-amber-600" />
-											<p className="font-semibold text-amber-800">未達成のアドバイス</p>
+							<div className="flex flex-col gap-4">
+								<div className="flex flex-col lg:flex-row gap-4">
+									{/* Advice column moved to left edge (horizontal shift only) */}
+									{selectedCategory === "conversation" && (
+										<div className="lg:w-72 space-y-4">
+											{adviceFulfilledDetails.length > 0 && (
+												<Card className="p-4 border-2 border-green-200 bg-green-50 space-y-3">
+													<div className="flex items-center gap-2">
+														<ThumbsUp className="w-4 h-4 text-green-600" />
+														<p className="text-sm font-semibold text-green-800">背景適合で加点</p>
+													</div>
+													<ul className="space-y-1 list-disc pl-5">
+														{adviceFulfilledDetails.map((d) => (
+															<li key={`advice-left-${d.id}`} className="text-xs text-green-900">
+																{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
+															</li>
+														))}
+													</ul>
+												</Card>
+											)}
+											{adviceUnfulfilledList.length > 0 && (
+												<Card className="p-4 border-2 border-amber-200 bg-amber-50 space-y-2">
+													<div className="flex items-center gap-2">
+														<Lightbulb className="w-4 h-4 text-amber-600" />
+														<p className="font-semibold text-amber-800 text-sm">未達成アドバイス</p>
+													</div>
+													<ul className="list-disc pl-5 space-y-1">
+														{adviceUnfulfilledList.map((line, idx) => (
+															<li key={`unfulfilled-left-${idx}`} className="text-xs text-amber-900">
+																{line}
+															</li>
+														))}
+													</ul>
+												</Card>
+											)}
 										</div>
-										<ul className="list-disc pl-5 space-y-1">
-											{adviceUnfulfilledList.map((line, idx) => (
-												<li key={`unfulfilled-${idx}`} className="text-sm text-amber-900">
-													{line}
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
-							</Card>
+									)}
+									<Card className="flex-1 p-6 border-2 space-y-4">
+										<div className="flex items-center gap-2">
+											<div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+												<Lightbulb className="w-5 h-5 text-accent" />
+											</div>
+											<h2 className="text-xl font-semibold text-foreground">
+												改善点（{categoryLabel}）
+											</h2>
+										</div>
+										{activeImprovementPoints.length > 0 ? (
+											<ul className="space-y-3">
+												{activeImprovementPoints.map((point, index) => (
+													<li
+														key={`${selectedCategory}-improve-${point.substring(0,30)}-${index}`}
+														className="flex gap-3 items-start rounded-xl border border-accent/20 bg-accent/5 p-4"
+													>
+														<div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-1">
+															{index + 1}
+														</div>
+														<p className="font-semibold text-foreground">{point}</p>
+													</li>
+												))}
+											</ul>
+										) : (
+											<p className="text-sm text-muted-foreground">
+												{selectedCategory === "gesture" ? "仕草の改善点は、カメラ分析データが集まり次第ここに表示されます。" : "改善点が記録されていません。"}
+											</p>
+										)}
+									</Card>
+								</div>
+							</div>
 						)}
 
 						{/* Score History */}
@@ -1295,7 +1328,7 @@ function FeedbackContent() {
 							{/* 実践練習へ進むボタン（高スコアの場合に表示） */}
 							{feedback &&
 								feedback.overallScore !== null &&
-								feedback.overallScore >= 70 && (
+								feedback.overallScore >= 30 && (	//testで30点にした
 									<Card className="p-6 border-2 border-green-500/20 bg-green-500/5">
 										<div className="text-center space-y-4">
 											<h3 className="text-xl font-bold text-foreground">
@@ -1306,13 +1339,13 @@ function FeedbackContent() {
 												<br />
 												実際の女性とのビデオ通話で、本物の会話練習に挑戦しましょう。
 											</p>
-											<Link href="/partner-matching" className="block">
+											<Link href="/test-call" className="block">
 												<Button
 													size="lg"
 													className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white"
 												>
 													<Users className="w-5 h-5 mr-2" />
-													実践練習へ進む
+													実践練習へ進む （残り {Math.max(0, 10 - practiceCount)} 回）
 												</Button>
 											</Link>
 										</div>
