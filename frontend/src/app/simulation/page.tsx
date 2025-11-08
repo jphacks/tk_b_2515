@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Video } from "lucide-react";
+import { Heart, Lightbulb, Video } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -74,6 +74,7 @@ export default function SimulationPage() {
 		useState<BackgroundKey>("library");
 	const [assistMode, setAssistMode] = useState<boolean>(true);
 	const [adviceCompleted, setAdviceCompleted] = useState<Record<string, boolean>>({});
+	const [showAdvicePanel, setShowAdvicePanel] = useState(false);
 
 	const videoStreamRef = useRef<VideoStreamRef>(null);
 	const hasSentBatchRef = useRef(false);
@@ -123,6 +124,17 @@ export default function SimulationPage() {
 			return neutralId || config.tts.voiceId || "";
 		return femaleId;
 	}, [selectedAvatar]);
+
+	const adviceItems = useMemo(
+		() =>
+			BACKGROUND_ADVICE[selectedBackground].map((item) => ({
+				id: item.id,
+				label: item.label,
+				checked: !!adviceCompleted[item.id],
+			})),
+		[selectedBackground, adviceCompleted],
+	);
+	const adviceAvailable = assistMode && adviceItems.length > 0;
 
 	// auth handled by shared Header; no local auth state here
 
@@ -226,11 +238,16 @@ export default function SimulationPage() {
 	}, [session?.id]);
 
 	// 背景変更時にアドバイス進捗リセット
-	// biome-ignore lint/correctness/useExhaustiveDependencies: 背景変更トリガでのみリセットしたい
+useEffect(() => {
+	setAdviceCompleted({});
+	void selectedBackground;
+}, [selectedBackground]);
+
 	useEffect(() => {
-		setAdviceCompleted({});
-		void selectedBackground; // 明示的に依存を使用
-	}, [selectedBackground]);
+		if (!adviceAvailable) {
+			setShowAdvicePanel(false);
+		}
+	}, [adviceAvailable]);
 
 	// Timer management
 	const { timeRemaining, startTimer, stopTimer } = useSimulationTimer({
@@ -630,14 +647,44 @@ export default function SimulationPage() {
 						</div>
 						<div className="w-full h-full flex flex-col md:flex-row gap-2 p-2 overflow-hidden">
 							{/* AI Avatar */}
-							<AvatarDisplay
-								modelUrl={avatarModelUrl}
-								lipSyncValue={lipSyncValue}
-								emotion={avatarEmotion}
-								gesture={avatarGesture}
-								avatarName={avatarName}
-												backgroundSrc={BACKGROUNDS[selectedBackground].src}
-							/>
+							<div className="relative flex-1">
+								<AvatarDisplay
+									modelUrl={avatarModelUrl}
+									lipSyncValue={lipSyncValue}
+									emotion={avatarEmotion}
+									gesture={avatarGesture}
+									avatarName={avatarName}
+									backgroundSrc={BACKGROUNDS[selectedBackground].src}
+								/>
+								{adviceAvailable && (
+									<div className="pointer-events-none absolute right-4 bottom-4 flex justify-end">
+										<div className="pointer-events-auto w-[85%] max-w-[360px] flex flex-col items-end gap-3">
+											{showAdvicePanel && (
+												<AdviceChecklist
+													title="背景に合わせたアドバイス"
+													items={adviceItems}
+													size="lg"
+													className="bg-black/85 border-white/30 text-white shadow-2xl"
+												/>
+											)}
+											<Button
+												size="lg"
+												variant={showAdvicePanel ? "default" : "outline"}
+												className="rounded-full h-11 sm:h-12 px-4 text-xs sm:text-sm font-semibold backdrop-blur bg-white/85 text-primary shadow"
+												onClick={() => setShowAdvicePanel((prev) => !prev)}
+												aria-pressed={showAdvicePanel}
+											>
+												<Lightbulb
+													className={`w-4 h-4 mr-1 ${
+														showAdvicePanel ? "text-yellow-300" : "text-primary"
+													}`}
+												/>
+												背景アドバイス
+											</Button>
+										</div>
+									</div>
+								)}
+							</div>
 
 							{/* User Video */}
 							<UserVideoDisplay
@@ -646,20 +693,6 @@ export default function SimulationPage() {
 								videoEnabled={videoEnabled}
 								onVideoReady={handleVideoReady}
 							/>
-
-							{/* Advice Checklist (アシストモード時のみ表示) */}
-							{assistMode && (
-								<div className="md:absolute md:left-2 md:top-2 md:w-64 md:z-10 w-full md:w-auto">
-									<AdviceChecklist
-										title="背景に合わせたアドバイス"
-										items={BACKGROUND_ADVICE[selectedBackground].map(item => ({
-											id: item.id,
-											label: item.label,
-											checked: !!adviceCompleted[item.id],
-										}))}
-									/>
-								</div>
-							)}
 						</div>
 
 						{/* Recording Status Indicator */}
@@ -698,7 +731,7 @@ export default function SimulationPage() {
 						onToggleRecording={toggleRecording}
 						onToggleVideo={toggleVideo}
 						onEndConversation={handleEndConversation}
-						onToggleControls={() => setShowControls(!showControls)}
+						onToggleControls={() => setShowControls((prev) => !prev)}
 					/>
 				</main>
 			)}

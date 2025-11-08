@@ -4,8 +4,9 @@
  * Node.js HTTPサーバーとWebSocketシグナリングサーバーを起動します。
  * Honoアプリケーションと統合し、REST APIとWebSocketを同じポートで提供します。
  */
-import { createServer } from "node:http";
+import { createServer, type IncomingMessage } from "node:http";
 import { dirname, resolve } from "node:path";
+import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import app from "./index";
@@ -28,13 +29,16 @@ const server = createServer(async (req, res) => {
 		? !["GET", "HEAD"].includes(req.method.toUpperCase())
 		: false;
 
-	const handleRequest = async (bodyStream: any | undefined) => {
+	const handleRequest = async (bodySource?: IncomingMessage) => {
 		try {
 			// NodeのIncomingMessageをそのままReadableとして渡す（multipart FormData対応）
-			const requestInit: any = {
+			const requestInit: RequestInit & { duplex?: "half" } = {
 				method: req.method,
 				headers: req.headers as HeadersInit,
-				body: isBodyAllowed ? bodyStream : undefined,
+				body:
+					isBodyAllowed && bodySource
+						? (Readable.toWeb(bodySource) as unknown as BodyInit)
+						: undefined,
 				// Node.js固有: Readableをfetchに渡す際のduplex指定
 				...(isBodyAllowed ? { duplex: "half" as const } : {}),
 			};
@@ -70,12 +74,7 @@ const server = createServer(async (req, res) => {
 		}
 	};
 
-	if (isBodyAllowed) {
-		// 直接IncomingMessageを渡せばストリーミング扱いになるため分岐なしでOK
-		handleRequest(req);
-	} else {
-		handleRequest(undefined);
-	}
+	await handleRequest(isBodyAllowed ? req : undefined);
 });
 
 /**

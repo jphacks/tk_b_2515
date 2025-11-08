@@ -896,8 +896,7 @@ ${
     const maxBonus = 8;
     const candidates = backgroundAdviceMap[backgroundKey] ?? [];
     const completed = candidates.filter((c) => adviceIdsCompleted.has(c.id));
-    const completedCount = completed.length;
-    // 実際の加点をアイテム単位で配分（最大値を超える分は切り捨て）
+
     let remaining = maxBonus;
     adviceFulfilledDetails = [];
     for (const item of completed) {
@@ -906,8 +905,10 @@ ${
       adviceFulfilledDetails.push({ id: item.id, label: item.label, points: allocate });
       remaining -= allocate;
     }
-  const bonus = adviceFulfilledDetails.reduce((sum, i) => sum + i.points, 0);
-  adviceScoreAdded = Math.min(bonus, maxBonus);
+
+    const bonus = adviceFulfilledDetails.reduce((sum, i) => sum + i.points, 0);
+    adviceScoreAdded = Math.min(bonus, maxBonus);
+
     const unfulfilled = candidates.filter((c) => !adviceIdsCompleted.has(c.id));
     if (unfulfilled.length) {
       adviceUnfulfilled = unfulfilled.map((u) => u.label).join("\n");
@@ -922,6 +923,7 @@ ${
         improvementPointsStr = lines.join("\n");
       }
     }
+
     if (hasAnyScore && bonus > 0) {
       const baseSum = (conversationScore ?? 0) + (gestureScore ?? 0) + (voiceScore ?? 0);
       overallScore = clamp(baseSum + bonus, 0, 100); // 総合=会話+仕草+声+アドバイス
