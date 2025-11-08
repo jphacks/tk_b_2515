@@ -583,22 +583,22 @@ export default function SimulationPage() {
 									</p>
 									<p>{BACKGROUNDS[selectedBackground].scenario}</p>
 								</div>
-								{/* Assist Mode Toggle */}
-								<div className="mt-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-lg p-3 flex items-center justify-between gap-3">
-									<div>
-										<p className="font-semibold text-foreground mb-0.5">モード選択</p>
-										<p>アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。</p>
+								{/* Assist Mode Toggle (下段表示) */}
+								<div className="mt-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-lg p-3">
+									<p className="font-semibold text-foreground mb-1">モード選択</p>
+									<p className="mb-2 leading-relaxed">アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。</p>
+									<div className="flex items-center gap-2">
+										<label className="inline-flex items-center gap-2 cursor-pointer select-none">
+											<input
+												type="checkbox"
+												checked={assistMode}
+												onChange={(e) => setAssistMode(e.target.checked)}
+												className="h-4 w-4"
+												aria-label="アシストモードを有効化"
+											/>
+											<span className="text-foreground text-xs sm:text-sm font-medium whitespace-nowrap">アシストモード</span>
+										</label>
 									</div>
-									<label className="flex items-center gap-2 cursor-pointer select-none">
-										<input
-											type="checkbox"
-											checked={assistMode}
-											onChange={(e) => setAssistMode(e.target.checked)}
-											className="h-4 w-4"
-											aria-label="アシストモードを有効化"
-										/>
-										<span className="text-foreground text-xs whitespace-nowrap">アシストモード</span>
-									</label>
 								</div>
 							</div>
 							<Button
