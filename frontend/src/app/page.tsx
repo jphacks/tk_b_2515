@@ -116,7 +116,7 @@ export default function HomePage() {
 									</Button>
 								</Link>
 								{showPracticeButton && (
-									<Link href="/test-call" className="w-full sm:w-auto">
+									<Link href="/practice/waiting" className="w-full sm:w-auto">
 										<Button
 											size="lg"
 											variant="outline"
