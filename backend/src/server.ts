@@ -1,8 +1,8 @@
 /**
  * サーバーエントリーポイント
  *
- * Node.js HTTPサーバーとWebSocketシグナリングサーバーを起動します。
- * Honoアプリケーションと統合し、REST APIとWebSocketを同じポートで提供します。
+ * Node.js HTTPサーバーを起動します。
+ * Honoアプリケーションと統合し、REST APIを提供します。
  */
 import { createServer, type IncomingMessage } from "node:http";
 import { dirname, resolve } from "node:path";
@@ -10,7 +10,6 @@ import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { config } from "dotenv";
 import app from "./index";
-import { SignalingServer } from "./services/signaling-node";
 
 // プロジェクトルートの.envファイルをロード
 const __filename = fileURLToPath(import.meta.url);
@@ -78,15 +77,9 @@ const server = createServer(async (req, res) => {
 });
 
 /**
- * WebSocketシグナリングサーバーを初期化
- * WebRTC接続用のシグナリングメッセージを中継します
- */
-new SignalingServer(server);
-
-/**
  * サーバーを起動
  */
 server.listen(port, () => {
 	console.log(`Server is running on http://localhost:${port}`);
-	console.log(`WebSocket signaling available at ws://localhost:${port}/ws/signal/:sessionId`);
+	console.log(`API available at http://localhost:${port}/api`);
 });

@@ -780,6 +780,80 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 | `/api/stt`                          | POST     | 音声をテキストに変換（STT）        |
 | `/api/tts`                          | POST     | テキストを音声に変換（TTS）        |
 | `/api/voices`                       | GET      | 利用可能な音声一覧を取得           |
+| `/api/__db-check`                   | GET      | データベース接続状態を確認（デバッグ用） |
+
+---
+
+## データベース構成
+
+### Prisma + Supabase (PostgreSQL)
+
+本アプリケーションは、Supabase PostgreSQL データベースを使用しています。
+
+#### スキーマ構成
+
+- **Conversation**: 会話セッション情報
+- **Message**: 会話メッセージ履歴
+- **Feedback**: AI によるフィードバック（会話内容・表情・声質の評価）
+- **GestureMetrics**: 表情・視線データの集計結果
+- **User/Account/Session**: 認証情報（Better Auth）
+- **HumanPartnerSession/HumanPartnerFeedback**: 人間パートナーとの練習セッション
+- **PracticeSlot**: パートナーの予約枠管理
+
+#### 本番環境でのデータベース接続
+
+Cloudflare Workers（エッジランタイム）での Prisma 使用には **Prisma Accelerate** が必要です：
+
+1. **Prisma Accelerate のセットアップ**
+   - [Prisma Console](https://console.prisma.io/) でプロジェクトを作成
+   - Database connection string に Supabase の接続文字列を設定
+   - Accelerate API Key を取得
+
+2. **環境変数の設定**
+   ```bash
+   # Cloudflare Workers用（本番環境）
+   DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY"
+
+   # ローカル開発用
+   DATABASE_URL="postgresql://user:password@host:6543/database?pgbouncer=true&connection_limit=1"
+   DIRECT_URL="postgresql://user:password@host:5432/database?sslmode=require"
+   ```
+
+3. **マイグレーション実行**
+   ```bash
+   # ローカル環境でマイグレーション
+   pnpm prisma migrate dev
+
+   # 本番環境へのマイグレーション適用
+   pnpm prisma migrate deploy
+   ```
+
+#### デバッグエンドポイント
+
+データベース接続の問題をデバッグするための専用エンドポイント：
+
+```bash
+# 本番環境の接続確認
+curl https://renai-backend.renai-back.workers.dev/api/__db-check
+```
+
+成功時のレスポンス:
+```json
+{
+  "ok": true,
+  "version": "PostgreSQL 17.6 ...",
+  "host": "accelerate.prisma-data.net"
+}
+```
+
+エラー時のレスポンス:
+```json
+{
+  "ok": false,
+  "code": "DB_AUTH_FAILED | DB_TLS_REQUIRED | DB_UNREACHABLE | UNKNOWN",
+  "detail": "Error message..."
+}
+```
 
 ---
 
