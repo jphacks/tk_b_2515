@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "../generated/prisma/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
 // PrismaClientのシングルトンインスタンスを作成
@@ -23,10 +23,11 @@ function createPrismaClient() {
 
 	if (isAccelerateUrl) {
 		console.log("[Prisma] Using Prisma Accelerate for edge runtime");
-		return new PrismaClient({
-			datasourceUrl: databaseUrl,
+		// AccelerateはdatasourceUrlを自動的に処理するため、明示的に指定しない
+		const client = new PrismaClient({
 			log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
-		}).$extends(withAccelerate()) as unknown as PrismaClient;
+		});
+		return client.$extends(withAccelerate()) as unknown as PrismaClient;
 	}
 
 	// 標準のPrisma Clientを使用（ローカル開発用）
