@@ -71,7 +71,9 @@ export default function TestCallPage() {
 								</p>
 								<ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1 ml-2">
 									<li>「ユーザーとして参加」をクリック</li>
-									<li>「パートナーとして参加」をクリック（新しいウィンドウが開く）</li>
+									<li>
+										「パートナーとして参加」をクリック（新しいウィンドウが開く）
+									</li>
 									<li>両方のウィンドウでカメラ・マイクを許可</li>
 									<li>パートナー側がofferを送信し、接続が確立されます</li>
 								</ol>

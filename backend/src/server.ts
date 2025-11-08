@@ -88,5 +88,7 @@ new SignalingServer(server);
  */
 server.listen(port, () => {
 	console.log(`Server is running on http://localhost:${port}`);
-	console.log(`WebSocket signaling available at ws://localhost:${port}/ws/signal/:sessionId`);
+	console.log(
+		`WebSocket signaling available at ws://localhost:${port}/ws/signal/:sessionId`,
+	);
 });

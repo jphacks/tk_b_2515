@@ -43,19 +43,25 @@ export class SignalingServer {
 		this.wss = new WebSocketServer({ noServer: true });
 		this.sessions = new Map();
 
-		server.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
-			const url = new URL(request.url || "", `http://${request.headers.host}`);
-			const pathname = url.pathname;
+		server.on(
+			"upgrade",
+			(request: IncomingMessage, socket: Duplex, head: Buffer) => {
+				const url = new URL(
+					request.url || "",
+					`http://${request.headers.host}`,
+				);
+				const pathname = url.pathname;
 
-			// /ws/signal/:sessionId へのリクエストのみ処理
-			if (pathname.startsWith("/ws/signal/")) {
-				this.wss.handleUpgrade(request, socket, head, (ws) => {
-					this.handleConnection(ws, url);
-				});
-			} else {
-				socket.destroy();
-			}
-		});
+				// /ws/signal/:sessionId へのリクエストのみ処理
+				if (pathname.startsWith("/ws/signal/")) {
+					this.wss.handleUpgrade(request, socket, head, (ws) => {
+						this.handleConnection(ws, url);
+					});
+				} else {
+					socket.destroy();
+				}
+			},
+		);
 	}
 
 	private handleConnection(ws: WebSocket, url: URL) {
@@ -108,9 +114,7 @@ export class SignalingServer {
 						participantCount: sessionClients.size,
 					}),
 				);
-				console.log(
-					`[Signaling] Sent ready message to ${userId} (${role})`,
-				);
+				console.log(`[Signaling] Sent ready message to ${userId} (${role})`);
 			} catch (error) {
 				console.error("[Signaling] Error sending ready message:", error);
 			}
@@ -200,7 +204,11 @@ export class SignalingServer {
 	/**
 	 * セッション内の他の参加者にメッセージをブロードキャスト
 	 */
-	private broadcast(sessionId: string, message: SignalingMessage, exclude?: WebSocket) {
+	private broadcast(
+		sessionId: string,
+		message: SignalingMessage,
+		exclude?: WebSocket,
+	) {
 		const sessionClients = this.sessions.get(sessionId);
 		if (!sessionClients) return;
 

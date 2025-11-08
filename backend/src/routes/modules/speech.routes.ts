@@ -220,7 +220,12 @@ speech.post("/stt", async (c) => {
 		const apiKey = process.env.ELEVENLABS_API_KEY;
 		if (!apiKey) {
 			console.error("STT Error: ELEVENLABS_API_KEY is not configured");
-			return sttError(c, 500, "API_KEY_NOT_CONFIGURED", "API key not configured");
+			return sttError(
+				c,
+				500,
+				"API_KEY_NOT_CONFIGURED",
+				"API key not configured",
+			);
 		}
 
 		let audioFile: FileLike | undefined;
@@ -251,7 +256,13 @@ speech.post("/stt", async (c) => {
 				}
 			} catch (bodyErr) {
 				console.error("Both FormData and parseBody failed", bodyErr);
-				return sttError(c, 400, "BODY_PARSE_FAILED", "Failed to parse request body", bodyErr instanceof Error ? bodyErr.message : String(bodyErr));
+				return sttError(
+					c,
+					400,
+					"BODY_PARSE_FAILED",
+					"Failed to parse request body",
+					bodyErr instanceof Error ? bodyErr.message : String(bodyErr),
+				);
 			}
 		}
 
@@ -274,7 +285,13 @@ speech.post("/stt", async (c) => {
 				hasVoice: !!result.voice,
 			});
 			if (result.text === "[UNSUPPORTED_LANGUAGE]") {
-				return sttError(c, 422, "UNSUPPORTED_LANGUAGE", "日本語か英語で話してください。", "Detected unsupported language");
+				return sttError(
+					c,
+					422,
+					"UNSUPPORTED_LANGUAGE",
+					"日本語か英語で話してください。",
+					"Detected unsupported language",
+				);
 			}
 			return c.json(result);
 		}
@@ -283,7 +300,13 @@ speech.post("/stt", async (c) => {
 		const text = await speechToText(apiKey, audioFile);
 		console.log("STT Success:", { textLength: text.length });
 		if (text === "[UNSUPPORTED_LANGUAGE]") {
-			return sttError(c, 422, "UNSUPPORTED_LANGUAGE", "日本語か英語で話してください。", "Detected unsupported language");
+			return sttError(
+				c,
+				422,
+				"UNSUPPORTED_LANGUAGE",
+				"日本語か英語で話してください。",
+				"Detected unsupported language",
+			);
 		}
 		return c.json({ text });
 	} catch (error) {
@@ -292,8 +315,15 @@ speech.post("/stt", async (c) => {
 			stack: error instanceof Error ? error.stack : undefined,
 			type: error instanceof Error ? error.constructor.name : typeof error,
 		});
-		const errorMessage = error instanceof Error ? error.message : "Unknown error";
-		return sttError(c, 500, "STT_INTERNAL_ERROR", "Failed to process speech-to-text", errorMessage);
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+		return sttError(
+			c,
+			500,
+			"STT_INTERNAL_ERROR",
+			"Failed to process speech-to-text",
+			errorMessage,
+		);
 	}
 });
 

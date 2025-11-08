@@ -254,9 +254,13 @@ export default function PartnerCallPage() {
 						{connectionStatus === "connected" && (
 							<div className="flex items-center gap-2">
 								<span className="text-sm text-muted-foreground">残り時間:</span>
-								<span className={`text-lg font-bold ${
-									timeRemaining <= 60 ? "text-red-500 animate-pulse" : "text-foreground"
-								}`}>
+								<span
+									className={`text-lg font-bold ${
+										timeRemaining <= 60
+											? "text-red-500 animate-pulse"
+											: "text-foreground"
+									}`}
+								>
 									{formatTimeRemaining(timeRemaining)}
 								</span>
 							</div>

@@ -340,7 +340,11 @@ function FeedbackContent() {
 				let adviceCompletedIds: string[] | undefined;
 				try {
 					const savedBg = localStorage.getItem("selectedBackground");
-					if (savedBg === "library" || savedBg === "classroom" || savedBg === "xmas") {
+					if (
+						savedBg === "library" ||
+						savedBg === "classroom" ||
+						savedBg === "xmas"
+					) {
 						backgroundKey = savedBg;
 					}
 					if (sessionId) {
@@ -348,8 +352,8 @@ function FeedbackContent() {
 						if (raw) {
 							const parsed = JSON.parse(raw) as Record<string, boolean>;
 							adviceCompletedIds = Object.entries(parsed)
-							  .filter(([, v]) => v)
-							  .map(([k]) => k);
+								.filter(([, v]) => v)
+								.map(([k]) => k);
 						}
 					}
 				} catch {
@@ -678,7 +682,6 @@ function FeedbackContent() {
 			.slice(0, 3);
 	}, [selectedFeedback]);
 
-
 	const scoreChartMetrics = useMemo(() => {
 		if (scoreHistory.length === 0) {
 			return {
@@ -865,87 +868,97 @@ function FeedbackContent() {
 							</div>
 						</div>
 
-							{/* Title */}
-							<div className="text-center space-y-1 sm:space-y-2">
-								<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-									会話フィードバック
-								</h1>
-								<p className="text-muted-foreground text-sm sm:text-base">
-									AIがあなたの会話を分析しました
-								</p>
-							</div>
+						{/* Title */}
+						<div className="text-center space-y-1 sm:space-y-2">
+							<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+								会話フィードバック
+							</h1>
+							<p className="text-muted-foreground text-sm sm:text-base">
+								AIがあなたの会話を分析しました
+							</p>
+						</div>
 
-							{/* Overall Score */}
-							<Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-								<div className="space-y-3 sm:space-y-4">
-									<div className="space-y-1 sm:space-y-2">
-										<p className="text-xs sm:text-sm text-muted-foreground font-medium">
-											総合スコア
-										</p>
-										<div className="text-5xl sm:text-6xl font-bold text-primary">
-											{feedback.overallScore}
-										</div>
-										<p className="text-xs sm:text-sm text-muted-foreground">
-											/ 100点
-										</p>
+						{/* Overall Score */}
+						<Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+							<div className="space-y-3 sm:space-y-4">
+								<div className="space-y-1 sm:space-y-2">
+									<p className="text-xs sm:text-sm text-muted-foreground font-medium">
+										総合スコア
+									</p>
+									<div className="text-5xl sm:text-6xl font-bold text-primary">
+										{feedback.overallScore}
 									</div>
-									<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-										<div className="rounded-lg border border-primary/10 px-3 py-2">
-											<p className="font-medium text-foreground">会話</p>
-											<p>{feedback.conversationScore ?? "—"} / 40点</p>
-										</div>
-										<div className="rounded-lg border border-primary/10 px-3 py-2">
-											<p className="font-medium text-foreground">仕草</p>
-											<p>{feedback.gestureScore ?? "—"} / 50点</p>
-										</div>
-										<div className="rounded-lg border border-primary/10 px-3 py-2">
-											<p className="font-medium text-foreground">声</p>
-											<p>{feedback.voiceScore ?? "—"} / 10点</p>
-										</div>
+									<p className="text-xs sm:text-sm text-muted-foreground">
+										/ 100点
+									</p>
+								</div>
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+									<div className="rounded-lg border border-primary/10 px-3 py-2">
+										<p className="font-medium text-foreground">会話</p>
+										<p>{feedback.conversationScore ?? "—"} / 40点</p>
 									</div>
-									{typeof feedback.adviceScoreAdded === "number" && feedback.adviceScoreAdded > 0 && (
+									<div className="rounded-lg border border-primary/10 px-3 py-2">
+										<p className="font-medium text-foreground">仕草</p>
+										<p>{feedback.gestureScore ?? "—"} / 50点</p>
+									</div>
+									<div className="rounded-lg border border-primary/10 px-3 py-2">
+										<p className="font-medium text-foreground">声</p>
+										<p>{feedback.voiceScore ?? "—"} / 10点</p>
+									</div>
+								</div>
+								{typeof feedback.adviceScoreAdded === "number" &&
+									feedback.adviceScoreAdded > 0 && (
 										<div className="mt-2 text-sm font-medium flex items-center justify-center gap-1 text-green-600">
 											<TrendingUp className="w-4 h-4" />
-											シチュエーション達成ボーナス +{feedback.adviceScoreAdded}点
+											シチュエーション達成ボーナス +{feedback.adviceScoreAdded}
+											点
 										</div>
 									)}
-									{adviceFulfilledDetails.length > 0 && (
-										<Card className="mt-4 p-4 border border-green-200 bg-green-50 space-y-3">
-											<div className="flex items-center gap-2">
-												<ThumbsUp className="w-4 h-4 text-green-600" />
-												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
-											</div>
-											<ul className="space-y-1 list-disc pl-5">
-												{adviceFulfilledDetails.map((d) => (
-													<li key={`advice-fulfilled-${d.id}`} className="text-sm text-green-900">
-														{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
-													</li>
-												))}
-											</ul>
-										</Card>
-									)}
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => {
-											if (feedback.overallScore !== null) {
-												playVoiceComment(feedback.overallScore);
-											}
-										}}
-										disabled={isPlayingVoice || feedback.overallScore === null}
-										className="rounded-full mx-auto"
-									>
-										<Volume2
-											className={`w-4 h-4 mr-2 ${
-												isPlayingVoice ? "animate-pulse" : ""
-											}`}
-										/>
-										{isPlayingVoice
-											? "再生中..."
-											: `${speakerName}のコメントを聞く`}
-									</Button>
-								</div>
-							</Card>
+								{adviceFulfilledDetails.length > 0 && (
+									<Card className="mt-4 p-4 border border-green-200 bg-green-50 space-y-3">
+										<div className="flex items-center gap-2">
+											<ThumbsUp className="w-4 h-4 text-green-600" />
+											<p className="text-sm font-semibold text-green-800">
+												背景適合で加点された項目
+											</p>
+										</div>
+										<ul className="space-y-1 list-disc pl-5">
+											{adviceFulfilledDetails.map((d) => (
+												<li
+													key={`advice-fulfilled-${d.id}`}
+													className="text-sm text-green-900"
+												>
+													{d.label}{" "}
+													<span className="font-semibold text-green-700">
+														+{d.points}点
+													</span>
+												</li>
+											))}
+										</ul>
+									</Card>
+								)}
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										if (feedback.overallScore !== null) {
+											playVoiceComment(feedback.overallScore);
+										}
+									}}
+									disabled={isPlayingVoice || feedback.overallScore === null}
+									className="rounded-full mx-auto"
+								>
+									<Volume2
+										className={`w-4 h-4 mr-2 ${
+											isPlayingVoice ? "animate-pulse" : ""
+										}`}
+									/>
+									{isPlayingVoice
+										? "再生中..."
+										: `${speakerName}のコメントを聞く`}
+								</Button>
+							</div>
+						</Card>
 
 						{/* Category Toggle */}
 						<div className="flex justify-center gap-2 sm:gap-4 flex-wrap">
@@ -1056,21 +1069,27 @@ function FeedbackContent() {
 								)}
 
 								{/* 未達成のアドバイス（会話のみ） */}
-								{selectedCategory === "conversation" && adviceUnfulfilledList.length > 0 && (
-									<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
-										<div className="flex items-center gap-2 mb-2">
-											<Lightbulb className="w-4 h-4 text-amber-600" />
-											<p className="font-semibold text-amber-800">未達成のアドバイス</p>
+								{selectedCategory === "conversation" &&
+									adviceUnfulfilledList.length > 0 && (
+										<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+											<div className="flex items-center gap-2 mb-2">
+												<Lightbulb className="w-4 h-4 text-amber-600" />
+												<p className="font-semibold text-amber-800">
+													未達成のアドバイス
+												</p>
+											</div>
+											<ul className="list-disc pl-5 space-y-1">
+												{adviceUnfulfilledList.map((line, idx) => (
+													<li
+														key={`unfulfilled-${idx}`}
+														className="text-sm text-amber-900"
+													>
+														{line}
+													</li>
+												))}
+											</ul>
 										</div>
-										<ul className="list-disc pl-5 space-y-1">
-											{adviceUnfulfilledList.map((line, idx) => (
-												<li key={`unfulfilled-${idx}`} className="text-sm text-amber-900">
-													{line}
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
+									)}
 							</Card>
 						)}
 
@@ -1359,54 +1378,62 @@ function FeedbackContent() {
 				) : selectedFeedback ? (
 					<div className="space-y-6">
 						{/* スコア表示 */}
-							<Card className="p-6 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-								<div className="space-y-2">
-									<p className="text-sm text-muted-foreground font-medium">
-										総合スコア
-									</p>
-									<div className="text-5xl font-bold text-primary">
-										{selectedFeedback.overallScore}
+						<Card className="p-6 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+							<div className="space-y-2">
+								<p className="text-sm text-muted-foreground font-medium">
+									総合スコア
+								</p>
+								<div className="text-5xl font-bold text-primary">
+									{selectedFeedback.overallScore}
+								</div>
+								<p className="text-sm text-muted-foreground">/ 100点</p>
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-sm text-muted-foreground">
+									<div className="rounded-lg border border-primary/10 px-3 py-2">
+										<p className="font-medium text-foreground">会話</p>
+										<p>{selectedFeedback.conversationScore ?? "—"} / 40点</p>
 									</div>
-									<p className="text-sm text-muted-foreground">/ 100点</p>
-									<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-sm text-muted-foreground">
-										<div className="rounded-lg border border-primary/10 px-3 py-2">
-											<p className="font-medium text-foreground">会話</p>
-											<p>
-												{selectedFeedback.conversationScore ?? "—"} / 40点
-											</p>
-										</div>
-										<div className="rounded-lg border border-primary/10 px-3 py-2">
-											<p className="font-medium text-foreground">仕草</p>
-											<p>{selectedFeedback.gestureScore ?? "—"} / 50点</p>
-										</div>
-										<div className="rounded-lg border border-primary/10 px-3 py-2">
-											<p className="font-medium text-foreground">声</p>
-											<p>{selectedFeedback.voiceScore ?? "—"} / 10点</p>
-										</div>
+									<div className="rounded-lg border border-primary/10 px-3 py-2">
+										<p className="font-medium text-foreground">仕草</p>
+										<p>{selectedFeedback.gestureScore ?? "—"} / 50点</p>
 									</div>
-									{typeof selectedFeedback.adviceScoreAdded === "number" && selectedFeedback.adviceScoreAdded > 0 && (
+									<div className="rounded-lg border border-primary/10 px-3 py-2">
+										<p className="font-medium text-foreground">声</p>
+										<p>{selectedFeedback.voiceScore ?? "—"} / 10点</p>
+									</div>
+								</div>
+								{typeof selectedFeedback.adviceScoreAdded === "number" &&
+									selectedFeedback.adviceScoreAdded > 0 && (
 										<div className="mt-2 text-sm font-medium flex items-center justify-center gap-1 text-green-600">
 											<TrendingUp className="w-4 h-4" />
-											シチュエーション達成ボーナス +{selectedFeedback.adviceScoreAdded}点
+											シチュエーション達成ボーナス +
+											{selectedFeedback.adviceScoreAdded}点
 										</div>
 									)}
-									{(selectedFeedback.adviceFulfilledDetails?.length ?? 0) > 0 && (
-										<Card className="mt-4 p-4 border border-green-200 bg-green-50 space-y-3">
-											<div className="flex items-center gap-2">
-												<ThumbsUp className="w-4 h-4 text-green-600" />
-												<p className="text-sm font-semibold text-green-800">背景適合で加点された項目</p>
-											</div>
-											<ul className="space-y-1 list-disc pl-5">
-												{selectedFeedback.adviceFulfilledDetails?.map((d) => (
-													<li key={`modal-advice-fulfilled-${d.id}`} className="text-sm text-green-900">
-														{d.label} <span className="font-semibold text-green-700">+{d.points}点</span>
-													</li>
-												))}
-											</ul>
-										</Card>
-									)}
-								</div>
-							</Card>
+								{(selectedFeedback.adviceFulfilledDetails?.length ?? 0) > 0 && (
+									<Card className="mt-4 p-4 border border-green-200 bg-green-50 space-y-3">
+										<div className="flex items-center gap-2">
+											<ThumbsUp className="w-4 h-4 text-green-600" />
+											<p className="text-sm font-semibold text-green-800">
+												背景適合で加点された項目
+											</p>
+										</div>
+										<ul className="space-y-1 list-disc pl-5">
+											{selectedFeedback.adviceFulfilledDetails?.map((d) => (
+												<li
+													key={`modal-advice-fulfilled-${d.id}`}
+													className="text-sm text-green-900"
+												>
+													{d.label}{" "}
+													<span className="font-semibold text-green-700">
+														+{d.points}点
+													</span>
+												</li>
+											))}
+										</ul>
+									</Card>
+								)}
+							</div>
+						</Card>
 
 						{/* カテゴリ切り替え */}
 						<div className="flex justify-center gap-4 flex-wrap">
@@ -1459,16 +1486,14 @@ function FeedbackContent() {
 										良かった点（{categoryLabel}）
 									</h3>
 								</div>
-								{(
-									selectedCategory === "conversation"
-										? selectedConversationGoodPoints
-										: selectedGestureGoodPoints
+								{(selectedCategory === "conversation"
+									? selectedConversationGoodPoints
+									: selectedGestureGoodPoints
 								).length > 0 ? (
 									<ul className="space-y-2">
-										{(
-											selectedCategory === "conversation"
-												? selectedConversationGoodPoints
-												: selectedGestureGoodPoints
+										{(selectedCategory === "conversation"
+											? selectedConversationGoodPoints
+											: selectedGestureGoodPoints
 										).map((point, index) => (
 											<li
 												key={`modal-${selectedCategory}-good-${point.substring(
@@ -1507,16 +1532,14 @@ function FeedbackContent() {
 										改善点（{categoryLabel}）
 									</h3>
 								</div>
-								{(
-									selectedCategory === "conversation"
-										? selectedConversationImprovementPoints
-										: selectedGestureImprovementPoints
+								{(selectedCategory === "conversation"
+									? selectedConversationImprovementPoints
+									: selectedGestureImprovementPoints
 								).length > 0 ? (
 									<ul className="space-y-2">
-										{(
-											selectedCategory === "conversation"
-												? selectedConversationImprovementPoints
-												: selectedGestureImprovementPoints
+										{(selectedCategory === "conversation"
+											? selectedConversationImprovementPoints
+											: selectedGestureImprovementPoints
 										).map((point, index) => (
 											<li
 												key={`modal-${selectedCategory}-improve-${point.substring(
@@ -1543,21 +1566,27 @@ function FeedbackContent() {
 								)}
 
 								{/* 未達成のアドバイス（会話のみ、モーダル） */}
-								{selectedCategory === "conversation" && selectedAdviceUnfulfilledList.length > 0 && (
-									<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
-										<div className="flex items-center gap-2 mb-2">
-											<Lightbulb className="w-4 h-4 text-amber-600" />
-											<p className="font-semibold text-amber-800">未達成のアドバイス</p>
+								{selectedCategory === "conversation" &&
+									selectedAdviceUnfulfilledList.length > 0 && (
+										<div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
+											<div className="flex items-center gap-2 mb-2">
+												<Lightbulb className="w-4 h-4 text-amber-600" />
+												<p className="font-semibold text-amber-800">
+													未達成のアドバイス
+												</p>
+											</div>
+											<ul className="list-disc pl-5 space-y-1">
+												{selectedAdviceUnfulfilledList.map((line, idx) => (
+													<li
+														key={`modal-unfulfilled-${idx}`}
+														className="text-sm text-amber-900"
+													>
+														{line}
+													</li>
+												))}
+											</ul>
 										</div>
-										<ul className="list-disc pl-5 space-y-1">
-											{selectedAdviceUnfulfilledList.map((line, idx) => (
-												<li key={`modal-unfulfilled-${idx}`} className="text-sm text-amber-900">
-													{line}
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
+									)}
 							</div>
 						)}
 

@@ -60,7 +60,8 @@ export default function SessionRoomPage() {
 
 		// userIdを一度だけ生成（sessionがない場合）
 		if (!userId) {
-			const id = session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
+			const id =
+				session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
 			setUserId(id);
 			console.log("[WebRTC] Generated userId:", id);
 		}
@@ -118,7 +119,7 @@ export default function SessionRoomPage() {
 			console.log("[WebRTC] Waiting for localStream, userId, and role...", {
 				localStream: !!localStream,
 				userId,
-				role
+				role,
 			});
 			return;
 		}
@@ -175,7 +176,10 @@ export default function SessionRoomPage() {
 
 			// 接続状態の監視
 			peerConnection.onconnectionstatechange = () => {
-				console.log("[WebRTC] Connection state:", peerConnection.connectionState);
+				console.log(
+					"[WebRTC] Connection state:",
+					peerConnection.connectionState,
+				);
 				if (peerConnection.connectionState === "connected") {
 					setConnectionStatus("connected");
 				} else if (peerConnection.connectionState === "disconnected") {
@@ -192,7 +196,10 @@ export default function SessionRoomPage() {
 
 			// ICE接続状態の監視
 			peerConnection.oniceconnectionstatechange = () => {
-				console.log("[WebRTC] ICE connection state:", peerConnection.iceConnectionState);
+				console.log(
+					"[WebRTC] ICE connection state:",
+					peerConnection.iceConnectionState,
+				);
 				if (peerConnection.iceConnectionState === "failed") {
 					console.error("[WebRTC] ICE connection failed");
 				} else if (peerConnection.iceConnectionState === "disconnected") {
@@ -202,7 +209,10 @@ export default function SessionRoomPage() {
 
 			// ICE収集状態の監視
 			peerConnection.onicegatheringstatechange = () => {
-				console.log("[WebRTC] ICE gathering state:", peerConnection.iceGatheringState);
+				console.log(
+					"[WebRTC] ICE gathering state:",
+					peerConnection.iceGatheringState,
+				);
 			};
 
 			// WebSocketシグナリングサーバーに接続
@@ -223,7 +233,10 @@ export default function SessionRoomPage() {
 					switch (message.type) {
 						case "ready":
 							// 既に相手がいる場合、partnerならofferを送信
-							console.log("[WebRTC] Room is ready, participants:", message.participantCount);
+							console.log(
+								"[WebRTC] Room is ready, participants:",
+								message.participantCount,
+							);
 							if (currentRole === "partner") {
 								console.log("[WebRTC] Creating offer as partner...");
 								const offer = await peerConnection.createOffer();
@@ -263,7 +276,10 @@ export default function SessionRoomPage() {
 							);
 
 							// バッファリングされたICE候補を追加
-							console.log("[WebRTC] Processing buffered ICE candidates:", iceCandidatesQueueRef.current.length);
+							console.log(
+								"[WebRTC] Processing buffered ICE candidates:",
+								iceCandidatesQueueRef.current.length,
+							);
 							for (const candidate of iceCandidatesQueueRef.current) {
 								await peerConnection.addIceCandidate(candidate);
 							}
@@ -289,7 +305,10 @@ export default function SessionRoomPage() {
 							);
 
 							// バッファリングされたICE候補を追加
-							console.log("[WebRTC] Processing buffered ICE candidates:", iceCandidatesQueueRef.current.length);
+							console.log(
+								"[WebRTC] Processing buffered ICE candidates:",
+								iceCandidatesQueueRef.current.length,
+							);
 							for (const candidate of iceCandidatesQueueRef.current) {
 								await peerConnection.addIceCandidate(candidate);
 							}
@@ -304,7 +323,9 @@ export default function SessionRoomPage() {
 
 								// remoteDescriptionが設定されていない場合はバッファに追加
 								if (!peerConnection.remoteDescription) {
-									console.log("[WebRTC] Buffering ICE candidate (no remote description yet)");
+									console.log(
+										"[WebRTC] Buffering ICE candidate (no remote description yet)",
+									);
 									iceCandidatesQueueRef.current.push(candidate);
 								} else {
 									console.log("[WebRTC] Adding ICE candidate");
