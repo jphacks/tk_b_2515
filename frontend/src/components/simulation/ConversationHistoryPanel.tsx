@@ -11,12 +11,14 @@ interface ConversationHistoryPanelProps {
 	messages: Message[];
 	showHistory: boolean;
 	onToggleHistory: (show: boolean) => void;
+	partnerName: string;
 }
 
 export function ConversationHistoryPanel({
 	messages,
 	showHistory,
 	onToggleHistory,
+	partnerName,
 }: ConversationHistoryPanelProps) {
 	return (
 		<>
@@ -42,6 +44,7 @@ export function ConversationHistoryPanel({
 							<MemoizedConversationHistory
 								messages={messages}
 								className="h-full p-4"
+								partnerName={partnerName}
 							/>
 						</div>
 					</Card>
