@@ -1,0 +1,140 @@
+graph TB
+    subgraph "クライアント層"
+        User[ユーザー]
+        Partner[パートナー]
+        Camera[カメラ]
+        Mic[マイク]
+    end
+
+    subgraph "フロントエンド - Next.js 15 on Vercel"
+        subgraph "主要ページ"
+            SimPage[/simulation<br/>AI会話シミュレーション]
+            FeedbackPage[/feedback<br/>フィードバック表示]
+            PracticePage[/practice<br/>練習予約]
+            PartnerPage[/partner<br/>パートナーダッシュボード]
+            SessionPage[/session<br/>セッション詳細]
+            TestCallPage[/test-call<br/>通話テスト]
+        end
+
+        subgraph "コアフック"
+            UseConversation[useConversation<br/>会話管理]
+            UseFacialAnalysis[useFacialAnalysis<br/>MediaPipe表情分析]
+            UseLipSync[useLipSync<br/>Web Audio APIリップシンク]
+            UseVRM[useVRM<br/>VRM制御]
+            UseAgoraCall[useAgoraCall<br/>Agoraビデオ通話]
+        end
+
+        subgraph "3D/UI層"
+            VRMAvatar[VRMアバター<br/>React Three Fiber]
+            MediaPipe[MediaPipe<br/>478点顔ランドマーク]
+            AudioRecorder[AudioRecorder<br/>音声録音]
+        end
+    end
+
+    subgraph "バックエンド - Hono on Cloudflare Workers"
+        subgraph "APIルート"
+            SessionsAPI[/api/sessions<br/>セッション管理]
+            ConversationAPI[/api/conversation<br/>AI会話生成]
+            FeedbackAPI[/api/feedback<br/>フィードバック生成]
+            SpeechAPI[/api/stt, /api/tts<br/>音声処理]
+            AgoraAPI[/api/agora/token<br/>トークン生成]
+            PartnersAPI[/api/partners<br/>パートナー管理]
+            AuthAPI[/api/auth<br/>Better Auth]
+        end
+
+        subgraph "サービス層"
+            ConversationService[conversation.ts<br/>ビジネスロジック]
+            AIClient[ai-client.ts<br/>Gemini APIクライアント]
+            STTService[stt.ts<br/>STT/TTS処理]
+        end
+    end
+
+    subgraph "データベース層 - Supabase"
+        PostgreSQL[(PostgreSQL)]
+        Storage[(Supabase Storage<br/>音声ファイル)]
+    end
+
+    subgraph "外部サービス"
+        Gemini[Google Gemini 2.5 Flash<br/>AI会話・フィードバック]
+        ElevenLabs[ElevenLabs API<br/>TTS/STT]
+        Agora[Agora RTC<br/>ビデオ通話]
+    end
+
+    subgraph "データモデル - Prisma"
+        Conversation[Conversation<br/>会話セッション]
+        Message[Message<br/>メッセージ履歴]
+        Feedback[Feedback<br/>フィードバック]
+        GestureMetrics[GestureMetrics<br/>表情・視線データ]
+        HumanPartnerSession[HumanPartnerSession<br/>人間パートナーセッション]
+        HumanPartnerFeedback[HumanPartnerFeedback<br/>パートナーフィードバック]
+        PracticeSlot[PracticeSlot<br/>予約枠]
+        UserModel[User<br/>ユーザー]
+    end
+
+    %% クライアント → フロントエンド
+    User --> SimPage
+    User --> FeedbackPage
+    User --> PracticePage
+    Partner --> PartnerPage
+    Camera --> MediaPipe
+    Mic --> AudioRecorder
+
+    %% フロントエンド内部フロー
+    SimPage --> UseConversation
+    SimPage --> UseFacialAnalysis
+    SimPage --> UseVRM
+    UseConversation --> AudioRecorder
+    UseFacialAnalysis --> MediaPipe
+    UseVRM --> VRMAvatar
+    UseLipSync --> VRMAvatar
+
+    TestCallPage --> UseAgoraCall
+    SessionPage --> UseAgoraCall
+
+    %% フロントエンド → バックエンド
+    UseConversation --> SpeechAPI
+    UseConversation --> ConversationAPI
+    FeedbackPage --> FeedbackAPI
+    PracticePage --> PartnersAPI
+    PartnerPage --> PartnersAPI
+    UseAgoraCall --> AgoraAPI
+    SimPage --> SessionsAPI
+
+    %% バックエンド内部フロー
+    ConversationAPI --> ConversationService
+    FeedbackAPI --> ConversationService
+    ConversationService --> AIClient
+    SpeechAPI --> STTService
+
+    %% バックエンド → 外部サービス
+    AIClient --> Gemini
+    STTService --> ElevenLabs
+    AgoraAPI --> Agora
+
+    %% バックエンド → データベース
+    SessionsAPI --> PostgreSQL
+    ConversationService --> PostgreSQL
+    STTService --> Storage
+    PartnersAPI --> PostgreSQL
+    AuthAPI --> PostgreSQL
+
+    %% データモデルリレーション
+    Conversation --> Message
+    Conversation --> Feedback
+    Conversation --> GestureMetrics
+    HumanPartnerSession --> HumanPartnerFeedback
+    HumanPartnerSession --> PracticeSlot
+    UserModel --> HumanPartnerSession
+
+    %% スタイリング
+    classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px,color:#000
+    classDef backend fill:#f39c12,stroke:#333,stroke-width:2px,color:#000
+    classDef database fill:#2ecc71,stroke:#333,stroke-width:2px,color:#000
+    classDef external fill:#e74c3c,stroke:#333,stroke-width:2px,color:#fff
+    classDef model fill:#9b59b6,stroke:#333,stroke-width:2px,color:#fff
+
+    class SimPage,FeedbackPage,PracticePage,PartnerPage,SessionPage,TestCallPage,UseConversation,UseFacialAnalysis,UseLipSync,UseVRM,UseAgoraCall,VRMAvatar,MediaPipe,AudioRecorder frontend
+    class SessionsAPI,ConversationAPI,FeedbackAPI,SpeechAPI,AgoraAPI,PartnersAPI,AuthAPI,ConversationService,AIClient,STTService backend
+    class PostgreSQL,Storage database
+    class Gemini,ElevenLabs,Agora external
+    class Conversation,Message,Feedback,GestureMetrics,HumanPartnerSession,HumanPartnerFeedback,PracticeSlot,UserModel model

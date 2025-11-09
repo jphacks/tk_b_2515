@@ -1,0 +1,47 @@
+graph LR
+    subgraph "フロントエンド技術"
+        NextJS[Next.js 15<br/>React 19]
+        R3F[React Three Fiber<br/>Three.js]
+        VRM[@pixiv/three-vrm<br/>VRMモデル]
+        MediaPipeLib[MediaPipe<br/>顔分析]
+        WebAPIs[Web APIs<br/>Speech/Audio]
+        Agora1[Agora RTC SDK]
+    end
+
+    subgraph "バックエンド技術"
+        Hono[Hono Framework]
+        Workers[Cloudflare Workers]
+        ZodOpenAPI[@hono/zod-openapi]
+        BetterAuth[Better Auth]
+    end
+
+    subgraph "データ層"
+        Prisma[Prisma ORM]
+        PrismaAccelerate[Prisma Accelerate]
+        Supabase[Supabase<br/>PostgreSQL + Storage]
+    end
+
+    subgraph "AI/外部サービス"
+        Gemini2[Google Gemini<br/>2.5 Flash]
+        ElevenLabs2[ElevenLabs<br/>TTS/STT]
+        Agora2[Agora RTC]
+    end
+
+    NextJS --> R3F
+    R3F --> VRM
+    NextJS --> MediaPipeLib
+    NextJS --> WebAPIs
+    NextJS --> Agora1
+
+    Hono --> Workers
+    Hono --> ZodOpenAPI
+    Hono --> BetterAuth
+
+    Hono --> Prisma
+    Prisma --> PrismaAccelerate
+    PrismaAccelerate --> Supabase
+    NextJS --> Prisma
+
+    Hono --> Gemini2
+    Hono --> ElevenLabs2
+    Hono --> Agora2
