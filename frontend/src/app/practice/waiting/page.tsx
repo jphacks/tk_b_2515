@@ -18,7 +18,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSession } from "@/lib/auth-client";
-import { config } from "@/lib/config";
 
 type AvailablePartner = {
   id: string;
@@ -114,15 +113,12 @@ export default function PracticeWaitingPage() {
     setPartnersError(null);
     setIsLoadingPartners(true);
     try {
-      const response = await fetch(
-        `${config.api.baseUrl}/api/partners/available`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
+      const response = await fetch("/api/partners/available", {
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        cache: "no-store",
+      });
 
       if (!response.ok) {
         throw new Error("パートナー情報の取得に失敗しました。");
