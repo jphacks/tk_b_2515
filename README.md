@@ -397,51 +397,30 @@ Prisma と Supabase を活用し、堅牢なデータ管理を実現しました
 
 ### システムアーキテクチャ
 
+詳細なアーキテクチャ図とシステム設計については[docs/architecture.md](docs/architecture.md)を参照してください。
+
+#### 概要図
+
 ```
-┌─────────────────────────────────────────────────┐
-│         Next.js Frontend (Vercel)               │
-│                                                 │
-│  ┌─────────────┐  ┌──────────────────────────┐ │
-│  │ VRM Avatar  │  │  MediaPipe Face Detect   │ │
-│  │ (Three.js)  │  │  - 478 Landmarks         │ │
-│  │ - Lip Sync  │  │  - Gaze Tracking         │ │
-│  │ - Blinking  │  │  - Smile Detection       │ │
-│  └─────────────┘  └──────────────────────────┘ │
-│                                                 │
-│  ┌──────────────────────────────────────────┐  │
-│  │  Web Speech API / ElevenLabs STT         │  │
-│  │  - Audio Recording                       │  │
-│  │  - Speech Recognition                    │  │
-│  └──────────────────────────────────────────┘  │
-└──────────────┬──────────────────────────────────┘
-               │ REST API (OpenAPI)
-               ▼
-┌──────────────────────────────────────────────────┐
-│       Hono Backend (Cloudflare Workers)          │
-│                                                  │
-│  ┌─────────────┐  ┌────────────────────────┐    │
-│  │   Routes    │  │   Services             │    │
-│  │ - Sessions  │  │ - Conversation AI      │    │
-│  │ - Messages  │  │ - STT/TTS Processing   │    │
-│  │ - Feedback  │  │ - Feedback Generation  │    │
-│  │ - Gestures  │  └────────────────────────┘    │
-│  └─────────────┘                                │
-└────────┬─────────────────────────────────────────┘
-         │
-    ┌────┴─────┬──────────────┬──────────────┐
-    ▼          ▼              ▼              ▼
-┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│ Gemini  │ │ElevenLabs│ │Supabase  │ │Supabase  │
-│ 2.5     │ │ API      │ │PostgreSQL│ │ Storage  │
-│ Flash   │ │- TTS     │ │- Prisma  │ │- Audio   │
-│         │ │- STT     │ │- Session │ │  Files   │
-└─────────┘ └──────────┘ └──────────┘ └──────────┘
+[フロントエンド: Next.js on Vercel]
+  - VRM Avatar (React Three Fiber)
+  - MediaPipe表情分析(478点ランドマーク)
+  - Web Audio APIリップシンク
+  - Agora RTC (ビデオ通話)
+         ↓
+[バックエンド: Hono on Cloudflare Workers]
+  - REST API (OpenAPI)
+  - AI会話生成・フィードバック
+  - STT/TTS処理
+         ↓
+[データ層・外部サービス]
+  - Supabase PostgreSQL + Storage
+  - Google Gemini 2.5 Flash
+  - ElevenLabs API
+  - Agora RTC
 ```
 
 ---
-
-
-![アーキテクチャー図](./docs/architecture.png)
 
 ## 独自技術・注力ポイント
 
