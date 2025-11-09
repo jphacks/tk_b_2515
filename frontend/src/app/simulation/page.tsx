@@ -679,7 +679,7 @@ useEffect(() => {
 														showAdvicePanel ? "text-yellow-300" : "text-primary"
 													}`}
 												/>
-												背景アドバイス
+												アドバイス
 											</Button>
 										</div>
 									</div>
