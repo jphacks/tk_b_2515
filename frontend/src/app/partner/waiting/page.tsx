@@ -29,6 +29,10 @@ type WaitingSession = {
 		name: string | null;
 		image: string | null;
 	} | null;
+	partner?: {
+		id: string;
+		name: string | null;
+	} | null;
 };
 
 const POLL_INTERVAL_MS = 15_000;
@@ -37,7 +41,6 @@ export default function PartnerWaitingPage() {
 	const router = useRouter();
 	const sessionState = useSession();
 	const { data: sessionData, isPending } = sessionState;
-	const isPartner = (sessionData?.user as { role?: string } | undefined)?.role === "partner";
 
 	const [sessions, setSessions] = useState<WaitingSession[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -48,29 +51,34 @@ export default function PartnerWaitingPage() {
 	const fetchWaitingSessions = useCallback(async () => {
 		setError(null);
 		try {
-			const response = await fetch("/api/partner/sessions/waiting", {
-				cache: "no-store",
-			});
+			const params = new URLSearchParams();
+			if (sessionData?.user?.id) {
+				params.set("partnerId", sessionData.user.id);
+			}
+			const response = await fetch(
+				`/api/partners/sessions/waiting${params.size > 0 ? `?${params.toString()}` : ""}`,
+				{
+					cache: "no-store",
+				},
+			);
 
 			if (!response.ok) {
-				if (response.status === 401) {
-					setError("パートナーログインが必要です。");
-				} else if (response.status === 403) {
-					setError("パートナー権限が必要です。");
-				} else {
-					const payload = await response.json().catch(() => ({}));
-					const message =
-						typeof payload?.error === "string"
-							? payload.error
-							: "待機中セッションの取得に失敗しました。";
-					setError(message);
-				}
+				const payload = await response.json().catch(() => ({}));
+				const message =
+					typeof payload?.error === "string"
+						? payload.error
+						: "待機中セッションの取得に失敗しました。";
+				setError(message);
 				setSessions([]);
 				return;
 			}
 
 			const data = (await response.json()) as { sessions: WaitingSession[] };
-			setSessions(data.sessions ?? []);
+			setSessions(
+				data.sessions?.filter((session) =>
+					sessionData?.user?.id ? session.partner?.id === sessionData.user.id : true,
+				) ?? [],
+			);
 			setLastUpdated(new Date());
 		} catch (err) {
 			console.error("Failed to load waiting sessions:", err);
@@ -79,7 +87,7 @@ export default function PartnerWaitingPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, []);
+	}, [sessionData?.user?.id]);
 
 	useEffect(() => {
 		void fetchWaitingSessions();

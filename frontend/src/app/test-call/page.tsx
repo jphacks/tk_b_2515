@@ -63,13 +63,13 @@ export default function TestCallPage() {
     return () => window.removeEventListener("storage", onStorage);
   }, [sessionId]);
 
-  // 両者接続後に 5 分カウントダウン開始
-  useEffect(() => {
-    if (!timerStarted && userConnected && partnerConnected) {
-      setSecondsRemaining(300); // 5分
-      setTimerStarted(true);
-    }
-  }, [userConnected, partnerConnected, timerStarted]);
+	// 両者接続後に 3 分カウントダウン開始
+	useEffect(() => {
+		if (!timerStarted && userConnected && partnerConnected) {
+			setSecondsRemaining(180); // 3分
+			setTimerStarted(true);
+		}
+	}, [userConnected, partnerConnected, timerStarted]);
 
   // カウントダウン進行
   useEffect(() => {
@@ -190,7 +190,7 @@ export default function TestCallPage() {
             </div>
             {!timerStarted && (
               <p className="text-xs text-muted-foreground">
-                両方が接続すると5分タイマーが開始します。
+						両方が接続すると3分タイマーが開始します。
               </p>
             )}
             {timerStarted && secondsRemaining !== null && (
@@ -223,7 +223,7 @@ export default function TestCallPage() {
             <h3 className="font-semibold text-foreground mb-2">確認項目:</h3>
             <ul className="text-sm text-muted-foreground space-y-1">
               <li>✓ 両方の画面で接続が「接続」になるか</li>
-              <li>✓ 接続後に5分タイマーが開始されるか</li>
+					<li>✓ 接続後に3分タイマーが開始されるか</li>
               <li>✓ タイマー終了または終了ボタンでホームへ戻るか</li>
             </ul>
           </div>

@@ -22,17 +22,6 @@ const tokenRequestSchema = z.object({
 });
 
 /**
- * Token generation response schema
- */
-const tokenResponseSchema = z.object({
-	token: z.string().describe("Agora RTC token"),
-	appId: z.string().describe("Agora App ID"),
-	channelName: z.string().describe("Channel name"),
-	uid: z.number().describe("Numeric user ID for Agora"),
-	expiresIn: z.number().describe("Token expiration time in seconds"),
-});
-
-/**
  * Generate Agora RTC token
  * POST /api/agora/token
  *

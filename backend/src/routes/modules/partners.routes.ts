@@ -657,4 +657,99 @@ partners.openapi(getPartnerFeedbackRoute, async (c) => {
   }
 });
 
+// List waiting sessions for partners
+const listWaitingSessionsRoute = createRoute({
+  method: "get",
+  path: "/sessions/waiting",
+  tags: ["Partners"],
+  request: {
+    query: z.object({
+      partnerId: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Waiting sessions list",
+      content: {
+        "application/json": {
+          schema: z.object({
+            sessions: z.array(
+              z.object({
+                id: z.string(),
+                status: z.string(),
+                createdAt: z.string(),
+                user: z
+                  .object({
+                    id: z.string(),
+                    name: z.string().nullable(),
+                    image: z.string().nullable(),
+                  })
+                  .nullable(),
+                partner: z.object({
+                  id: z.string(),
+                  name: z.string().nullable(),
+                }),
+              })
+            ),
+          }),
+        },
+      },
+    },
+    500: {
+      description: "Failed to fetch waiting sessions",
+      content: {
+        "application/json": {
+          schema: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+  },
+});
+
+partners.openapi(listWaitingSessionsRoute, async (c) => {
+  try {
+    const partnerId = c.req.query("partnerId");
+
+    const sessions = await prisma.humanPartnerSession.findMany({
+      where: {
+        status: "waiting",
+        ...(partnerId ? { partnerId } : {}),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+        partner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return c.json({
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        status: session.status,
+        createdAt: session.createdAt.toISOString(),
+        user: session.user,
+        partner: session.partner,
+      })),
+    });
+  } catch (error) {
+    console.error("Failed to fetch waiting sessions:", error);
+    return c.json({ error: "Failed to fetch waiting sessions" }, 500);
+  }
+});
+
 export default partners;
