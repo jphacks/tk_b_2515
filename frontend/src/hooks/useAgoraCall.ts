@@ -7,7 +7,6 @@
  */
 import AgoraRTC, {
 	type IAgoraRTCClient,
-	type IAgoraRTCRemoteUser,
 	type ILocalAudioTrack,
 	type ILocalVideoTrack,
 	type IRemoteAudioTrack,
@@ -80,7 +79,11 @@ export function useAgoraCall(
 				client.on("user-published", async (user, mediaType) => {
 					console.log(`[Agora] User ${user.uid} published ${mediaType}`);
 					try {
-						await client!.subscribe(user, mediaType);
+						if (!client) {
+							console.warn("[Agora] Client not initialized before subscribe");
+							return;
+						}
+						await client.subscribe(user, mediaType);
 						console.log(`[Agora] Subscribed to user ${user.uid} ${mediaType}`);
 
 						if (mediaType === "video" && isMounted) {

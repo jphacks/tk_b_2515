@@ -42,6 +42,8 @@ export default function SessionRoomPage() {
 		token: string;
 		uid: number;
 	} | null>(null);
+	const LIMIT_SECONDS = 180;
+	const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
 	// URLパラメータからroleを取得し、userIdを初期化
 	useEffect(() => {
@@ -137,15 +139,49 @@ export default function SessionRoomPage() {
 		}
 	}, [remoteVideoTrack]);
 
-	// 通話時間のカウント
-	useEffect(() => {
-		if (connectionState === "connected") {
-			const interval = setInterval(() => {
-				setCallDuration((prev) => prev + 1);
-			}, 1000);
-			return () => clearInterval(interval);
+	// 通話終了
+	const endCall = useCallback(async () => {
+		await leave();
+		try {
+			localStorage.setItem(`webrtc_end_${sessionId}`, String(Date.now()));
+		} catch {
+			/* ignore */
 		}
+		router.push("/");
+	}, [leave, router, sessionId]);
+
+	// 通話時間のカウントと残り時間
+	useEffect(() => {
+		if (connectionState !== "connected") {
+			setTimeRemaining(null);
+			return;
+		}
+
+		const durationInterval = setInterval(() => {
+			setCallDuration((prev) => prev + 1);
+		}, 1000);
+
+		setTimeRemaining((prev) => prev ?? LIMIT_SECONDS);
+
+		const remainingInterval = setInterval(() => {
+			setTimeRemaining((prev) => {
+				if (prev === null) return prev;
+				return prev > 0 ? prev - 1 : 0;
+			});
+		}, 1000);
+
+		return () => {
+			clearInterval(durationInterval);
+			clearInterval(remainingInterval);
+		};
 	}, [connectionState]);
+
+	// 制限時間に到達したら自動終了
+	useEffect(() => {
+		if (timeRemaining === 0) {
+			void endCall();
+		}
+	}, [timeRemaining, endCall]);
 
 	// 接続状態をlocalStorageに反映(test-call連携用)
 	useEffect(() => {
@@ -161,17 +197,6 @@ export default function SessionRoomPage() {
 			/* ignore */
 		}
 	}, [connectionState, sessionId, role]);
-
-	// 通話終了
-	const endCall = useCallback(async () => {
-		await leave();
-		try {
-			localStorage.setItem(`webrtc_end_${sessionId}`, String(Date.now()));
-		} catch {
-			/* ignore */
-		}
-		router.push("/");
-	}, [leave, router, sessionId]);
 
 	// test-callページからの終了通知を監視
 	useEffect(() => {
@@ -212,20 +237,27 @@ export default function SessionRoomPage() {
 						</div>
 					</div>
 					<div className="flex items-center gap-2">
-						<div
-							className={`w-3 h-3 rounded-full ${
-								connectionState === "connected"
-									? "bg-green-500"
-									: connectionState === "connecting"
-										? "bg-yellow-500 animate-pulse"
-										: "bg-red-500"
-							}`}
-						/>
-						<span className="text-sm text-muted-foreground">
-							{connectionState === "connecting" && "接続中"}
-							{connectionState === "connected" && "接続済み"}
-							{connectionState === "disconnected" && "切断"}
-						</span>
+						{connectionState === "connected" && timeRemaining !== null && (
+							<div className="text-sm font-semibold text-foreground bg-primary/10 px-3 py-1 rounded-full">
+								残り {formatDuration(timeRemaining)}
+							</div>
+						)}
+						<div className="flex items-center gap-2">
+							<div
+								className={`w-3 h-3 rounded-full ${
+									connectionState === "connected"
+										? "bg-green-500"
+										: connectionState === "connecting"
+											? "bg-yellow-500 animate-pulse"
+											: "bg-red-500"
+								}`}
+							/>
+							<span className="text-sm text-muted-foreground">
+								{connectionState === "connecting" && "接続中"}
+								{connectionState === "connected" && "接続済み"}
+								{connectionState === "disconnected" && "切断"}
+							</span>
+						</div>
 					</div>
 				</div>
 			</header>
