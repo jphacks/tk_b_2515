@@ -46,6 +46,66 @@ export default function PartnerWaitingPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // 匿名認証を実行
+  useEffect(() => {
+    const authenticateAnonymously = async () => {
+      // セッション読み込み中はスキップ
+      if (isPending) return;
+
+      // 既にログイン済みの場合はスキップ
+      if (sessionData?.user) return;
+
+      // 認証中フラグが立っている場合はスキップ
+      if (isAuthenticating) return;
+
+      setIsAuthenticating(true);
+
+      try {
+        // 匿名ユーザーとしてサインイン
+        const anonymousEmail = `partner-${crypto.randomUUID()}@anonymous.local`;
+        const anonymousPassword = crypto.randomUUID();
+
+        console.log('[Partner Waiting] Creating anonymous partner account...');
+
+        // サインアップとサインインを試みる
+        const signUpResponse = await fetch('/api/auth/sign-up/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: anonymousEmail,
+            password: anonymousPassword,
+            name: `パートナー${Math.floor(Math.random() * 1000)}`,
+          }),
+        });
+
+        if (signUpResponse.ok) {
+          console.log('[Partner Waiting] Anonymous account created, updating role...');
+
+          // roleをpartnerに更新
+          const updateRoleResponse = await fetch('/api/auth/update-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'partner' }),
+          });
+
+          if (updateRoleResponse.ok) {
+            console.log('[Partner Waiting] Role updated to partner');
+          }
+
+          // ページをリロードしてセッションを更新
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('[Partner Waiting] Anonymous authentication failed:', error);
+      } finally {
+        setIsAuthenticating(false);
+      }
+    };
+
+    void authenticateAnonymously();
+  }, [isPending, sessionData?.user, isAuthenticating]);
 
   const fetchWaitingSessions = useCallback(async () => {
     setError(null);
@@ -132,12 +192,12 @@ export default function PartnerWaitingPage() {
     [router],
   );
 
-  if (isPending) {
+  if (isPending || isAuthenticating) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span>セッション情報を読み込み中...</span>
+          <span>{isAuthenticating ? '匿名認証中...' : 'セッション情報を読み込み中...'}</span>
         </div>
       </div>
     );

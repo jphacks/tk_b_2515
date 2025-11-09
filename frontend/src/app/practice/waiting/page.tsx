@@ -38,7 +38,8 @@ const REFRESH_INTERVAL_MS = 20_000;
 export default function PracticeWaitingPage() {
   const router = useRouter();
   const sessionState = useSession();
-  const user = sessionState.data?.user ?? null;
+  const { data: sessionData, isPending } = sessionState;
+  const user = sessionData?.user ?? null;
   const [partners, setPartners] = useState<AvailablePartner[]>([]);
   const [partnersError, setPartnersError] = useState<string | null>(null);
   const [isLoadingPartners, setIsLoadingPartners] = useState(true);
@@ -48,6 +49,66 @@ export default function PracticeWaitingPage() {
   const [matchError, setMatchError] = useState<string | null>(null);
   const [activeMatch, setActiveMatch] = useState<MatchResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // 匿名認証を実行
+  useEffect(() => {
+    const authenticateAnonymously = async () => {
+      // セッション読み込み中はスキップ
+      if (isPending) return;
+
+      // 既にログイン済みの場合はスキップ
+      if (sessionData?.user) return;
+
+      // 認証中フラグが立っている場合はスキップ
+      if (isAuthenticating) return;
+
+      setIsAuthenticating(true);
+
+      try {
+        // 匿名ユーザーとしてサインイン
+        const anonymousEmail = `user-${crypto.randomUUID()}@anonymous.local`;
+        const anonymousPassword = crypto.randomUUID();
+
+        console.log('[Practice Waiting] Creating anonymous user account...');
+
+        // サインアップとサインインを試みる
+        const signUpResponse = await fetch('/api/auth/sign-up/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: anonymousEmail,
+            password: anonymousPassword,
+            name: `ユーザー${Math.floor(Math.random() * 1000)}`,
+          }),
+        });
+
+        if (signUpResponse.ok) {
+          console.log('[Practice Waiting] Anonymous account created, updating role...');
+
+          // roleをuserに更新(明示的に設定)
+          const updateRoleResponse = await fetch('/api/auth/update-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'user' }),
+          });
+
+          if (updateRoleResponse.ok) {
+            console.log('[Practice Waiting] Role updated to user');
+          }
+
+          // ページをリロードしてセッションを更新
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('[Practice Waiting] Anonymous authentication failed:', error);
+      } finally {
+        setIsAuthenticating(false);
+      }
+    };
+
+    void authenticateAnonymously();
+  }, [isPending, sessionData?.user, isAuthenticating]);
 
   const loadPartners = useCallback(async () => {
     setPartnersError(null);
@@ -176,6 +237,17 @@ export default function PracticeWaitingPage() {
   const availableCount = useMemo(() => {
     return partners.filter((partner) => partner.isAvailable).length;
   }, [partners]);
+
+  if (isPending || isAuthenticating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>{isAuthenticating ? '匿名認証中...' : 'セッション情報を読み込み中...'}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-muted/30">
