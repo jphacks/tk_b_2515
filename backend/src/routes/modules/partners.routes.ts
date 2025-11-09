@@ -737,15 +737,27 @@ partners.openapi(listWaitingSessionsRoute, async (c) => {
       },
     });
 
-    return c.json({
-      sessions: sessions.map((session) => ({
-        id: session.id,
-        status: session.status,
-        createdAt: session.createdAt.toISOString(),
-        user: session.user,
-        partner: session.partner,
-      })),
-    });
+    return c.json(
+      {
+        sessions: sessions.map((session) => ({
+          id: session.id,
+          status: session.status,
+          createdAt: session.createdAt.toISOString(),
+          user: session.user
+            ? {
+                id: session.user.id,
+                name: session.user.name,
+                image: session.user.image,
+              }
+            : null,
+          partner: {
+            id: session.partner.id,
+            name: session.partner.name,
+          },
+        })),
+      },
+      200
+    );
   } catch (error) {
     console.error("Failed to fetch waiting sessions:", error);
     return c.json({ error: "Failed to fetch waiting sessions" }, 500);
