@@ -18,9 +18,13 @@ export async function POST(req: NextRequest) {
     }
 
     // ユーザーのroleを更新
+    // partnerの場合はisAvailableもtrueに設定
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { role },
+      data: {
+        role,
+        ...(role === "partner" && { isAvailable: true }),
+      },
     });
 
     return NextResponse.json({ success: true });
