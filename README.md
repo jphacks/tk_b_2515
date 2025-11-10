@@ -6,7 +6,8 @@
 
 ###  恋 AI: https://renailove.vercel.app 
 　　　　　　↑↑ここから使ってみてください！！↑↑
-- 紹介動画: https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE
+- 紹介動画: https://youtu.be/w-tGninTG8s
+- 旧紹介動画: https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE
 
 ## 製品概要
 
