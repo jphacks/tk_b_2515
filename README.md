@@ -1,6 +1,6 @@
 # 純愛を求める男子学生のためのアプリ、"**恋 AI(renai)**"
 
-[![恋AI](./docs/renai-title.jpg)](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
+[![恋AI](./docs/renai.png)](https://youtu.be/tYjXiZOQHnI?si=hFwHpYndLv_864NE)
 
 ### 各種リンク
 
