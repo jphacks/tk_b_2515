@@ -870,7 +870,7 @@ function FeedbackContent() {
 				) : (
 					<div className="max-w-3xl w-full space-y-4 sm:space-y-6 px-2">
 						{/* Avatar */}
-						<div className="flex justify-center">
+						<div className="flex justify-center mt-8 mb-6">
 							<div className="relative w-24 h-24 sm:w-32 sm:h-32">
 								<Image
 									src={feedbackAvatarImageSrc}
@@ -1324,7 +1324,7 @@ function FeedbackContent() {
 												<br />
 												実際の女性とのビデオ通話で、本物の会話練習に挑戦しましょう。
 											</p>
-											<Link href="/practice/waiting" className="block">
+											<Link href="/test-call" className="block">
 												<Button
 													size="lg"
 													className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white"

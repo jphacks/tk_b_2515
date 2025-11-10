@@ -332,7 +332,7 @@ useEffect(() => {
 
 			await startSession();
 			setConversationStarted(true);
-			startTimer(3 * 60); // 3 minutes
+			startTimer(5 * 60); // 10 minutes
 		} catch (error) {
 			console.error("Failed to start conversation:", error);
 		}
@@ -679,7 +679,7 @@ useEffect(() => {
 														showAdvicePanel ? "text-yellow-300" : "text-primary"
 													}`}
 												/>
-												アドバイス
+												背景アドバイス
 											</Button>
 										</div>
 									</div>
