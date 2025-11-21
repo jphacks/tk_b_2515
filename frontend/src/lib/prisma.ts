@@ -4,10 +4,13 @@ const globalForPrisma = globalThis as unknown as {
 	prisma: PrismaClient | undefined;
 };
 
+// ビルド時のフォールバック用のダミーURL
+const databaseUrl = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
+
 export const prisma =
 	globalForPrisma.prisma ??
 	new PrismaClient({
-		accelerateUrl: process.env.DATABASE_URL,
+		accelerateUrl: databaseUrl,
 		log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
 	});
 
