@@ -905,6 +905,24 @@ function FeedbackContent() {
 							</p>
 						</div>
 
+						{/* Google Form Link */}
+						<div className="flex justify-center">
+							<a
+								href="https://forms.gle/ZcBJWcJwycA3mcdQ7"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-block"
+							>
+								<Button
+									size="lg"
+									variant="outline"
+									className="rounded-full px-6 sm:px-8"
+								>
+									感想教えてねbyまき
+								</Button>
+							</a>
+						</div>
+
 						{/* Overall Score */}
 						<Card className="p-6 sm:p-8 text-center border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
 							<div className="space-y-3 sm:space-y-4">

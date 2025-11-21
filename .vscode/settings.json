@@ -31,5 +31,6 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "prisma.fileWatcher": true
+  "prisma.fileWatcher": true,
+  "prisma.pinToPrisma6": false
 }
