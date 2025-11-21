@@ -25,14 +25,14 @@ interface ConversationAvatarProps {
  * 背景画像を表示するコンポーネント（与えられたsrcを使う）
  */
 function BackgroundImageWithSrc({ src }: { src: string }) {
-    const texture = useTexture(src);
+	const texture = useTexture(src);
 
-    return (
-        <mesh position={[0, 1.65, -2]}>
-            <planeGeometry args={[8, 4.5]} />
-            <meshBasicMaterial map={texture} side={THREE.DoubleSide} />
-        </mesh>
-    );
+	return (
+		<mesh position={[0, 1.65, -2]}>
+			<planeGeometry args={[8, 4.5]} />
+			<meshBasicMaterial map={texture} side={THREE.DoubleSide} />
+		</mesh>
+	);
 }
 
 /**
@@ -66,7 +66,9 @@ export default function ConversationAvatar({
 						lipSyncValue={lipSyncValue}
 						emotion={emotion}
 						gesture={gesture}
-						disableGreeting={disableGreeting || backgroundSrc?.includes("springschool")}
+						disableGreeting={
+							disableGreeting || backgroundSrc?.includes("springschool")
+						}
 					/>
 				</Suspense>
 				<OrbitControls

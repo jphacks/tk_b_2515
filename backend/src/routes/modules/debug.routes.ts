@@ -81,7 +81,10 @@ debug.openapi(dbCheckRoute, async (c) => {
 				errorType = "DB_AUTH_FAILED";
 			} else if (message.includes("SSL") || message.includes("TLS")) {
 				errorType = "DB_TLS_REQUIRED";
-			} else if (message.includes("ECONNREFUSED") || message.includes("ETIMEDOUT")) {
+			} else if (
+				message.includes("ECONNREFUSED") ||
+				message.includes("ETIMEDOUT")
+			) {
 				errorType = "DB_UNREACHABLE";
 			}
 		}

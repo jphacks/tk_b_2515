@@ -46,7 +46,8 @@ agora.post("/token", async (c) => {
 		const { channelName, userId } = parsed.data;
 
 		// 環境変数からAgora認証情報を取得
-		const appId = process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID || "";
+		const appId =
+			process.env.AGORA_APP_ID || process.env.NEXT_PUBLIC_AGORA_APP_ID || "";
 		const appCertificate = process.env.AGORA_APP_CERTIFICATE || "";
 
 		if (!appId || !appCertificate) {
@@ -80,7 +81,9 @@ agora.post("/token", async (c) => {
 			privilegeExpiredTs, // privilegeExpire
 		);
 
-		console.log(`[Agora] Generated token for user ${userId} (uid: ${uid}) in channel ${channelName}`);
+		console.log(
+			`[Agora] Generated token for user ${userId} (uid: ${uid}) in channel ${channelName}`,
+		);
 
 		return c.json(
 			{

@@ -64,9 +64,7 @@ export function AdviceChecklist({
 								isLarge
 									? "text-xs sm:text-sm leading-relaxed"
 									: "text-xs leading-snug"
-							} ${
-								item.checked ? "text-foreground" : "text-muted-foreground"
-							}`}
+							} ${item.checked ? "text-foreground" : "text-muted-foreground"}`}
 						>
 							{item.label}
 						</span>

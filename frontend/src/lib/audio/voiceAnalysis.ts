@@ -205,7 +205,7 @@ function estimateTempoScore(
 ): number {
 	if (!durationSeconds || durationSeconds <= 0) return 0;
 	const voicedPerSecond =
-		(pitchSummary.pitchValues.length / durationSeconds) || 0;
+		pitchSummary.pitchValues.length / durationSeconds || 0;
 	const minRate = 1.5;
 	const maxRate = 5.5;
 	return clamp01((voicedPerSecond - minRate) / (maxRate - minRate));

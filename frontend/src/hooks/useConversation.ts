@@ -147,16 +147,21 @@ export function useConversation(options: UseConversationOptions) {
 					const unsupportedErr = new Error(
 						"日本語または英語で話してください (Detected unsupported language).",
 					);
-					setState((prev) => ({ ...prev, error: unsupportedErr, isProcessing: false }));
+					setState((prev) => ({
+						...prev,
+						error: unsupportedErr,
+						isProcessing: false,
+					}));
 					return null;
 				}
 
 				// 2. AI: テキストから応答を生成
-				const relationshipStage = state.messages.length < 7
-					? "shy"
-					: state.messages.length < 15
-						? "friendly"
-						: "open";
+				const relationshipStage =
+					state.messages.length < 7
+						? "shy"
+						: state.messages.length < 15
+							? "friendly"
+							: "open";
 				const aiResponse = await conversationApi.generateResponse({
 					sessionId: state.session.id,
 					userMessage: sttResult.text,
@@ -239,7 +244,15 @@ export function useConversation(options: UseConversationOptions) {
 				return null;
 			}
 		},
-    		[state.session, systemPrompt, ttsVoiceId, onAudioReady, onEmotionUpdate, avatarId, state.messages.length],
+		[
+			state.session,
+			systemPrompt,
+			ttsVoiceId,
+			onAudioReady,
+			onEmotionUpdate,
+			avatarId,
+			state.messages.length,
+		],
 	);
 
 	// クリーンアップ

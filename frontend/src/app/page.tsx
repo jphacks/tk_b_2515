@@ -1,6 +1,12 @@
 "use client";
 
-import { Heart, MessageCircle, Sparkles, TrendingUp, Users } from "lucide-react";
+import {
+	Heart,
+	MessageCircle,
+	Sparkles,
+	TrendingUp,
+	Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,7 +17,9 @@ import { Card } from "@/components/ui/card";
 export default function HomePage() {
 	const [showPracticeButton, setShowPracticeButton] = useState(false);
 	const [practiceCount, setPracticeCount] = useState(0);
-	const [centerAvatar, setCenterAvatar] = useState<"maki" | "rento" | "kouta">("maki");
+	const [centerAvatar, setCenterAvatar] = useState<"maki" | "rento" | "kouta">(
+		"maki",
+	);
 
 	useEffect(() => {
 		try {
@@ -20,7 +28,9 @@ export default function HomePage() {
 			const count = countRaw ? parseInt(countRaw, 10) || 0 : 0;
 			setPracticeCount(count);
 			setShowPracticeButton(unlocked && count < 10);
-		} catch { /* ignore */ }
+		} catch {
+			/* ignore */
+		}
 	}, []);
 
 	// Avatar ordering helpers
@@ -52,7 +62,9 @@ export default function HomePage() {
 								AIコミュニケーション・コーチング
 							</div>
 							<h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-balance drop-shadow-lg sparkle-text px-2">
-								<span style={{ color: "#ef5784ff" }}>異性と話せるようになろう!!</span>
+								<span style={{ color: "#ef5784ff" }}>
+									異性と話せるようになろう!!
+								</span>
 							</h2>
 							<p className="text-sm sm:text-base md:text-lg lg:text-xl text-foreground text-pretty max-w-2xl mx-auto drop-shadow px-4">
 								バーチャル大学生「まき」「れんと」「こうた」との会話で、あなたのコミュニケーション力を楽しく伸ばそう！
@@ -105,77 +117,77 @@ export default function HomePage() {
 							</div>
 						</div>
 
-							<div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12">
-								<Link href="/simulation" className="w-full sm:w-auto">
+						<div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12">
+							<Link href="/simulation" className="w-full sm:w-auto">
+								<Button
+									size="lg"
+									className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all font-bold animate-wiggle heart-effect"
+								>
+									<MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
+									今すぐはなしかける
+								</Button>
+							</Link>
+							{showPracticeButton && (
+								<Link href="/practice/waiting" className="w-full sm:w-auto">
 									<Button
 										size="lg"
-										className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/50 hover:scale-105 transition-all font-bold animate-wiggle heart-effect"
+										variant="outline"
+										className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/30 transition-all font-bold"
 									>
-										<MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
-										今すぐはなしかける
+										<Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
+										実践練習へ進む （残り {10 - practiceCount} 回）
 									</Button>
 								</Link>
-								{showPracticeButton && (
-									<Link href="/practice/waiting" className="w-full sm:w-auto">
-										<Button
-											size="lg"
-											variant="outline"
-											className="w-full sm:w-auto rounded-full text-base sm:text-xl md:text-2xl px-8 sm:px-12 md:px-16 py-6 sm:py-8 md:py-10 shadow-2xl hover:shadow-primary/30 transition-all font-bold"
-										>
-											<Users className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 mr-2 sm:mr-3" />
-											実践練習へ進む （残り {10 - practiceCount} 回）
-										</Button>
-									</Link>
-								)}
-							</div>
-
-							{/* Features */}
-							<div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto px-2">
-								<Card className="p-4 sm:p-6 space-y-2 sm:space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
-									<div className="flex items-start gap-3 sm:gap-4">
-										<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-											<MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-										</div>
-										<h3 className="text-base sm:text-lg font-semibold mt-1">
-											リアルタイム会話
-										</h3>
-									</div>
-									<p className="text-muted-foreground text-xs sm:text-sm mt-2">
-										"まき"と自然な会話を楽しみながら、コミュニケーションスキルを磨けます
-									</p>
-								</Card>
-
-								<Card className="p-4 sm:p-6 space-y-2 sm:space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
-									<div className="flex items-start gap-3 sm:gap-4">
-										<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-											<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
-										</div>
-										<h3 className="text-base sm:text-lg font-semibold mt-1">
-											的確なフィードバック
-										</h3>
-									</div>
-									<p className="text-muted-foreground text-xs sm:text-sm mt-2">
-										会話終了後、AIが良かった点と改善点をフィードバックします
-									</p>
-								</Card>
-
-								<Card className="p-4 sm:p-6 space-y-2 sm:space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm sm:col-span-2 md:col-span-1">
-									<div className="flex items-start gap-3 sm:gap-4">
-										<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-											<Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-										</div>
-										<h3 className="text-base sm:text-lg font-semibold mt-1">
-											安心して練習
-										</h3>
-									</div>
-									<p className="text-muted-foreground text-xs sm:text-sm mt-2">
-										匿名で利用可能。失敗を恐れず、何度でも練習できる安全な環境です
-									</p>
-								</Card>
-							</div>
+							)}
 						</div>
-					</main>
-								{/* removed arrow styles */}
+
+						{/* Features */}
+						<div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto px-2">
+							<Card className="p-4 sm:p-6 space-y-2 sm:space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
+								<div className="flex items-start gap-3 sm:gap-4">
+									<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+										<MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+									</div>
+									<h3 className="text-base sm:text-lg font-semibold mt-1">
+										リアルタイム会話
+									</h3>
+								</div>
+								<p className="text-muted-foreground text-xs sm:text-sm mt-2">
+									"まき"と自然な会話を楽しみながら、コミュニケーションスキルを磨けます
+								</p>
+							</Card>
+
+							<Card className="p-4 sm:p-6 space-y-2 sm:space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm">
+								<div className="flex items-start gap-3 sm:gap-4">
+									<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+										<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+									</div>
+									<h3 className="text-base sm:text-lg font-semibold mt-1">
+										的確なフィードバック
+									</h3>
+								</div>
+								<p className="text-muted-foreground text-xs sm:text-sm mt-2">
+									会話終了後、AIが良かった点と改善点をフィードバックします
+								</p>
+							</Card>
+
+							<Card className="p-4 sm:p-6 space-y-2 sm:space-y-3 border-2 transition-colors bg-card/80 backdrop-blur-sm sm:col-span-2 md:col-span-1">
+								<div className="flex items-start gap-3 sm:gap-4">
+									<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+										<Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+									</div>
+									<h3 className="text-base sm:text-lg font-semibold mt-1">
+										安心して練習
+									</h3>
+								</div>
+								<p className="text-muted-foreground text-xs sm:text-sm mt-2">
+									匿名で利用可能。失敗を恐れず、何度でも練習できる安全な環境です
+								</p>
+							</Card>
+						</div>
+					</div>
+				</main>
+				{/* removed arrow styles */}
 				<footer className="h-14 sm:h-16 flex items-center justify-center text-muted-foreground text-xs sm:text-sm border-t border-border/50 bg-card/50 backdrop-blur-md px-4">
 					<p className="text-center">
 						© 2025

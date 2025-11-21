@@ -43,16 +43,27 @@ export function ErrorDisplay({
 	// STT関連: Unsupported language メッセージをより親しみやすく表示
 	let friendlyMessage = error?.message;
 	if (friendlyMessage) {
-		if (friendlyMessage.includes("UNSUPPORTED_LANGUAGE") || friendlyMessage.includes("日本語または英語で話してください")) {
-			friendlyMessage = "日本語か英語で話してみましょう。方言や特殊記号は認識できない場合があります。";
+		if (
+			friendlyMessage.includes("UNSUPPORTED_LANGUAGE") ||
+			friendlyMessage.includes("日本語または英語で話してください")
+		) {
+			friendlyMessage =
+				"日本語か英語で話してみましょう。方言や特殊記号は認識できない場合があります。";
 		}
 		// APIキー未設定
-		if (friendlyMessage.includes("API key not configured") || friendlyMessage.includes("API_KEY_NOT_CONFIGURED")) {
+		if (
+			friendlyMessage.includes("API key not configured") ||
+			friendlyMessage.includes("API_KEY_NOT_CONFIGURED")
+		) {
 			friendlyMessage = "音声認識設定が未構成です。管理者に連絡してください。";
 		}
 		// 接続失敗
-		if (friendlyMessage.includes("バックエンドサーバーに接続できません") || friendlyMessage.includes("Failed to connect")) {
-			friendlyMessage = "サーバーに接続できません。バックエンドが起動しているか、ネットワーク/プロキシ設定を確認してください。";
+		if (
+			friendlyMessage.includes("バックエンドサーバーに接続できません") ||
+			friendlyMessage.includes("Failed to connect")
+		) {
+			friendlyMessage =
+				"サーバーに接続できません。バックエンドが起動しているか、ネットワーク/プロキシ設定を確認してください。";
 		}
 	}
 

@@ -25,10 +25,7 @@ export async function POST(req: NextRequest) {
 		} | null;
 
 		if (!body || typeof body.isAvailable !== "boolean") {
-			return NextResponse.json(
-				{ error: "Invalid payload" },
-				{ status: 400 },
-			);
+			return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 		}
 
 		await prisma.user.update({
