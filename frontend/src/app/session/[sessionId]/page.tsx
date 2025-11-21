@@ -58,8 +58,7 @@ export default function SessionRoomPage() {
 		// userIdを一度だけ生成
 		if (!userId) {
 			const id =
-				session?.user?.id ||
-				`user-${Math.random().toString(36).substring(7)}`;
+				session?.user?.id || `user-${Math.random().toString(36).substring(7)}`;
 			setUserId(id);
 			console.log("[Session] Generated userId:", id);
 		}
@@ -231,7 +230,8 @@ export default function SessionRoomPage() {
 							<h1 className="font-semibold text-foreground">練習セッション</h1>
 							<p className="text-sm text-muted-foreground">
 								{connectionState === "connecting" && "接続中..."}
-								{connectionState === "connected" && formatDuration(callDuration)}
+								{connectionState === "connected" &&
+									formatDuration(callDuration)}
 								{connectionState === "disconnected" && "通話終了"}
 							</p>
 						</div>

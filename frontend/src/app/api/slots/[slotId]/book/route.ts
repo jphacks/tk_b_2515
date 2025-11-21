@@ -13,10 +13,7 @@ export async function POST(
 		});
 
 		if (!authSession?.user) {
-			return NextResponse.json(
-				{ error: "認証が必要です" },
-				{ status: 401 },
-			);
+			return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 		}
 
 		const userId = authSession.user.id;

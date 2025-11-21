@@ -19,7 +19,6 @@ import { useConversation } from "@/hooks/useConversation";
 import { useFacialAnalysis } from "@/hooks/useFacialAnalysis";
 import { useGestureTracking } from "@/hooks/useGestureTracking";
 import { useMediaDevices } from "@/hooks/useMediaDevices";
-import { useSimulationTimer } from "@/hooks/useSimulationTimer";
 import { BACKGROUND_ADVICE } from "@/lib/advice";
 import { AdviceChecklist } from "@/components/simulation/AdviceChecklist";
 import { preloadVRM } from "@/hooks/useVRM";
@@ -73,7 +72,9 @@ export default function SimulationPage() {
 	const [selectedBackground, setSelectedBackground] =
 		useState<BackgroundKey>("library");
 	const [assistMode, setAssistMode] = useState<boolean>(true);
-	const [adviceCompleted, setAdviceCompleted] = useState<Record<string, boolean>>({});
+	const [adviceCompleted, setAdviceCompleted] = useState<
+		Record<string, boolean>
+	>({});
 	const [showAdvicePanel, setShowAdvicePanel] = useState(false);
 
 	const videoStreamRef = useRef<VideoStreamRef>(null);
@@ -81,10 +82,10 @@ export default function SimulationPage() {
 	const avatarModelUrl = useMemo(() => {
 		if (selectedAvatar === "male") return "/models/rento.vrm";
 		if (selectedAvatar === "neutral") return "/models/kouta.vrm";
-		return "/models/maki.vrm"; // female
+		return "/models/maki-bee.vrm"; // female
 	}, [selectedAvatar]);
 
-	// 背景の保存/復元
+	// 背景の保存/復元s
 	useEffect(() => {
 		try {
 			const saved = localStorage.getItem(
@@ -197,12 +198,17 @@ export default function SimulationPage() {
 		onLipSyncUpdate: handleLipSyncUpdate,
 		ttsVoiceId: selectedVoiceId || undefined,
 		onEmotionUpdate: setAvatarEmotion,
-		avatarId: selectedAvatar === "female" ? "maki" : selectedAvatar === "male" ? "rento" : "kouta",
+		avatarId:
+			selectedAvatar === "female"
+				? "maki"
+				: selectedAvatar === "male"
+					? "rento"
+					: "kouta",
 	});
 	// 最新ユーザー発話でアドバイス達成判定（state反映遅延による未達表示不安定性を解消）
 	useEffect(() => {
 		if (!messages.length) return;
-		const lastUser = [...messages].reverse().find(m => m.role === 'user');
+		const lastUser = [...messages].reverse().find((m) => m.role === "user");
 		if (!lastUser) return;
 		const text = lastUser.content;
 		const adviceList = BACKGROUND_ADVICE[selectedBackground];
@@ -210,7 +216,7 @@ export default function SimulationPage() {
 		let changed = false;
 		for (const item of adviceList) {
 			if (next[item.id]) continue;
-			if (item.patterns.some(re => re.test(text))) {
+			if (item.patterns.some((re) => re.test(text))) {
 				next[item.id] = true;
 				changed = true;
 			}
@@ -219,7 +225,10 @@ export default function SimulationPage() {
 			setAdviceCompleted(next);
 			try {
 				if (session?.id) {
-					localStorage.setItem(`adviceCompleted:${session.id}`, JSON.stringify(next));
+					localStorage.setItem(
+						`adviceCompleted:${session.id}`,
+						JSON.stringify(next),
+					);
 				}
 			} catch {}
 		}
@@ -238,22 +247,16 @@ export default function SimulationPage() {
 	}, [session?.id]);
 
 	// 背景変更時にアドバイス進捗リセット
-useEffect(() => {
-	setAdviceCompleted({});
-	void selectedBackground;
-}, [selectedBackground]);
+	useEffect(() => {
+		setAdviceCompleted({});
+		void selectedBackground;
+	}, [selectedBackground]);
 
 	useEffect(() => {
 		if (!adviceAvailable) {
 			setShowAdvicePanel(false);
 		}
 	}, [adviceAvailable]);
-
-	// Timer management
-	const { timeRemaining, startTimer, stopTimer } = useSimulationTimer({
-		conversationStarted,
-		onTimeout: handleEndConversation,
-	});
 
 	// Preload VRM model when selected avatar changes
 	useEffect(() => {
@@ -280,8 +283,6 @@ useEffect(() => {
 
 	// End conversation handler
 	async function handleEndConversation() {
-		stopTimer();
-
 		if (isRecording) {
 			stopRecording();
 		}
@@ -332,11 +333,10 @@ useEffect(() => {
 
 			await startSession();
 			setConversationStarted(true);
-			startTimer(5 * 60); // 10 minutes
 		} catch (error) {
 			console.error("Failed to start conversation:", error);
 		}
-	}, [startStream, startSession, startTimer, resetGestures]);
+	}, [startStream, startSession, resetGestures]);
 
 	// Toggle recording
 	const toggleRecording = useCallback(() => {
@@ -404,7 +404,8 @@ useEffect(() => {
 			setAvatarGesture("talking");
 		} else {
 			const gestures: GestureType[] = ["idle", "idle", "idle"];
-			const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+			const randomGesture =
+				gestures[Math.floor(Math.random() * gestures.length)];
 			setAvatarGesture(randomGesture);
 		}
 	}, [isRecording, isProcessing, lipSyncValue]);
@@ -601,8 +602,12 @@ useEffect(() => {
 								</div>
 								{/* Assist Mode Toggle (下段表示) */}
 								<div className="mt-2 text-xs sm:text-sm text-muted-foreground bg-muted/30 border border-border/50 rounded-lg p-3">
-									<p className="font-semibold text-foreground mb-1">モード選択</p>
-									<p className="mb-2 leading-relaxed">アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。</p>
+									<p className="font-semibold text-foreground mb-1">
+										モード選択
+									</p>
+									<p className="mb-2 leading-relaxed">
+										アシストモードでは会話中に高得点のコツ（アドバイス）を表示します。
+									</p>
 									<div className="flex items-center gap-2">
 										<label className="inline-flex items-center gap-2 cursor-pointer select-none">
 											<input
@@ -612,7 +617,9 @@ useEffect(() => {
 												className="h-4 w-4"
 												aria-label="アシストモードを有効化"
 											/>
-											<span className="text-foreground text-xs sm:text-sm font-medium whitespace-nowrap">アシストモード</span>
+											<span className="text-foreground text-xs sm:text-sm font-medium whitespace-nowrap">
+												アシストモード
+											</span>
 										</label>
 									</div>
 								</div>
@@ -654,7 +661,9 @@ useEffect(() => {
 									gesture={avatarGesture}
 									avatarName={avatarName}
 									backgroundSrc={BACKGROUNDS[selectedBackground].src}
-									disableGreeting={BACKGROUNDS[selectedBackground].label === "入学式"}
+									disableGreeting={
+										BACKGROUNDS[selectedBackground].label === "入学式"
+									}
 								/>
 								{adviceAvailable && (
 									<div className="pointer-events-none absolute right-4 bottom-4 flex justify-end">
@@ -726,7 +735,7 @@ useEffect(() => {
 						stream={stream}
 						audioURL={audioURL}
 						showControls={showControls}
-						timeRemaining={timeRemaining}
+						timeRemaining={null}
 						messageCount={messages.length}
 						avatarName={avatarName}
 						onToggleRecording={toggleRecording}

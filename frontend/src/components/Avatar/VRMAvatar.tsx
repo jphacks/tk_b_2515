@@ -315,10 +315,10 @@ export default function VRMAvatar({
 			scene.scale.setScalar(scale);
 		}
 
-		// 顔を中心に表示するようにオフセット（スケール後に調整）
-		// モデルの頭の位置を計算して、顔が見えるように配置
-		const headOffset = size.y * 0.85; // モデルの高さの85%の位置（顔の位置）
-		scene.position.y = -headOffset * (targetHeight / size.y) * 4 + 1.5; // 顔を画面中央に
+		// 膝まで映るように上半身を中心に表示するようにオフセット（スケール後に調整）
+		// モデルの膝の位置を計算して、膝から上が見えるように配置
+		const kneeOffset = size.y * 0.5; // モデルの高さの30%の位置（膝の位置）
+		scene.position.y = -kneeOffset * (targetHeight / size.y) * 4 + 0.4; // 膝から上を画面に収める
 
 		// 初期状態で目を開ける
 		if (vrm.expressionManager) {
@@ -369,7 +369,6 @@ export default function VRMAvatar({
 
 		setIsReady(true);
 	}, [vrm]);
-
 
 	// アニメーション切替ロジック（短時間の連続切替をスロットル）
 	useEffect(() => {
@@ -433,30 +432,55 @@ export default function VRMAvatar({
 
 			// URL候補
 			const preferredUrls: string[] = (() => {
-				if (emo === "bashful") return ["/animations/bashful.vrma", gestureToVrmaPath.idle];
-				if (emo === "angry") return ["/animations/angry.vrma", gestureToVrmaPath.nodding, gestureToVrmaPath.idle];
-				if (emo === "sad") return ["/animations/sad.vrma", gestureToVrmaPath.thinking, gestureToVrmaPath.idle];
-				return [gestureToVrmaPath[ges] ?? gestureToVrmaPath.idle, gestureToVrmaPath.idle];
+				if (emo === "bashful")
+					return ["/animations/bashful.vrma", gestureToVrmaPath.idle];
+				if (emo === "angry")
+					return [
+						"/animations/angry.vrma",
+						gestureToVrmaPath.nodding,
+						gestureToVrmaPath.idle,
+					];
+				if (emo === "sad")
+					return [
+						"/animations/sad.vrma",
+						gestureToVrmaPath.thinking,
+						gestureToVrmaPath.idle,
+					];
+				return [
+					gestureToVrmaPath[ges] ?? gestureToVrmaPath.idle,
+					gestureToVrmaPath.idle,
+				];
 			})();
 
 			let chosenUrl: string | null = null;
 			let finalClip: THREE.AnimationClip | null = null;
 			for (const u of preferredUrls) {
-				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emo) return; // 変更不要
+				if (lastPlayedUrlRef.current === u && lastEmotionRef.current === emo)
+					return; // 変更不要
 				// eslint-disable-next-line no-await-in-loop
 				const clip = await loadVrmaClip(u);
-				if (clip) { chosenUrl = u; finalClip = clip; break; }
+				if (clip) {
+					chosenUrl = u;
+					finalClip = clip;
+					break;
+				}
 			}
 			if (!finalClip || !chosenUrl) return;
 
 			const fadeSec = (() => {
 				switch (emo) {
-					case "bashful": return 0.4;
-					case "sad": return 0.35;
-					case "happy": return 0.3;
-					case "angry": return 0.2;
-					case "surprised": return 0.15;
-					default: return 0.25;
+					case "bashful":
+						return 0.4;
+					case "sad":
+						return 0.35;
+					case "happy":
+						return 0.3;
+					case "angry":
+						return 0.2;
+					case "surprised":
+						return 0.15;
+					default:
+						return 0.25;
 				}
 			})();
 
@@ -483,7 +507,16 @@ export default function VRMAvatar({
 
 		// すぐに切替実行
 		performSwitch(emotion, gesture);
-	}, [emotion, gesture, gestureToVrmaPath, isReady, loadVrmaClip, playClip, vrm, disableGreeting]);
+	}, [
+		emotion,
+		gesture,
+		gestureToVrmaPath,
+		isReady,
+		loadVrmaClip,
+		playClip,
+		vrm,
+		disableGreeting,
+	]);
 
 	if (error) {
 		console.error("VRM load error:", error);

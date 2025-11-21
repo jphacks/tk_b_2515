@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
 		});
 
 		const requesterId = session?.user?.id;
-		const requesterRole = (session?.user as { role?: string } | undefined)?.role;
+		const requesterRole = (session?.user as { role?: string } | undefined)
+			?.role;
 
 		if (!partnerIdQuery && requesterRole === "partner" && requesterId) {
 			searchParams.set("partnerId", requesterId);
