@@ -39,73 +39,13 @@ const POLL_INTERVAL_MS = 15_000;
 export default function PartnerWaitingPage() {
   const router = useRouter();
   const sessionState = useSession();
-  const { data: sessionData, isPending } = sessionState;
+	const { data: sessionData, isPending } = sessionState;
 
   const [sessions, setSessions] = useState<WaitingSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-
-  // 匿名認証を実行
-  useEffect(() => {
-    const authenticateAnonymously = async () => {
-      // セッション読み込み中はスキップ
-      if (isPending) return;
-
-      // 既にログイン済みの場合はスキップ
-      if (sessionData?.user) return;
-
-      // 認証中フラグが立っている場合はスキップ
-      if (isAuthenticating) return;
-
-      setIsAuthenticating(true);
-
-      try {
-        // 匿名ユーザーとしてサインイン
-        const anonymousEmail = `partner-${crypto.randomUUID()}@anonymous.local`;
-        const anonymousPassword = crypto.randomUUID();
-
-        console.log('[Partner Waiting] Creating anonymous partner account...');
-
-        // サインアップとサインインを試みる
-        const signUpResponse = await fetch('/api/auth/sign-up/email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: anonymousEmail,
-            password: anonymousPassword,
-            name: `パートナー${Math.floor(Math.random() * 1000)}`,
-          }),
-        });
-
-        if (signUpResponse.ok) {
-          console.log('[Partner Waiting] Anonymous account created, updating role...');
-
-          // roleをpartnerに更新
-          const updateRoleResponse = await fetch('/api/auth/update-role', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role: 'partner' }),
-          });
-
-          if (updateRoleResponse.ok) {
-            console.log('[Partner Waiting] Role updated to partner');
-          }
-
-          // ページをリロードしてセッションを更新
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error('[Partner Waiting] Anonymous authentication failed:', error);
-      } finally {
-        setIsAuthenticating(false);
-      }
-    };
-
-    void authenticateAnonymously();
-  }, [isPending, sessionData?.user, isAuthenticating]);
+	const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
 
   const fetchWaitingSessions = useCallback(async () => {
     setError(null);
@@ -192,52 +132,52 @@ export default function PartnerWaitingPage() {
     [router],
   );
 
-  if (isPending || isAuthenticating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span>{isAuthenticating ? '匿名認証中...' : 'セッション情報を読み込み中...'}</span>
-        </div>
-      </div>
-    );
-  }
+	if (isPending) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="flex items-center gap-3 text-muted-foreground">
+					<Loader2 className="w-5 h-5 animate-spin" />
+					<span>セッション情報を読み込み中...</span>
+				</div>
+			</div>
+		);
+	}
 
-  // if (!sessionData?.user) {
-  // 	return (
-  // 		<div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-  // 			<AlertCircle className="w-10 h-10 text-red-500" />
-  // 			<div>
-  // 				<p className="text-lg font-semibold text-foreground">ログインが必要です</p>
-  // 				<p className="text-sm text-muted-foreground">
-  // 					このページにアクセスするにはパートナーアカウントでログインしてください。
-  // 				</p>
-  // 			</div>
-  // 			<Link href="/login">
-  // 				<Button className="rounded-full">ログインページへ</Button>
-  // 			</Link>
-  // 		</div>
-  // 	);
-  // }
+	// if (!sessionData?.user) {
+	// 	return (
+	// 		<div className="min-h-screen flex flex-col items-center justify中心 gap-4 text-center px-4">
+	// 			<AlertCircle className="w-10 h-10 text-red-500" />
+	// 			<div>
+	// 				<p className="text-lg font-semibold text-foreground">ログインが必要です</p>
+	// 				<p className="text-sm text-muted-foreground">
+	// 					このページにアクセスするにはパートナーアカウントでログインしてください。
+	// 				</p>
+	// 			</div>
+	// 			<Link href="/login">
+	// 				<Button className="rounded-full">ログインページへ</Button>
+	// 			</Link>
+	// 		</div>
+	// 	);
+	// }
 
-  // if (!isPartner) {
-  // 	return (
-  // 		<div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-  // 			<AlertCircle className="w-10 h-10 text-red-500" />
-  // 			<div>
-  // 				<p className="text-lg font-semibold text-foreground">
-  // 					パートナー権限が必要です
-  // 				</p>
-  // 				<p className="text-sm text-muted-foreground">
-  // 					このページは認定パートナーのみが利用できます。ログインし直すか管理者にお問い合わせください。
-  // 				</p>
-  // 			</div>
-  // 			<Link href="/login">
-  // 				<Button className="rounded-full">ログインページへ</Button>
-  // 			</Link>
-  // 		</div>
-  // 	);
-  // }
+	// if (!isPartner) {
+	// 	return (
+	// 		<div className="min-h-screen flex flex-col items-center justify中心 gap-4 text-center px-4">
+	// 			<AlertCircle className="w-10 h-10 text-red-500" />
+	// 			<div>
+	// 				<p className="text-lg font-semibold text-foreground">
+	// 					パートナー権限が必要です
+	// 				</p>
+	// 				<p className="text-sm text-muted-foreground">
+	// 					このページは認定パートナーのみが利用できます。ログインし直すか管理者にお問い合わせください。
+	// 				</p>
+	// 			</div>
+	// 			<Link href="/login">
+	// 				<Button className="rounded-full">ログインページへ</Button>
+	// 			</Link>
+	// 		</div>
+	// 	);
+	// }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-muted/30">
