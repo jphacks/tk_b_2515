@@ -23,16 +23,19 @@ function createPrismaClient() {
 
 	if (isAccelerateUrl) {
 		console.log("[Prisma] Using Prisma Accelerate for edge runtime");
-		// AccelerateはdatasourceUrlを自動的に処理するため、明示的に指定しない
+		// Prisma 7では accelerateUrl を明示的に指定する
 		const client = new PrismaClient({
+			accelerateUrl: databaseUrl,
 			log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
 		});
 		return client.$extends(withAccelerate()) as unknown as PrismaClient;
 	}
 
 	// 標準のPrisma Clientを使用（ローカル開発用）
+	// Prisma 7では直接接続の場合も accelerateUrl を指定
 	console.log("[Prisma] Using standard Prisma Client");
 	return new PrismaClient({
+		accelerateUrl: databaseUrl,
 		log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
 	});
 }
