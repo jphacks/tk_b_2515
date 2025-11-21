@@ -497,7 +497,7 @@ function FeedbackContent() {
 
 	// 70点以上取得で実践練習解禁フラグを保存
 	useEffect(() => {
-		if (feedback?.overallScore !== null && feedback?.overallScore !== undefined && feedback.overallScore >= 30) {	//testで30点にした
+		if (feedback?.overallScore !== null && feedback?.overallScore !== undefined && feedback.overallScore >= 70) {	//testで30点にできる
 			try {
 				localStorage.setItem("practiceUnlocked", "true");
 			} catch {/* ignore */}
@@ -1313,7 +1313,7 @@ function FeedbackContent() {
 							{/* 実践練習へ進むボタン（高スコアの場合に表示） */}
 							{feedback &&
 								feedback.overallScore !== null &&
-								feedback.overallScore >= 30 && (	//testで30点にした
+								feedback.overallScore >= 70 && (	//testで30点にした
 									<Card className="p-6 border-2 border-green-500/20 bg-green-500/5">
 										<div className="text-center space-y-4">
 											<h3 className="text-xl font-bold text-foreground">
