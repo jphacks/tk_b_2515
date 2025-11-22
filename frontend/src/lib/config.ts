@@ -24,6 +24,8 @@ export const config = {
 				process.env.ELEVENLABS_VOICE_ID_MALE ||
 				"",
 			neutral:
+				process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID_GENDERLESS ||
+				process.env.ELEVENLABS_VOICE_ID_GENDERLESS ||
 				process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID_NEUTRAL ||
 				process.env.ELEVENLABS_VOICE_ID_NEUTRAL ||
 				// デフォルトは女性ボイスを利用（後で差し替え可能）
