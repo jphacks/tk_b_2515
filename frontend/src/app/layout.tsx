@@ -37,7 +37,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/renai_icon.png" />
         <link
           rel="preload"
-          href="/models/maki.vrm"
+          href="/models/hatisannomaki.vrm"
           as="fetch"
           crossOrigin="anonymous"
         />
