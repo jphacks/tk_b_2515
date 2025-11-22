@@ -82,7 +82,7 @@ export default function SimulationPage() {
   const avatarModelUrl = useMemo(() => {
     if (selectedAvatar === "male") return "/models/rento.vrm";
     if (selectedAvatar === "neutral") return "/models/kouta.vrm";
-    return "/models/hachisannomaki.vrm"; // female
+    return "/models/maki.vrm"; // female
   }, [selectedAvatar]);
 
   // 背景の保存/復元s
@@ -496,7 +496,7 @@ export default function SimulationPage() {
                     />
                   </div>
                   <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                    養蜂とコラボ!!
+                    女性アバター
                   </div>
                 </button>
 
