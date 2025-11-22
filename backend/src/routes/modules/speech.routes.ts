@@ -397,8 +397,8 @@ speech.openapi(ttsRoute, async (c) => {
 
 		const { text, voiceId, modelId } = c.req.valid("json");
 
-		// Use default voiceId if not provided (Rachel - a natural sounding voice)
-		const selectedVoiceId = voiceId || "lhTvHflPVOqgSWyuWQry";
+		// Use default voiceId from environment or fallback
+		const selectedVoiceId = voiceId || process.env.ELEVENLABS_VOICE_ID || "lhTvHflPVOqgSWyuWQry";
 
 		const audioStream = await textToSpeech(
 			apiKey,

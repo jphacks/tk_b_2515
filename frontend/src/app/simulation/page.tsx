@@ -82,7 +82,7 @@ export default function SimulationPage() {
   const avatarModelUrl = useMemo(() => {
     if (selectedAvatar === "male") return "/models/rento.vrm";
     if (selectedAvatar === "neutral") return "/models/kouta.vrm";
-    return "/models/hachisannomaki.vrm"; // female
+    return "/models/maki.vrm"; // female
   }, [selectedAvatar]);
 
   // 背景の保存/復元s

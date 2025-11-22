@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/prisma/edge";
+import { PrismaClient } from "../generated/prisma";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
 // PrismaClientのシングルトンインスタンスを作成

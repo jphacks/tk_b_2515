@@ -21,8 +21,8 @@ else
 fi
 
 # ルートの.envファイルを読み込んでサーバーを起動
-# Node.jsのメモリ制限を1GBに設定
-export NODE_OPTIONS="--max-old-space-size=1024"
+# Node.jsのメモリ制限を1GBに設定、WASMモジュールを有効化（Prisma 7対応）
+export NODE_OPTIONS="--max-old-space-size=1024 --experimental-wasm-modules"
 
 if command -v pnpm >/dev/null 2>&1; then
 	pnpm tsx --env-file=../.env src/server.ts
