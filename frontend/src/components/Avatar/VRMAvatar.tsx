@@ -318,7 +318,7 @@ export default function VRMAvatar({
 		// 膝まで映るように上半身を中心に表示するようにオフセット（スケール後に調整）
 		// モデルの膝の位置を計算して、膝から上が見えるように配置
 		const kneeOffset = size.y * 0.5; // モデルの高さの30%の位置（膝の位置）
-		scene.position.y = -kneeOffset * (targetHeight / size.y) * 4 + 0.4; // 膝から上を画面に収める
+		scene.position.y = -kneeOffset * (targetHeight / size.y) * 4; // 元に戻した
 
 		// 初期状態で目を開ける
 		if (vrm.expressionManager) {
